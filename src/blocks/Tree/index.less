@@ -39,25 +39,22 @@
   padding-right: 6px;
 
   &:hover {
+    background-color: var(--color-hover-bg);
   }
 }
 
 .treeNodeFocus {
-  // background-color: var(--color-hover-bg);
-  // background-color: var(--color-primary-bg-hover);
-  background-color: var(--color-primary-hover);
-  // background-color: var(--color-primary);
+  background-color: var(--color-primary-bg-hover);
   .right {
-    // color: var(--color-primary);
-    color: var(--color-bg-base);
+    color: var(--color-text);
   }
   .indent {
     &::before {
-      opacity: 0;
+      opacity: 0.3;
     }
   }
   .type {
-    color: var(--color-bg-base);
+    color: var(--color-text-secondary);
   }
 }
 

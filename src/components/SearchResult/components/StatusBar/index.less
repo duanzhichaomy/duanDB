@@ -1,19 +1,28 @@
 @import '../../../../styles/var.less';
 
 .statusBar {
-  height: 26px;
+  height: 24px;
   box-sizing: border-box;
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 3px 10px;
+  font-size: 11px;
   display: flex;
   justify-content: start;
   align-items: center;
-  border-top: 1px solid var(--color-border-secondary);
+  border-top: 1px solid var(--color-border);
   background-color: var(--color-bg-subtle);
   overflow: hidden;
   flex-shrink: 0;
+  color: var(--color-text-secondary);
   .f-single-line();
   & > span {
     margin-right: 16px;
+    &::after {
+      content: '|';
+      margin-left: 16px;
+      color: var(--color-border);
+    }
+    &:last-child::after {
+      content: none;
+    }
   }
 }

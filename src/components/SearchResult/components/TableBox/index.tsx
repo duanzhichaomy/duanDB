@@ -718,6 +718,15 @@ export default function TableBox(props: ITableProps) {
   // 处理粘贴的数据 hooks
   usePasteData({ updateTableData, curOperationRowNo, editingCell });
 
+  // 计算表格总宽度，避免表格撑满整个屏幕
+  const tableWidth = useMemo(() => {
+    const fallbackSize = 150;
+    const totalWidth = columns.reduce((sum, _, index) => {
+      return sum + (columnResize[index] || fallbackSize);
+    }, 0);
+    return totalWidth;
+  }, [columns, columnResize]);
+
   // 表格渲染的配置
   const pipeline = useTablePipeline()
     .input({ dataSource: tableData, columns })
@@ -1064,6 +1073,7 @@ export default function TableBox(props: ITableProps) {
                     <SupportBaseTable
                       className={classnames('supportBaseTable', props.className, styles.table)}
                       components={{ EmptyContent: () => <h2>{i18n('common.text.noData')}</h2> }}
+                      style={{ width: tableWidth, overflow: 'visible' }}
                       isStickyHead
                       stickyTop={31}
                       {...pipeline.getProps()}

@@ -43,12 +43,12 @@ const antdLightTheme = {
     // colorText: "#232429",
     colorTextBase: '#232429',
     colorBgBase: '#ffffff',
-    colorHoverBg: 'rgba(0, 0, 0, 0.03)',
+    colorHoverBg: 'rgba(0, 0, 0, 0.04)',
     colorBgContainer: '#ffffff',
-    colorBgSubtle: '#f6f8fa',
+    colorBgSubtle: '#f4f5f7',
     colorBgElevated: '#ffffff',
-    colorBorder: 'rgba(211, 211, 212, 0.4)',
-    colorBorderSecondary: 'rgba(211, 211, 212, 0.4)',
+    colorBorder: '#e1e3e6',
+    colorBorderSecondary: '#ebedf0',
   },
 };
 

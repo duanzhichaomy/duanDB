@@ -9,13 +9,15 @@
 
   .dividerCenter {
     position: absolute;
-    width: 6px;
+    width: 4px;
     top: 0px;
     bottom: 0px;
     z-index: 100;
     transform: translateX(-50%);
+    transition: background-color 0.15s;
     &:hover {
-      background-color: var(--color-primary-bg);
+      background-color: var(--color-primary);
+      opacity: 0.3;
       cursor: col-resize;
     }
   }

@@ -1,21 +1,11 @@
 @import '../../styles/var.less';
 
 .tab-focus() {
-  background-color: var(--color-bg-subtle);
-  // 添加内阴影
-  box-shadow: inset 0px -1px 0px var(--color-primary);
+  background-color: var(--color-bg-base);
+  border-bottom: 2px solid var(--color-primary);
 
   .icon {
     opacity: 1;
-  }
-}
-
-.tab-focus-line() {
-  color: var(--color-primary);
-  background-color: var(--color-bg-subtle);
-
-  .icon {
-    display: flex;
   }
 }
 
@@ -28,9 +18,9 @@
   display: flex;
   overflow-x: hidden;
   position: relative;
-  height: 32px;
+  height: 34px;
   flex-shrink: 0;
-  background-color: var(--color-bg-base);
+  background-color: var(--color-bg-subtle);
   border-bottom: 1px solid var(--color-border);
   &:hover {
     overflow-x: scroll;
@@ -68,12 +58,15 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding-left: 10px;
-  line-height: 32px;
-  height: 32px;
+  padding: 0 12px;
+  line-height: 34px;
+  height: 34px;
   cursor: pointer;
   user-select: none;
-  border-right: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  transition: color 0.15s, background-color 0.15s;
+  border-right: 1px solid var(--color-border-secondary);
 
   &:last-child {
     border-right: 0;
@@ -96,27 +89,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
-    margin: 0px 4px;
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
     border-radius: 4px;
     cursor: pointer;
-    color: var(--color-text-secondary);
+    color: var(--color-text-tertiary);
     opacity: 0;
+    transition: opacity 0.15s;
 
     i {
-      font-size: 12px;
+      font-size: 11px;
     }
 
     &:hover {
-      color: var(--color-primary);
+      color: var(--color-text);
       background-color: var(--color-hover-bg);
     }
   }
 
   &:hover {
-    // .tab-focus();
-    color: var(--color-primary);
+    color: var(--color-text);
+    background-color: rgba(0, 0, 0, 0.02);
 
     .icon {
       opacity: 1;
@@ -126,16 +120,16 @@
 
 .activeTab {
   .tab-focus();
+  color: var(--color-text);
+  font-weight: 500;
 }
 
 .rightBox {
-  // flex: 1;
   position: sticky;
   right: 0;
   top: 0;
   bottom: 0;
-  background-color: var(--color-bg-base);
-  // box-shadow: -1px 0 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-bg-subtle);
   display: flex;
 }
 
@@ -146,13 +140,13 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  border-left: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border-secondary);
+  color: var(--color-text-secondary);
 
   &:hover {
     color: var(--color-primary);
+    background-color: var(--color-hover-bg);
   }
-
-
 }
 
 .addIcon {
@@ -162,10 +156,12 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  border-left: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border-secondary);
+  color: var(--color-text-secondary);
 
   &:hover {
     color: var(--color-primary);
+    background-color: var(--color-hover-bg);
   }
 }
 
@@ -174,6 +170,7 @@
   cursor: not-allowed;
   &:hover {
     color: var(--color-text-disabled);
+    background-color: transparent;
   }
 }
 
