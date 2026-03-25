@@ -1,0 +1,96 @@
+@import '../../../../../styles/var.less';
+
+.workspaceLeft {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-bg-subtle);
+  box-sizing: border-box;
+  min-width: 200px;
+}
+
+.tableListWrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.saveListSection {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.saveListHeader {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 32px;
+  cursor: pointer;
+  user-select: none;
+  &:hover {
+    background-color: var(--color-hover-bg);
+    color: var(--color-primary);
+  }
+  .saveListHeaderIcon {
+    font-size: 14px;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .saveListHeaderText {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .saveListArrow {
+    font-size: 12px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    transform: rotate(0deg);
+    &.saveListArrowOpen {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.saveListBody {
+  height: 220px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.noConnectionList {
+  height: 100%;
+  margin-top: 30vh;
+  text-align: center;
+  font-size: 14px;
+  .noConnectionListIcon {
+    font-size: 60px;
+    color: var(--color-primary);
+  }
+  .noConnectionListTips {
+    margin: 10px 0px;
+  }
+  .create {
+    color: var(--color-primary);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-right: 4px;
+    &:hover {
+      color: var(--color-primary-hover);
+    }
+  }
+}
+
+.createButtonBox {
+  padding: 10px 0px 10px;
+}
+
+.divider {
+  margin: 0px;
+}

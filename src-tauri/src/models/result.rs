@@ -1,0 +1,74 @@
+use serde::{Deserialize, Serialize};
+
+/// SQL 执行结果
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecuteResult {
+    pub sql: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub original_sql: Option<String>,
+    pub description: String,
+    pub message: String,
+    pub success: bool,
+    pub header_list: Vec<TableHeader>,
+    pub data_list: Vec<Vec<Option<String>>>,
+    pub duration: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fuzzy_total: Option<String>,
+    pub has_next_page: bool,
+    pub sql_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub update_count: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub can_edit: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub table_name: Option<String>,
+}
+
+/// 表头信息
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TableHeader {
+    pub name: String,
+    pub data_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auto_increment: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column_size: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub decimal_digits: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nullable: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub primary_key: Option<bool>,
+}
+
+/// SQL 执行请求
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecuteSqlParams {
+    pub sql: Option<String>,
+    pub console_id: Option<i64>,
+    pub data_source_id: Option<i64>,
+    pub database_name: Option<String>,
+    pub schema_name: Option<String>,
+    pub table_name: Option<String>,
+    pub page_no: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+/// DDL 执行结果
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DdlExecuteResult {
+    pub success: bool,
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub original_sql: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sql: Option<String>,
+}
