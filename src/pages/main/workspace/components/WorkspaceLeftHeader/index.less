@@ -1,69 +1,162 @@
 @import '../../../../../styles/var.less';
 
-.splitViewLeft {
+.connectionRow {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 2px 4px;
+  background-color: var(--color-primary-hover);
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
 }
 
-.selectConnection {
-  padding: 6px;
+.expandArrow {
+  flex-shrink: 0;
+  width: 18px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+
+  .arrowIcon {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.connInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.dbTypeIcon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  font-size: 14px;
+}
+
+.connName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dbCount {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-secondary);
+  }
+}
+
+// Connection switch context menu
+.connDropdown {
+  min-width: 180px;
+}
+
+.connMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.envDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.connMenuIcon {
+  color: var(--color-primary);
+}
+
+.connMenuName {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// Database filter panel
+.filterPanel {
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  width: 280px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.filterSearchBox {
+  padding: 8px 8px 4px;
+  flex-shrink: 0;
+}
+
+.filterHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-border-secondary);
+  flex-shrink: 0;
+}
+
+.clearBtn {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
   cursor: pointer;
-  box-sizing: border-box;
-  height: 32px;
-  .menuLabel {
-    flex: 1;
-    width: 0px;
-  }
-  .dropDownArrow {
-    transform: rotate(90deg);
-    color: var(--color-text-secondary);
-  }
+
   &:hover {
-    background: var(--color-hover-bg);
-  }
-}
-
-.dropdownOverlay {
-  max-width: 500px;
-  :global {
-    .ant-dropdown-menu-item {
-      padding: 4px 6px !important;
-    }
-  }
-}
-
-.menuLabel {
-  display: flex;
-  align-items: center;
-  .menuLabelIconBox {
-    width: 22px;
-    display: flex;
-    align-items: center;
-  }
-  .menuLabelIcon {
     color: var(--color-primary);
   }
-  .menuLabelTag {
-    margin-right: 10px;
-  }
-  .menuLabelTitle {
-    flex: 1;
-    width: 0px;
-    .f-single-line();
-  }
-  .envTag {
-    flex-shrink: 0;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--color-primary);
-    margin-right: 8px;
-  }
 }
 
-.databaseTypeIcon {
-  margin-right: 10px;
-  font-weight: 400;
-  color: var(--color-primary);
+.filterList {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.filterItem {
+  padding: 5px 12px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+  }
+
+  :global {
+    .ant-checkbox-wrapper {
+      width: 100%;
+    }
+  }
 }

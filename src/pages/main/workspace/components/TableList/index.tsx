@@ -1,11 +1,8 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './index.less';
 import classnames from 'classnames';
 
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
-
-// ----- components -----
-import OperationLine from '../OperationLine';
 
 import Tree from '@/blocks/Tree';
 import { treeConfig } from '@/blocks/Tree/treeConfig';
@@ -14,13 +11,15 @@ import { TreeNodeType } from '@/constants';
 
 interface IProps {
   className?: string;
+  selectedDbNames?: string[] | null;
+  onDbNamesLoaded?: (names: string[]) => void;
+  searchValue?: string;
+  onRegisterRefresh?: (fn: (refresh?: boolean) => void) => void;
 }
 
 export default memo<IProps>((props) => {
-  const { className } = props;
+  const { className, selectedDbNames, onDbNamesLoaded, searchValue = '', onRegisterRefresh } = props;
   const [treeData, setTreeData] = useState<ITreeNode[] | null>(null);
-
-  const [searchValue, setSearchValue] = useState<string>('');
 
   const currentConnectionDetails = useWorkspaceStore((state) => state.currentConnectionDetails);
 
@@ -35,7 +34,7 @@ export default memo<IProps>((props) => {
       .getChildren?.({
         dataSourceId: currentConnectionDetails.id,
         dataSourceName: currentConnectionDetails.alias,
-        refresh: refresh,
+        refresh,
         extraParams: {
           dataSourceId: currentConnectionDetails.id,
           dataSourceName: currentConnectionDetails.alias,
@@ -44,6 +43,9 @@ export default memo<IProps>((props) => {
       })
       .then((res) => {
         setTreeData(res);
+        if (onDbNamesLoaded) {
+          onDbNamesLoaded((res as ITreeNode[]).map((n) => n.name));
+        }
       })
       .catch(() => {
         setTreeData([]);
@@ -51,13 +53,23 @@ export default memo<IProps>((props) => {
   };
 
   useEffect(() => {
+    if (onRegisterRefresh) {
+      onRegisterRefresh(getTreeData);
+    }
+  }, [currentConnectionDetails]);
+
+  useEffect(() => {
     getTreeData();
   }, [currentConnectionDetails]);
 
+  const filteredTreeData = useMemo(() => {
+    if (!treeData || !selectedDbNames) return treeData;
+    return treeData.filter((node) => selectedDbNames.includes(node.name));
+  }, [treeData, selectedDbNames]);
+
   return (
     <div className={classnames(styles.treeContainer, className)}>
-      <OperationLine getTreeData={getTreeData} searchValue={searchValue} setSearchValue={setSearchValue} />
-      <Tree className={styles.treeBox} searchValue={searchValue} treeData={treeData} />
+      <Tree className={styles.treeBox} searchValue={searchValue} treeData={filteredTreeData} />
     </div>
   );
 });

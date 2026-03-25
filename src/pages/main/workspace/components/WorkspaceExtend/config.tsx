@@ -38,10 +38,4 @@ export const extendConfig: IToolbar[] = [
     icon: '\ue8ad',
     components: globalComponents.executiveLog,
   },
-  {
-    code: 'saveList',
-    title: i18n('workspace.title.savedConsole'),
-    icon: '\ue619',
-    components: globalComponents.saveList,
-  },
 ];

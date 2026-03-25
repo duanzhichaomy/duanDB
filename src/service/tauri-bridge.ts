@@ -73,6 +73,23 @@ const API_COMMAND_MAP: Record<string, string> = {
 
   // 用户信息（本地模式返回默认用户）
   'GET:/api/oauth/user_a': '_local_user',
+
+  // AI 配置（本地模式返回空配置）
+  'GET:/api/config/system_config/ai': '_ai_config_get',
+  'POST:/api/config/system_config/ai': '_noop',
+
+  // 系统配置
+  'GET:/api/config/system_config/:code': '_noop',
+  'POST:/api/config/system_config': '_noop',
+
+  // AI 白名单检测
+  'GET:/api/ai/embedding/white/check': '_noop',
+
+  // 版本更新（本地模式无需检测）
+  'GET:/api/system/get_latest_version': '_noop',
+  'GET:/api/system/is_update_success': '_noop',
+  'POST:/api/system/update_desktop_version': '_noop',
+  'POST:/api/system/set_update_type': '_noop',
 };
 
 /**
@@ -145,6 +162,12 @@ export async function tauriInvoke<R>(
       nickName: 'Local User',
       roleCode: 'ADMIN',
       token: '',
+    } as any;
+  }
+
+  if (command === '_ai_config_get') {
+    return {
+      aiSqlSource: 'OPENAI',
     } as any;
   }
 

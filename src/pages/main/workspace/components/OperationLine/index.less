@@ -1,18 +1,114 @@
-.operationLine{
+@import '../../../../../styles/var.less';
+
+.operationLine {
   flex-shrink: 0;
-  border-top: 1px solid var(--color-border-secondary);
-  height: 30px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0px 4px;
-  margin: 0px -2px;
-  .operationLineLeft{
-    display: flex;
-    align-items: center;
-    >div{
-      margin: 0px 2px;
-    }
+  padding: 0 8px;
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.leftActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.actionBtn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text);
+  }
+}
+
+// Search area (right side)
+.searchArea {
+  display: flex;
+  align-items: center;
+}
+
+.searchTrigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--color-text-tertiary);
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-secondary);
+  }
+}
+
+.searchTriggerIcon {
+  color: var(--color-text-tertiary);
+}
+
+.searchTriggerText {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
+.searchShortcut {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-left: 8px;
+  opacity: 0.7;
+}
+
+.searchInput {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-bg-hover);
+  border-radius: 4px;
+  padding: 3px 6px;
+  min-width: 140px;
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.searchNativeInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--color-text);
+  min-width: 0;
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+}
+
+.searchClear {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 1px 3px;
+  border-radius: 2px;
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-secondary);
   }
 }
 
@@ -26,10 +122,4 @@
 
 .dropdownItemIcon {
   color: var(--color-primary);
-}
-
-.searchBox{
-  flex-shrink: 0;
-  padding: 4px;
-  border-top: 1px solid var(--color-border-secondary);
 }

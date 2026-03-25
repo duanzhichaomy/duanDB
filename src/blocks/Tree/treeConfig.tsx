@@ -18,71 +18,71 @@ export const switchIcon: Partial<{ [key in TreeNodeType]: { icon: string; unfold
     icon: '\ue63e',
   },
   [TreeNodeType.TABLES]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.COLUMNS]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.COLUMN]: {
-    icon: '\ue611',
+    icon: '\ue63e',
   },
   [TreeNodeType.KEYS]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.KEY]: {
-    icon: '\ue775',
+    icon: '\ue63e',
   },
   [TreeNodeType.INDEXES]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.INDEX]: {
-    icon: '\ue65b',
+    icon: '\ue63e',
   },
   [TreeNodeType.VIEWS]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.VIEW]: {
-    icon: '\ue70c',
+    icon: '\ue63e',
   },
   [TreeNodeType.FUNCTION]: {
-    icon: '\ue76a',
+    icon: '\ue63e',
   },
   [TreeNodeType.PROCEDURE]: {
-    icon: '\ue73c',
+    icon: '\ue63e',
   },
   [TreeNodeType.TRIGGER]: {
-    icon: '\ue64a',
+    icon: '\ue63e',
   },
   [TreeNodeType.VIEWCOLUMNS]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.VIEWCOLUMN]: {
-    icon: '\ue647',
+    icon: '\ue63e',
   },
   [TreeNodeType.FUNCTIONS]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.PROCEDURES]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.TRIGGERS]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.SEQUENCES]: {
-    icon: '\ueabe',
-    unfoldIcon: '\ueabf',
+    icon: '\ueac5',
+    unfoldIcon: '\ueac7',
   },
   [TreeNodeType.SEQUENCE]: {
-    icon: '\ue611',
+    icon: '\ue63e',
   },
 };
 

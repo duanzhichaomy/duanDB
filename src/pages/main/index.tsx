@@ -19,6 +19,8 @@ import { useMainStore, setMainPageActiveTab } from '@/pages/main/store/main';
 import { getConnectionList } from '@/pages/main/store/connection';
 import { useUserStore, setCurUser } from '@/store/user';
 import { setAppTitleBarRightComponent } from '@/store/common/appTitleBarConfig';
+import { useWorkspaceStore } from '@/pages/main/workspace/store';
+import { setShowLeftSaveList } from '@/pages/main/workspace/store/common';
 
 // ----- component -----
 import CustomLayout from '@/components/CustomLayout';
@@ -34,7 +36,7 @@ import { useUpdateEffect } from '@/hooks';
 const initNavConfig: INavItem[] = [
   {
     key: 'workspace',
-    icon: '\ue616',
+    icon: '\ue669',
     iconFontSize: 16,
     isLoad: false,
     component: <Workspace />,
@@ -49,6 +51,7 @@ function MainPage() {
       userInfo: state.curUser,
     };
   });
+  const showLeftSaveList = useWorkspaceStore((state) => state.showLeftSaveList);
   const [navConfig, setNavConfig] = useState<INavItem[]>(initNavConfig);
   const mainPageActiveTab = useMainStore((state) => state.mainPageActiveTab);
   const [activeNavKey, setActiveNavKey] = useState<string>(
@@ -150,15 +153,33 @@ function MainPage() {
               <Tooltip key={item.key} placement="right" title={item.name}>
                 <li
                   className={classnames({
-                    [styles.activeNav]: item.key == activeNavKey,
+                    [styles.activeNav]: item.key == activeNavKey && !showLeftSaveList,
                   })}
-                  onClick={() => switchingNav(item.key)}
+                  onClick={() => {
+                    switchingNav(item.key);
+                    setShowLeftSaveList(false);
+                  }}
                 >
                   <Iconfont size={item.iconFontSize} className={styles.icon} code={item.icon} />
                 </li>
               </Tooltip>
             );
           })}
+          {activeNavKey === 'workspace' && (
+            <Tooltip placement="right" title={i18n('workspace.title.savedConsole')}>
+              <li
+                className={classnames({ [styles.activeNav]: showLeftSaveList })}
+                onClick={() => setShowLeftSaveList(true)}
+              >
+                <svg className={styles.icon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="3" />
+                  <line x1="8" y1="16" x2="8" y2="12" />
+                  <line x1="12" y1="16" x2="12" y2="8" />
+                  <line x1="16" y1="16" x2="16" y2="10" />
+                </svg>
+              </li>
+            </Tooltip>
+          )}
         </ul>
         <div className={styles.footer}>
           {/* <Tooltip placement="right" title="个人中心">

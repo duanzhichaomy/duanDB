@@ -8,12 +8,14 @@ export interface ICommonStore {
     code: string,
     uniqueData: any,
   } | null;
+  showLeftSaveList: boolean;
 }
 
 export const initCommonStore: ICommonStore = {
   currentConnectionDetails: null,
   currentWorkspaceExtend: null,
   currentWorkspaceGlobalExtend: null,
+  showLeftSaveList: false,
 }
 
 export const setCurrentConnectionDetails = (connectionDetails: ICommonStore['currentConnectionDetails']) => {
@@ -26,4 +28,8 @@ export const setCurrentWorkspaceExtend = (workspaceExtend: ICommonStore['current
 
 export const setCurrentWorkspaceGlobalExtend = (workspaceGlobalExtend: ICommonStore['currentWorkspaceGlobalExtend']) => {
   return useWorkspaceStore.setState({ currentWorkspaceGlobalExtend: workspaceGlobalExtend });
+}
+
+export const setShowLeftSaveList = (value: boolean) => {
+  return useWorkspaceStore.setState({ showLeftSaveList: value });
 }

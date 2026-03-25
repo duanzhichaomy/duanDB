@@ -49,7 +49,7 @@ export default memo<IProps>((props) => {
   const { className, slot } = props;
   return (
     <div className={classnames(styles.box, className)}>
-      <div className={styles.letterpress}>Chat2DB</div>
+      <div className={styles.letterpress}>DuanDB</div>
       <div className={styles.shortcuts}>
         {shortcutsList.map((t, i) => {
           return (

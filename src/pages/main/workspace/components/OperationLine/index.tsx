@@ -1,7 +1,7 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import i18n from '@/i18n';
 import styles from './index.less';
-import { Dropdown, Input, Modal, message } from 'antd';
+import { Dropdown, Modal, message } from 'antd';
 
 // ----- constants -----
 import { databaseTypeList } from '@/constants';
@@ -25,6 +25,39 @@ interface IProps {
 const OperationLine = (props: IProps) => {
   const { searchValue, setSearchValue, getTreeData } = props;
   const [newConnType, setNewConnType] = useState<string | null>(null);
+  const [searchActive, setSearchActive] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const activateSearch = () => {
+    setSearchActive(true);
+    setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  const handleSearchBlur = () => {
+    if (!searchValue) {
+      setSearchActive(false);
+    }
+  };
+
+  const handleSearchClear = () => {
+    setSearchValue('');
+    setSearchActive(false);
+  };
+
+  // ⌘F shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        activateSearch();
+      }
+      if (e.key === 'Escape' && searchActive) {
+        handleSearchClear();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [searchActive, searchValue]);
 
   const addMenuItems = [
     {
@@ -68,31 +101,45 @@ const OperationLine = (props: IProps) => {
   return (
     <>
       <div className={styles.operationLine}>
-        <div className={styles.operationLineLeft}>
+        <div className={styles.leftActions}>
           <Dropdown menu={{ items: addMenuItems }} trigger={['click']}>
-            <div>
-              <Iconfont code="&#xeb78;" box boxSize={20} size={15} />
+            <div className={styles.actionBtn}>
+              <Iconfont code="&#xeb78;" size={15} />
             </div>
           </Dropdown>
-          <Iconfont
-            onClick={() => getTreeData(true)}
-            code="&#xe668;"
-            box
-            boxSize={20}
-            size={14}
-          />
+          <div className={styles.actionBtn} onClick={() => getTreeData(true)}>
+            <Iconfont code="&#xe668;" size={14} />
+          </div>
+        </div>
+
+        <div className={styles.searchArea}>
+          {searchActive ? (
+            <div className={styles.searchInput}>
+              <Iconfont code="&#xe888;" size={13} className={styles.searchIcon} />
+              <input
+                ref={searchInputRef}
+                className={styles.searchNativeInput}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onBlur={handleSearchBlur}
+                placeholder="搜索"
+              />
+              {searchValue && (
+                <span className={styles.searchClear} onMouseDown={handleSearchClear}>
+                  ✕
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className={styles.searchTrigger} onClick={activateSearch}>
+              <Iconfont code="&#xe888;" size={13} className={styles.searchTriggerIcon} />
+              <span className={styles.searchTriggerText}>搜索</span>
+              <span className={styles.searchShortcut}>⌘F</span>
+            </div>
+          )}
         </div>
       </div>
-      <div className={styles.searchBox}>
-        <Input
-          size="small"
-          prefix={<Iconfont code="&#xe888;" />}
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          allowClear
-          placeholder={i18n('workspace.tree.search.placeholder')}
-        />
-      </div>
+
       <Modal
         open={!!newConnType}
         footer={null}

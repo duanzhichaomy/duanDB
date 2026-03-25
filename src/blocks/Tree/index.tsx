@@ -324,6 +324,24 @@ const TreeNode = memo((props: TreeNodeIProps) => {
     }
   };
 
+  const folderTypes = new Set([
+    TreeNodeType.TABLES, TreeNodeType.VIEWS, TreeNodeType.FUNCTIONS,
+    TreeNodeType.PROCEDURES, TreeNodeType.TRIGGERS, TreeNodeType.SEQUENCES,
+    TreeNodeType.COLUMNS, TreeNodeType.KEYS, TreeNodeType.INDEXES, TreeNodeType.VIEWCOLUMNS,
+  ]);
+
+  const itemTypes = new Set([
+    TreeNodeType.TABLE, TreeNodeType.VIEW, TreeNodeType.FUNCTION,
+    TreeNodeType.PROCEDURE, TreeNodeType.TRIGGER, TreeNodeType.SEQUENCE,
+    TreeNodeType.COLUMN, TreeNodeType.KEY, TreeNodeType.INDEX, TreeNodeType.VIEWCOLUMN,
+  ]);
+
+  const getIconColorClass = (treeNodeType: TreeNodeType) => {
+    if (folderTypes.has(treeNodeType)) return styles.folderIcon;
+    if (itemTypes.has(treeNodeType)) return styles.itemIcon;
+    return '';
+  };
+
   // 点击节点
   const handelClickTreeNode = () => {
     useCommonStore.setState({
@@ -424,7 +442,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
                 </div>
               )}
               <div className={styles.dblclickArea}>
-                <div className={styles.typeIcon}>
+                <div className={classnames(styles.typeIcon, getIconColorClass(treeNodeData.treeNodeType))}>
                   <Iconfont code={recognizeIcon(treeNodeData.treeNodeType)!} />
                 </div>
                 <div className={styles.contentText}>

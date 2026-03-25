@@ -133,15 +133,11 @@ pub async fn sql_execute_table(
 ) -> Result<ApiResponse<Vec<ExecuteResult>>, String> {
     let table_name = params.table_name.as_deref().unwrap_or("");
     let database = params.database_name.as_deref().unwrap_or("");
-    let page_no = params.page_no.unwrap_or(1);
-    let page_size = params.page_size.unwrap_or(500);
 
     let sql = format!(
-        "SELECT * FROM `{}`.`{}` LIMIT {}, {}",
+        "SELECT * FROM `{}`.`{}`",
         database.replace('`', "``"),
         table_name.replace('`', "``"),
-        (page_no - 1) * page_size,
-        page_size
     );
 
     let new_params = ExecuteSqlParams {

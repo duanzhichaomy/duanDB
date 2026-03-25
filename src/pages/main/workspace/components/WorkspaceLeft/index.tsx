@@ -1,23 +1,33 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useCallback, useRef } from 'react';
 import i18n from '@/i18n';
 import classnames from 'classnames';
 import styles from './index.less';
 import TableList from '../TableList';
 import WorkspaceLeftHeader from '../WorkspaceLeftHeader';
 import SaveList from '../SaveList';
+import OperationLine from '../OperationLine';
 import CreateDatabase from '@/components/CreateDatabase';
 import Iconfont from '@/components/Iconfont';
 import { useConnectionStore } from '@/pages/main/store/connection';
 import { setMainPageActiveTab } from '@/pages/main/store/main';
+import { useWorkspaceStore } from '@/pages/main/workspace/store';
 
 const WorkspaceLeft = memo(() => {
-  const [saveListOpen, setSaveListOpen] = useState(false);
+  const showLeftSaveList = useWorkspaceStore((state) => state.showLeftSaveList);
+  const [isConnectionExpanded, setIsConnectionExpanded] = useState(true);
+  const [allDbNames, setAllDbNames] = useState<string[]>([]);
+  const [selectedDbNames, setSelectedDbNames] = useState<string[] | null>(null);
+  const [searchValue, setSearchValue] = useState('');
+  const refreshTreeRef = useRef<(refresh?: boolean) => void>(() => {});
 
   const { connectionList } = useConnectionStore((state) => {
-    return {
-      connectionList: state.connectionList,
-    };
+    return { connectionList: state.connectionList };
   });
+
+  const handleDbNamesLoaded = useCallback((names: string[]) => {
+    setAllDbNames(names);
+    setSelectedDbNames(null);
+  }, []);
 
   const jumpPage = () => {
     setMainPageActiveTab('connections');
@@ -27,30 +37,34 @@ const WorkspaceLeft = memo(() => {
     <>
       <div className={classnames(styles.workspaceLeft)}>
         {connectionList?.length ? (
-          <>
-            <WorkspaceLeftHeader />
-            <div className={styles.tableListWrapper}>
-              <TableList />
+          showLeftSaveList ? (
+            <div className={styles.saveListPanel}>
+              <SaveList />
             </div>
-            <div className={styles.saveListSection}>
-              <div
-                className={styles.saveListHeader}
-                onClick={() => setSaveListOpen((v) => !v)}
-              >
-                <Iconfont code="&#xe619;" className={styles.saveListHeaderIcon} />
-                <span className={styles.saveListHeaderText}>{i18n('workspace.title.savedConsole')}</span>
-                <Iconfont
-                  code="&#xe88e;"
-                  className={classnames(styles.saveListArrow, { [styles.saveListArrowOpen]: saveListOpen })}
+          ) : (
+            <>
+              <OperationLine
+                getTreeData={(refresh) => refreshTreeRef.current(refresh)}
+                searchValue={searchValue}
+                setSearchValue={setSearchValue}
+              />
+              <WorkspaceLeftHeader
+                allDbNames={allDbNames}
+                selectedDbNames={selectedDbNames}
+                onSelectionChange={setSelectedDbNames}
+                isExpanded={isConnectionExpanded}
+                onToggleExpand={() => setIsConnectionExpanded((v) => !v)}
+              />
+              {isConnectionExpanded && (
+                <TableList
+                  selectedDbNames={selectedDbNames}
+                  onDbNamesLoaded={handleDbNamesLoaded}
+                  searchValue={searchValue}
+                  onRegisterRefresh={(fn) => { refreshTreeRef.current = fn; }}
                 />
-              </div>
-              {saveListOpen && (
-                <div className={styles.saveListBody}>
-                  <SaveList />
-                </div>
               )}
-            </div>
-          </>
+            </>
+          )
         ) : (
           <div className={styles.noConnectionList}>
             <Iconfont className={styles.noConnectionListIcon} code="&#xe638;" />
