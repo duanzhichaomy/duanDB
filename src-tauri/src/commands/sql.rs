@@ -191,6 +191,120 @@ pub async fn sql_execute_update(
     sql_execute_ddl(state, params).await
 }
 
+/// 获取更新数据的 SQL（预览待提交的更改）
+#[tauri::command]
+pub async fn sql_get_update_sql(
+    params: GetUpdateSqlParams,
+) -> Result<ApiResponse<String>, String> {
+    let table_name = params.table_name.as_deref().unwrap_or("");
+    let database = params.database_name.as_deref().unwrap_or("");
+    let headers = &params.header_list;
+
+    // 跳过第一列（CHAT2DB_ROW_NUMBER 序号列）
+    let col_headers: Vec<&TableHeader> = headers.iter()
+        .filter(|h| h.data_type != "CHAT2DB_ROW_NUMBER")
+        .collect();
+
+    let mut sql_parts: Vec<String> = Vec::new();
+
+    for op in &params.operations {
+        match op.op_type.as_str() {
+            "UPDATE" => {
+                if let (Some(data_list), Some(old_data_list)) = (&op.data_list, &op.old_data_list) {
+                    let mut set_parts = Vec::new();
+                    let mut where_parts = Vec::new();
+
+                    for (i, header) in col_headers.iter().enumerate() {
+                        // data_list 包含序号列，所以索引偏移1
+                        let data_idx = i + 1;
+                        let new_val = data_list.get(data_idx).and_then(|v| v.as_ref());
+                        let old_val = old_data_list.get(data_idx).and_then(|v| v.as_ref());
+
+                        if new_val != old_val {
+                            let col = escape_identifier(&header.name);
+                            set_parts.push(format!("{} = {}", col, escape_value(new_val)));
+                        }
+
+                        let col = escape_identifier(&header.name);
+                        where_parts.push(format!("{} = {}", col, escape_value(old_val)));
+                    }
+
+                    if !set_parts.is_empty() {
+                        sql_parts.push(format!(
+                            "UPDATE `{}`.`{}` SET {} WHERE {} LIMIT 1;",
+                            database.replace('`', "``"),
+                            table_name.replace('`', "``"),
+                            set_parts.join(", "),
+                            where_parts.join(" AND "),
+                        ));
+                    }
+                }
+            }
+            "CREATE" => {
+                if let Some(data_list) = &op.data_list {
+                    let cols: Vec<String> = col_headers.iter().map(|h| escape_identifier(&h.name)).collect();
+                    let vals: Vec<String> = (1..=col_headers.len())
+                        .map(|i| escape_value(data_list.get(i).and_then(|v| v.as_ref())))
+                        .collect();
+                    sql_parts.push(format!(
+                        "INSERT INTO `{}`.`{}` ({}) VALUES ({});",
+                        database.replace('`', "``"),
+                        table_name.replace('`', "``"),
+                        cols.join(", "),
+                        vals.join(", "),
+                    ));
+                }
+            }
+            "DELETE" => {
+                if let Some(old_data_list) = &op.old_data_list {
+                    let where_parts: Vec<String> = col_headers.iter().enumerate().map(|(i, header)| {
+                        let data_idx = i + 1;
+                        let val = old_data_list.get(data_idx).and_then(|v| v.as_ref());
+                        format!("{} = {}", escape_identifier(&header.name), escape_value(val))
+                    }).collect();
+                    sql_parts.push(format!(
+                        "DELETE FROM `{}`.`{}` WHERE {} LIMIT 1;",
+                        database.replace('`', "``"),
+                        table_name.replace('`', "``"),
+                        where_parts.join(" AND "),
+                    ));
+                }
+            }
+            "UPDATE_COPY" => {
+                if let Some(data_list) = &op.data_list {
+                    let cols: Vec<String> = col_headers.iter().map(|h| escape_identifier(&h.name)).collect();
+                    let vals: Vec<String> = (1..=col_headers.len())
+                        .map(|i| escape_value(data_list.get(i).and_then(|v| v.as_ref())))
+                        .collect();
+                    sql_parts.push(format!(
+                        "INSERT INTO `{}`.`{}` ({}) VALUES ({});",
+                        database.replace('`', "``"),
+                        table_name.replace('`', "``"),
+                        cols.join(", "),
+                        vals.join(", "),
+                    ));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(ApiResponse::ok(sql_parts.join("\n")))
+}
+
+/// 转义标识符
+fn escape_identifier(name: &str) -> String {
+    format!("`{}`", name.replace('`', "``"))
+}
+
+/// 转义值
+fn escape_value(val: Option<&String>) -> String {
+    match val {
+        None => "NULL".to_string(),
+        Some(v) => format!("'{}'", v.replace('\'', "\\'")),
+    }
+}
+
 /// 获取总行数
 #[tauri::command]
 pub async fn sql_count(

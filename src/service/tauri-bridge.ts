@@ -26,6 +26,7 @@ const API_COMMAND_MAP: Record<string, string> = {
   'POST:/api/rdb/dml/execute_ddl': 'sql_execute_ddl',
   'POST:/api/rdb/dml/execute_update': 'sql_execute_update',
   'POST:/api/rdb/dml/count': 'sql_count',
+  'POST:/api/rdb/dml/get_update_sql': 'sql_get_update_sql',
   'GET:/api/sql/format': 'sql_format',
 
   // 表操作
@@ -234,6 +235,7 @@ export async function tauriInvoke<R>(
       };
       break;
     // SQL 执行相关
+    case 'sql_get_update_sql':
     case 'sql_execute':
     case 'sql_execute_table':
     case 'sql_execute_ddl':

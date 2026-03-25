@@ -66,6 +66,7 @@ pub fn run() {
             commands::sql::sql_execute_update,
             commands::sql::sql_count,
             commands::sql::sql_format,
+            commands::sql::sql_get_update_sql,
             // 表操作
             commands::table::table_list,
             commands::table::table_name_list,

@@ -197,6 +197,31 @@ export default function TableBox(props: ITableProps) {
     if (queryResultData.dataList?.length) {
       setOldDataList(queryResultData.dataList);
     }
+
+    // 初次加载时，根据内容自动计算列宽
+    if (queryResultData.headerList?.length && queryResultData.dataList?.length) {
+      const MIN_COL_WIDTH = 60;
+      const MAX_COL_WIDTH = 400;
+      const CHAR_WIDTH = 8; // 每个字符大约的像素宽度
+      const PADDING = 10; // 单元格左右 padding + 排序图标等额外空间
+      const sampleRows = queryResultData.dataList.slice(0, 50); // 取前50行采样
+
+      const newSizes = queryResultData.headerList.map((header, colIndex) => {
+        if (colIndex === 0) return 50; // No. 列固定宽度
+        // 列名宽度
+        let maxLen = (header.name || '').length;
+        // 采样数据中最长内容的长度
+        for (const row of sampleRows) {
+          const cellValue = row[colIndex];
+          if (cellValue != null) {
+            maxLen = Math.max(maxLen, String(cellValue).length);
+          }
+        }
+        const width = Math.min(Math.max(maxLen * CHAR_WIDTH + PADDING, MIN_COL_WIDTH), MAX_COL_WIDTH);
+        return width;
+      });
+      setColumnResize(newSizes);
+    }
   }, [queryResultData.dataList]);
 
   // 导出sql的菜单项
@@ -996,7 +1021,7 @@ export default function TableBox(props: ITableProps) {
                     }}
                     className={classnames(styles.createDataBar, styles.editTableDataBarItem)}
                   >
-                    <Iconfont code="&#xe61b;" />
+                    <Iconfont code="&#xe631;" />
                   </div>
                 </Popover>
                 {/* 删除行 */}
@@ -1075,7 +1100,7 @@ export default function TableBox(props: ITableProps) {
                       components={{ EmptyContent: () => <h2>{i18n('common.text.noData')}</h2> }}
                       style={{ width: tableWidth, overflow: 'visible' }}
                       isStickyHead
-                      stickyTop={31}
+                      stickyTop={39}
                       {...pipeline.getProps()}
                     />
                   </>

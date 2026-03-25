@@ -61,6 +61,31 @@ pub struct ExecuteSqlParams {
     pub page_size: Option<i64>,
 }
 
+/// 获取更新 SQL 的请求参数
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetUpdateSqlParams {
+    pub database_name: Option<String>,
+    pub data_source_id: Option<i64>,
+    pub schema_name: Option<String>,
+    #[serde(rename = "type")]
+    pub db_type: Option<String>,
+    pub table_name: Option<String>,
+    pub header_list: Vec<TableHeader>,
+    pub operations: Vec<UpdateOperation>,
+}
+
+/// 单个更新操作
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateOperation {
+    #[serde(rename = "type")]
+    pub op_type: String,
+    pub row_id: String,
+    pub data_list: Option<Vec<Option<String>>>,
+    pub old_data_list: Option<Vec<Option<String>>>,
+}
+
 /// DDL 执行结果
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
