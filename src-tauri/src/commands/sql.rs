@@ -231,7 +231,7 @@ pub async fn sql_get_update_sql(
                         // 有主键时只用主键列作为WHERE条件，无主键时用所有列
                         if !has_primary_key || header.primary_key == Some(true) {
                             let col = escape_identifier(&header.name);
-                            where_parts.push(format!("{} = {}", col, escape_value(old_val)));
+                            where_parts.push(escape_where_condition(&col, old_val));
                         }
                     }
 
@@ -263,11 +263,15 @@ pub async fn sql_get_update_sql(
             }
             "DELETE" => {
                 if let Some(old_data_list) = &op.old_data_list {
-                    let where_parts: Vec<String> = col_headers.iter().enumerate().map(|(i, header)| {
-                        let data_idx = i + 1;
-                        let val = old_data_list.get(data_idx).and_then(|v| v.as_ref());
-                        format!("{} = {}", escape_identifier(&header.name), escape_value(val))
-                    }).collect();
+                    let has_primary_key = col_headers.iter().any(|h| h.primary_key == Some(true));
+                    let where_parts: Vec<String> = col_headers.iter().enumerate()
+                        .filter(|(_, header)| !has_primary_key || header.primary_key == Some(true))
+                        .map(|(i, header)| {
+                            let data_idx = i + 1;
+                            let val = old_data_list.get(data_idx).and_then(|v| v.as_ref());
+                            let col = escape_identifier(&header.name);
+                            escape_where_condition(&col, val)
+                        }).collect();
                     sql_parts.push(format!(
                         "DELETE FROM `{}`.`{}` WHERE {} LIMIT 1;",
                         database.replace('`', "``"),
@@ -308,6 +312,14 @@ fn escape_value(val: Option<&String>) -> String {
     match val {
         None => "NULL".to_string(),
         Some(v) => format!("'{}'", v.replace('\'', "\\'")),
+    }
+}
+
+/// 生成 WHERE 条件片段（NULL 用 IS NULL 而非 = NULL）
+fn escape_where_condition(col: &str, val: Option<&String>) -> String {
+    match val {
+        None => format!("{} IS NULL", col),
+        Some(v) => format!("{} = '{}'", col, v.replace('\'', "\\'")),
     }
 }
 
@@ -432,6 +444,25 @@ async fn execute_query(
 
     // 尝试获取表名（用于 canEdit）
     let table_name = extract_table_name(sql);
+
+    // 查询主键列并填充到 header 中
+    if let Some(ref tbl) = table_name {
+        if let Ok(pk_rows) = sqlx::raw_sql(&format!(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}' AND COLUMN_KEY = 'PRI'",
+            tbl.replace('\'', "''")
+        ))
+        .fetch_all(pool)
+        .await
+        {
+            let pk_cols: Vec<String> = pk_rows
+                .iter()
+                .filter_map(|r| r.try_get::<String, _>(0).ok())
+                .collect();
+            for header in headers.iter_mut() {
+                header.primary_key = Some(pk_cols.contains(&header.name));
+            }
+        }
+    }
 
     let row_count = data_list.len();
 

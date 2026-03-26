@@ -23,6 +23,7 @@ export const initConsoleStore = {
 };
 
 export const getOpenConsoleList = () => {
+  // 启动时关闭上次残留的tab，显示欢迎页
   historyService
     .getConsoleList({
       tabOpened: 'y',
@@ -30,7 +31,11 @@ export const getOpenConsoleList = () => {
       pageSize: 20,
     })
     .then((res) => {
-      useWorkspaceStore.setState({ consoleList: res?.data });
+      // 将之前打开的tab标记为关闭
+      res?.data?.forEach((item: IConsole) => {
+        historyService.updateSavedConsole({ id: item.id, tabOpened: 'n' });
+      });
+      useWorkspaceStore.setState({ consoleList: [] });
     });
 };
 

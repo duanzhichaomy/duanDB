@@ -85,7 +85,7 @@ const SupportBaseTable: any = styled(BaseTable)`
     --lock-shadow: rgb(37 37 37 / 0.5) 0 0 6px 2px;
     --border-color: var(--color-border-secondary);
     --cell-padding: 0px;
-    --row-height: 32px;
+    --row-height: 28px;
     --lock-shadow: 0px 1px 2px 0px var(--color-border);
   }
 `;
@@ -567,12 +567,13 @@ export default function TableBox(props: ITableProps) {
             setUpdateData([]);
           });
         } else {
+          setTableLoading(false);
           setUpdateDataSql(res?.sql);
           setViewUpdateDataSqlModal(true);
           setInitError(res.message);
         }
       })
-      .finally(() => {
+      .catch(() => {
         setTableLoading(false);
       });
   };

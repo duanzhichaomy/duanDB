@@ -164,7 +164,7 @@ const useCurdTableData = (props: IProps) => {
 
     // 新增一条数据，tableBox需要滚动到最下方
     setTimeout(() => {
-      tableBoxRef.current?.scrollTo(0, tableBoxRef.current?.scrollHeight + 31);
+      tableBoxRef.current?.scrollTo(0, tableBoxRef.current?.scrollHeight + 28);
     }, 0);
   };
 
