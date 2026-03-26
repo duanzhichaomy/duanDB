@@ -214,6 +214,9 @@ pub async fn sql_get_update_sql(
                     let mut set_parts = Vec::new();
                     let mut where_parts = Vec::new();
 
+                    // 检查是否存在主键列
+                    let has_primary_key = col_headers.iter().any(|h| h.primary_key == Some(true));
+
                     for (i, header) in col_headers.iter().enumerate() {
                         // data_list 包含序号列，所以索引偏移1
                         let data_idx = i + 1;
@@ -225,8 +228,11 @@ pub async fn sql_get_update_sql(
                             set_parts.push(format!("{} = {}", col, escape_value(new_val)));
                         }
 
-                        let col = escape_identifier(&header.name);
-                        where_parts.push(format!("{} = {}", col, escape_value(old_val)));
+                        // 有主键时只用主键列作为WHERE条件，无主键时用所有列
+                        if !has_primary_key || header.primary_key == Some(true) {
+                            let col = escape_identifier(&header.name);
+                            where_parts.push(format!("{} = {}", col, escape_value(old_val)));
+                        }
                     }
 
                     if !set_parts.is_empty() {

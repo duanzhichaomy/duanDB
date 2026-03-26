@@ -11,7 +11,7 @@
 /dist
 .swc
 ./yarn-error.log
-
+CLAUDE.md
 
 /release
 /static
