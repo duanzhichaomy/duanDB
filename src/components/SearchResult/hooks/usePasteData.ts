@@ -16,7 +16,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
   useEffect(() => {
     const handleClick = (event) => {
       const targetElement = event.target as Element;
-      if (targetElement.closest('[data-chat2db-edit-table-data-can-paste]')) {
+      if (targetElement.closest('[data-duandb-edit-table-data-can-paste]')) {
         setCanPaste(true);
       } else {
         setCanPaste(false);

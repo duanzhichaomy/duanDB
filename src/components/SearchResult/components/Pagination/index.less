@@ -4,6 +4,7 @@
   justify-content: start;
   align-items: center;
   height: 30px;
+  gap: 2px;
 }
 
 .item-icon {
@@ -13,12 +14,12 @@
   justify-content: center;
   align-items: center;
 
-  font-size: 10px;
+  font-size: 14px;
   background-color: transparent;
 
   border-radius: 4px;
   outline: none;
-  transition: border 0.2s;
+  transition: background-color 0.2s;
 
   color: var(--color-text);
   cursor: pointer;
@@ -36,6 +37,7 @@
   &:hover {
     cursor: not-allowed;
     color: var(--color-text-disabled);
+    background-color: transparent;
   }
 }
 
@@ -45,8 +47,6 @@
     .ant-input-number-input {
       text-align: center;
       padding: 0px;
-      // display: flex;
-      // justify-content: center;
     }
   }
 }

@@ -3,14 +3,10 @@ import { getLang } from '@/utils/localStorage';
 import { LangType } from '@/constants';
 import zhCN from './zh-cn';
 import enUS from './en-us';
-import trTR from './tr-tr';
-import jaJp from './ja-jp';
 
 const locale = {
   'en-us': enUS,
   'zh-cn': zhCN,
-  'tr-tr': trTR,
-  'ja-jp': jaJp,
 };
 
 export const currentLang: LangType = getLang() || LangType.EN_US;
@@ -18,10 +14,6 @@ export const currentLang: LangType = getLang() || LangType.EN_US;
 export const isEn = currentLang === LangType.EN_US;
 
 export const isZH = currentLang === LangType.ZH_CN;
-
-export const isTR = currentLang === LangType.TR_TR;
-
-export const isJA = currentLang === LangType.JA_JP;
 
 const langSet: Record<string, string> = locale[currentLang];
 

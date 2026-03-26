@@ -32,7 +32,7 @@ export const useSaveEditorData = (props: IProps) => {
 
     historyServer.updateSavedConsole(p).then(() => {
       getSavedConsoleList();
-      indexedDB.deleteData('chat2db', 'workspaceConsoleDDL', boundInfo.consoleId!);
+      indexedDB.deleteData('duandb', 'workspaceConsoleDDL', boundInfo.consoleId!);
       lastSyncConsole.current = value;
       setSaveStatus(ConsoleStatus.RELEASE);
       if (noPrompting) {
@@ -56,10 +56,10 @@ export const useSaveEditorData = (props: IProps) => {
         saveConsole(curValue, true);
       } else {
         indexedDB
-          .updateData('chat2db', 'workspaceConsoleDDL', {
+          .updateData('duandb', 'workspaceConsoleDDL', {
             consoleId: boundInfo.consoleId!,
             ddl: curValue,
-            userId: getCookie('CHAT2DB.USER_ID'),
+            userId: getCookie('DUANDB.USER_ID'),
           })
           .then(() => {
             lastSyncConsole.current = curValue;
@@ -86,10 +86,10 @@ export const useSaveEditorData = (props: IProps) => {
         saveConsole(curValue, true);
       } else {
         indexedDB
-          .updateData('chat2db', 'workspaceConsoleDDL', {
+          .updateData('duandb', 'workspaceConsoleDDL', {
             consoleId: boundInfo.consoleId!,
             ddl: curValue,
-            userId: getCookie('CHAT2DB.USER_ID'),
+            userId: getCookie('DUANDB.USER_ID'),
           })
           .then(() => {
             lastSyncConsole.current = curValue;
@@ -110,9 +110,9 @@ export const useSaveEditorData = (props: IProps) => {
       editorRef?.current?.setValue(defaultValue, 'cover');
     } else {
       indexedDB
-        .getDataByCursor('chat2db', 'workspaceConsoleDDL', {
+        .getDataByCursor('duandb', 'workspaceConsoleDDL', {
           consoleId: boundInfo.consoleId!,
-          userId: getCookie('CHAT2DB.USER_ID'),
+          userId: getCookie('DUANDB.USER_ID'),
         })
         .then((res: any) => {
           // oldValue是为了处理函数视图等，他们是带着值来的，不需要去数据库取值

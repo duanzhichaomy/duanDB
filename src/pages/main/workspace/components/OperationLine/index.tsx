@@ -115,7 +115,7 @@ const OperationLine = (props: IProps) => {
         <div className={styles.searchArea}>
           {searchActive ? (
             <div className={styles.searchInput}>
-              <Iconfont code="&#xe888;" size={13} className={styles.searchIcon} />
+              <Iconfont code="&#xe600;" size={13} className={styles.searchIcon} />
               <input
                 ref={searchInputRef}
                 className={styles.searchNativeInput}
@@ -132,7 +132,7 @@ const OperationLine = (props: IProps) => {
             </div>
           ) : (
             <div className={styles.searchTrigger} onClick={activateSearch}>
-              <Iconfont code="&#xe888;" size={13} className={styles.searchTriggerIcon} />
+              <Iconfont code="&#xe600;" size={13} className={styles.searchTriggerIcon} />
               <span className={styles.searchTriggerText}>搜索</span>
               <span className={styles.searchShortcut}>⌘F</span>
             </div>

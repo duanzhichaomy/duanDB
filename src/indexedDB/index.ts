@@ -28,7 +28,7 @@ export const createDB = (dbName: string, version: number) => {
 
 type TableType = 'workspaceConsoleDDL';
 
-type DBType = 'chat2db';
+type DBType = 'duandb';
 
 // 添加数据
 export const addData = (db: DBType, tableName: TableType, data: any) => {

@@ -8,6 +8,7 @@ use state::AppState;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::Manager;
+use tauri::menu::{MenuBuilder, SubmenuBuilder};
 use tokio::sync::RwLock;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -21,6 +22,42 @@ pub fn run() {
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
+            }
+
+            // 自定义菜单，移除 Cmd+W 的默认关闭窗口行为
+            #[cfg(target_os = "macos")]
+            {
+                let app_submenu = SubmenuBuilder::new(app, "DuanDB")
+                    .about(None)
+                    .separator()
+                    .hide()
+                    .hide_others()
+                    .show_all()
+                    .separator()
+                    .quit()
+                    .build()?;
+
+                let edit_submenu = SubmenuBuilder::new(app, "Edit")
+                    .undo()
+                    .redo()
+                    .separator()
+                    .cut()
+                    .copy()
+                    .paste()
+                    .select_all()
+                    .build()?;
+
+                let window_submenu = SubmenuBuilder::new(app, "Window")
+                    .minimize()
+                    .build()?;
+
+                let menu = MenuBuilder::new(app)
+                    .item(&app_submenu)
+                    .item(&edit_submenu)
+                    .item(&window_submenu)
+                    .build()?;
+
+                app.set_menu(menu)?;
             }
 
             // 初始化本地 SQLite

@@ -6,6 +6,7 @@ import i18n from '@/i18n';
 import BaseSetting from './BaseSetting';
 import AISetting from './AiSetting';
 import ProxySetting from './ProxySetting';
+import ShortcutKeySetting from './ShortcutKeySetting';
 import About from './About';
 import styles from './index.less';
 import { ILatestVersion } from '@/service/config';
@@ -88,6 +89,12 @@ function Setting(props: IProps) {
     //   body: <ProxySetting />,
     //   code: 'proxy',
     // },
+    {
+      label: '快捷键',
+      icon: '\ue63a',
+      body: <ShortcutKeySetting />,
+      code: 'shortcutKey',
+    },
     {
       label: i18n('setting.nav.aboutUs'),
       icon: '\ue65c',

@@ -16,6 +16,7 @@ export interface ISettingState {
   remainingUse?: IRemainingUse;
   hasWhite: boolean;
   holdingService: boolean;
+  pageSize: number;
 }
 
 const initSetting = {
@@ -25,6 +26,7 @@ const initSetting = {
   },
   hasWhite: false,
   holdingService: false,
+  pageSize: 200,
 }
 
 export const useSettingStore: UseBoundStoreWithEqualityFn<StoreApi<ISettingState>> = createWithEqualityFn(
@@ -37,6 +39,7 @@ export const useSettingStore: UseBoundStoreWithEqualityFn<StoreApi<ISettingState
         // 工作区的状态只保存 layout布局信息
         partialize: (state: ISettingState) => ({
           holdingService: state.holdingService,
+          pageSize: state.pageSize,
         }),
       },
     ),
@@ -96,6 +99,14 @@ export const fetchRemainingUse = (apiKey)=>{
 
 export const setHoldingService = (holdingService: boolean) => {
   useSettingStore.setState({ holdingService });
+}
+
+export const setPageSize = (pageSize: number) => {
+  useSettingStore.setState({ pageSize });
+}
+
+export const getPageSize = () => {
+  return useSettingStore.getState().pageSize || 200;
 }
 
 

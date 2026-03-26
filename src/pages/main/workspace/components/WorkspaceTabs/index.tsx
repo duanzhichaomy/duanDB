@@ -79,7 +79,7 @@ const WorkspaceTabs = memo(() => {
     };
 
     historyService.updateSavedConsole(p).then(() => {
-      indexedDB.deleteData('chat2db', 'workspaceConsoleDDL', key);
+      indexedDB.deleteData('duandb', 'workspaceConsoleDDL', key);
     });
   };
 

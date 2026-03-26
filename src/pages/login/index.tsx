@@ -32,7 +32,7 @@ const Login: React.FC = () => {
     <div className={styles.loginPage}>
       <div className={styles.logo}>
         <img className={styles.logoImage} src={LogoImg} />
-        <div className={styles.logoText}>Chat2DB</div>
+        <div className={styles.logoText}>DuanDB</div>
       </div>
       <div className={styles.loginPlane}>
         <div className={styles.loginWelcome}>{i18n('login.text.welcome')}</div>

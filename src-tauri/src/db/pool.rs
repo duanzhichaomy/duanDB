@@ -41,7 +41,11 @@ pub async fn get_or_create_pool(
     // 创建新连接池
     let pool = MySqlPoolOptions::new()
         .max_connections(5)
+        .min_connections(0)
         .acquire_timeout(std::time::Duration::from_secs(10))
+        .idle_timeout(std::time::Duration::from_secs(300))
+        .max_lifetime(std::time::Duration::from_secs(1800))
+        .test_before_acquire(true)
         .connect(url)
         .await
         .map_err(|e| format!("连接 MySQL 失败: {}", e))?;

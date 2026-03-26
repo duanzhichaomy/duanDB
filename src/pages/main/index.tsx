@@ -21,6 +21,11 @@ import { useUserStore, setCurUser } from '@/store/user';
 import { setAppTitleBarRightComponent } from '@/store/common/appTitleBarConfig';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import { setShowLeftSaveList } from '@/pages/main/workspace/store/common';
+import { useShortcutKeyStore } from '@/store/shortcutKey';
+import { setActiveConsoleId, setWorkspaceTabList, createConsole } from '@/pages/main/workspace/store/console';
+import { useTreeStore } from '@/blocks/Tree/treeStore';
+import historyService from '@/service/history';
+import indexedDB from '@/indexedDB';
 
 // ----- component -----
 import CustomLayout from '@/components/CustomLayout';
@@ -73,6 +78,87 @@ function MainPage() {
       setAppTitleBarRightComponent(false);
     };
   }, [mainPageActiveTab]);
+
+  // 全局快捷键
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const bindings = useShortcutKeyStore.getState().bindings;
+
+      // 检查是否匹配某个快捷键
+      const matchBinding = (key: string) => {
+        const b = bindings[key];
+        if (!b || !b.code) return false;
+        const modMatch = b.modifiers.every((m: string) => (e as any)[m]);
+        // 确保没有额外的修饰键
+        const allMods = ['metaKey', 'ctrlKey', 'altKey', 'shiftKey'];
+        const extraMod = allMods.some((m) => (e as any)[m] && !b.modifiers.includes(m));
+        return modMatch && !extraMod && e.code === b.code;
+      };
+
+      if (matchBinding('closeCurrentTab')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const { activeConsoleId: activeId, workspaceTabList: tabList } = useWorkspaceStore.getState();
+        if (tabList && tabList.length > 0 && activeId != null) {
+          const idx = tabList.findIndex((t) => t.id === activeId);
+          const tab = tabList.find((t) => t.id === activeId);
+          if (tab) {
+            // 关闭当前tab
+            const newList = tabList.filter((t) => t.id !== activeId);
+            setWorkspaceTabList(newList);
+            // 只有数字ID的tab才需要更新后端状态
+            if (typeof activeId === 'number') {
+              historyService.updateSavedConsole({ id: activeId, tabOpened: 'n' }).then(() => {
+                indexedDB.deleteData('duandb', 'workspaceConsoleDDL', activeId);
+              });
+            }
+            // 激活相邻tab
+            if (newList.length > 0) {
+              const newIdx = Math.min(idx, newList.length - 1);
+              setActiveConsoleId(newList[newIdx].id);
+            } else {
+              setActiveConsoleId(null);
+            }
+          }
+        }
+        return;
+      }
+
+      if (matchBinding('newConsole')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const conn = useWorkspaceStore.getState().currentConnectionDetails;
+        if (conn) {
+          const { databaseName, schemaName } = useTreeStore.getState().focusTreeNode || {};
+          createConsole({
+            dataSourceId: conn.id,
+            dataSourceName: conn.alias,
+            databaseType: conn.type,
+            databaseName,
+            schemaName,
+          });
+        }
+        return;
+      }
+
+      if (matchBinding('switchToWorkspace')) {
+        e.preventDefault();
+        e.stopPropagation();
+        setMainPageActiveTab('workspace');
+        return;
+      }
+
+      if (matchBinding('switchToDashboard')) {
+        e.preventDefault();
+        e.stopPropagation();
+        setMainPageActiveTab('dashboard');
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
+  }, []);
 
   useEffect(() => {
     handleInitPage();

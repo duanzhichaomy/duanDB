@@ -44,7 +44,8 @@ const smoothTree = (treeData: ITreeNode[], result: ITreeNode[] = [], parentNode?
       item.level = (parentNode.level || 0) + 1;
     }
     result.push(item);
-    if (item.children) {
+    // 只有 children 存在且 expanded 不为 false 时才展开
+    if (item.children && item.expanded !== false) {
       smoothTree(item.children, result, item);
     }
   });
@@ -91,14 +92,16 @@ function searchTree(treeData: ITreeNode[], searchValue: string): ITreeNode[] {
   // 遍历树
   treeData.forEach((node) => dfs(node));
 
-  // 根据uuid去重
+  // 根据uuid去重，使用浅拷贝避免修改原始数据
   const deWeightList: ITreeNode[] = [];
   result.forEach((item) => {
-    // 如果不匹配，说明该节点为path，不需要保留该节点的子元素，就把children置空
+    if (deWeightList.findIndex((i) => i.uuid === item.uuid) !== -1) return;
+    // 如果不匹配，说明该节点为path，不需要保留该节点的子元素
     if (!isMatch(item.name, searchValue)) {
-      item.children = null;
+      deWeightList.push({ ...item, children: null });
+    } else {
+      deWeightList.push({ ...item });
     }
-    deWeightList.findIndex((i) => i.uuid === item.uuid) === -1 && deWeightList.push(item);
   });
 
   return tranListToTreeData(deWeightList, undefined);
@@ -284,8 +287,10 @@ const TreeNode = memo((props: TreeNodeIProps) => {
             item.parentNode = result;
           });
           result.children = [...(result.children || []), ...(data || [])];
+          result.expanded = true;
         } else {
           result.children = null;
+          result.expanded = false;
         }
         setOriginalData?.(cloneDeep([...(originalData || [])]));
         break;
@@ -301,12 +306,30 @@ const TreeNode = memo((props: TreeNodeIProps) => {
     return result;
   };
 
+  // 切换节点展开/收起状态（不清除已加载的children）
+  const toggleExpand = (_treeData: ITreeNode[], uuid: string, originalDataList: any): boolean => {
+    const [originalData, setOriginalData] = originalDataList;
+    for (let i = 0; i < _treeData?.length; i++) {
+      if (_treeData[i].uuid === uuid) {
+        _treeData[i].expanded = _treeData[i].expanded === false ? true : false;
+        setOriginalData?.(cloneDeep([...(originalData || [])]));
+        return true;
+      } else if (_treeData[i].children) {
+        if (toggleExpand(_treeData[i].children!, uuid, originalDataList)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
   //展开-收起
   const handleClick = () => {
     if (treeNodeData?.children) {
-      insertData(treeData!, treeNodeData.uuid!, null,[treeData, setTreeData]);
+      // 已有children数据，只切换展开/收起状态，不清除数据
+      toggleExpand(treeData!, treeNodeData.uuid!, [treeData, setTreeData]);
       if(searchTreeData){
-        insertData(searchTreeData!, treeNodeData.uuid!, null,[searchTreeData, setSearchTreeData]);
+        toggleExpand(searchTreeData!, treeNodeData.uuid!, [searchTreeData, setSearchTreeData]);
       }
     } else {
       loadData();
@@ -319,7 +342,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
       return databaseMap[treeNodeData.extraParams!.databaseType!]?.icon;
     } else {
       return (
-        switchIcon[treeNodeType]?.[treeNodeData.children ? 'unfoldIcon' : 'icon'] || switchIcon[treeNodeType]?.icon
+        switchIcon[treeNodeType]?.[(treeNodeData.children && treeNodeData.expanded !== false) ? 'unfoldIcon' : 'icon'] || switchIcon[treeNodeType]?.icon
       );
     }
   };
@@ -419,7 +442,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
             onClick={handelClickTreeNode}
             onContextMenu={handelClickTreeNode}
             onDoubleClick={handelDoubleClickTreeNode}
-            data-chat2db-general-can-copy-element
+            data-duandb-general-can-copy-element
           >
             <div className={styles.left}>
               {indentArr.map((item, i) => {
@@ -434,7 +457,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
                   ) : (
                     <Iconfont
                       className={classnames(styles.arrowsIcon, {
-                        [styles.rotateArrowsIcon]: treeNodeData.children,
+                        [styles.rotateArrowsIcon]: treeNodeData.children && treeNodeData.expanded !== false,
                       })}
                       code="&#xe641;"
                     />
@@ -460,7 +483,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
         </Tooltip>
       </Dropdown>
     );
-  }, [isFocus, isLoading, rightClickMenu, treeNodeData.children]);
+  }, [isFocus, isLoading, rightClickMenu, treeNodeData.children, treeNodeData.expanded]);
 
   return treeNodeDom;
 });

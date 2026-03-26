@@ -200,9 +200,9 @@ pub async fn sql_get_update_sql(
     let database = params.database_name.as_deref().unwrap_or("");
     let headers = &params.header_list;
 
-    // 跳过第一列（CHAT2DB_ROW_NUMBER 序号列）
+    // 跳过第一列（DUANDB_ROW_NUMBER 序号列）
     let col_headers: Vec<&TableHeader> = headers.iter()
-        .filter(|h| h.data_type != "CHAT2DB_ROW_NUMBER")
+        .filter(|h| h.data_type != "DUANDB_ROW_NUMBER")
         .collect();
 
     let mut sql_parts: Vec<String> = Vec::new();
@@ -404,10 +404,10 @@ async fn execute_query(
         &rows[..]
     };
 
-    // 构建 header：第一列固定为序号列（CHAT2DB_ROW_NUMBER）
+    // 构建 header：第一列固定为序号列（DUANDB_ROW_NUMBER）
     let mut headers = vec![TableHeader {
-        name: "CHAT2DB_ROW_NUMBER".to_string(),
-        data_type: "CHAT2DB_ROW_NUMBER".to_string(),
+        name: "DUANDB_ROW_NUMBER".to_string(),
+        data_type: "DUANDB_ROW_NUMBER".to_string(),
         auto_increment: None,
         column_size: None,
         comment: None,

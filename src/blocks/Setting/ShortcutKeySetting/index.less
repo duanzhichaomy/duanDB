@@ -1,0 +1,67 @@
+@import '../../../styles/var.less';
+
+.shortcutKeyList {
+  width: 100%;
+}
+
+.shortcutItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-secondary);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.shortcutLabel {
+  font-size: 13px;
+  color: var(--color-text);
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.shortcutRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shortcutInput {
+  width: 160px;
+  height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+  cursor: pointer;
+  background: var(--color-bg-base);
+  color: var(--color-text);
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  }
+
+  &.recording {
+    border-color: var(--color-primary);
+    color: var(--color-text-secondary);
+  }
+}
+
+.actionBtn {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  padding: 4px;
+  border-radius: 4px;
+
+  &:hover {
+    color: var(--color-primary);
+    background: var(--color-hover-bg);
+  }
+}

@@ -211,9 +211,10 @@ export const useGetRightClickMenu = (props: IProps) => {
         text: i18n('workspace.menu.editTable'),
         icon: '\ue602',
         handle: () => {
+          const _dbName = treeNodeData.extraParams?.databaseName;
           addWorkspaceTab({
             id: `${OperationColumn.EditTable}-${treeNodeData.uuid}`,
-            title: treeNodeData?.name,
+            title: _dbName ? `${treeNodeData?.name} (${_dbName})` : treeNodeData?.name,
             type: WorkspaceTabType.EditTable,
             uniqueData: {
               dataSourceId: treeNodeData.extraParams!.dataSourceId!,
@@ -248,9 +249,11 @@ export const useGetRightClickMenu = (props: IProps) => {
         doubleClickTrigger: true,
         handle: () => {
           const databaseName = compatibleDataBaseName(treeNodeData.name!, treeNodeData.extraParams!.databaseType);
+          const dbName = treeNodeData.extraParams?.databaseName;
+          const tabTitle = dbName ? `${treeNodeData.name} (${dbName})` : treeNodeData.name;
           addWorkspaceTab({
             id: `${OperationColumn.OpenTable}-${treeNodeData.uuid}`,
-            title: treeNodeData.name,
+            title: tabTitle,
             type: WorkspaceTabType.EditTableData,
             uniqueData: {
               dataSourceId: treeNodeData.extraParams!.dataSourceId!,
@@ -577,9 +580,10 @@ export const getRightClickMenu = (props: IProps) => {
       text: i18n('workspace.menu.editTable'),
       icon: '\ue602',
       handle: () => {
+        const _dbName = treeNodeData.extraParams?.databaseName;
         addWorkspaceTab({
           id: `${OperationColumn.EditTable}-${treeNodeData.uuid}`,
-          title: treeNodeData?.name,
+          title: _dbName ? `${treeNodeData?.name} (${_dbName})` : treeNodeData?.name,
           type: WorkspaceTabType.EditTable,
           uniqueData: {
             dataSourceId: treeNodeData.extraParams!.dataSourceId!,
@@ -609,9 +613,11 @@ export const getRightClickMenu = (props: IProps) => {
       doubleClickTrigger: true,
       handle: () => {
         const databaseName = compatibleDataBaseName(treeNodeData.name!, treeNodeData.extraParams!.databaseType);
+        const dbName = treeNodeData.extraParams?.databaseName;
+        const tabTitle = dbName ? `${treeNodeData.name} (${dbName})` : treeNodeData.name;
         addWorkspaceTab({
           id: `${OperationColumn.OpenTable}-${treeNodeData.uuid}`,
-          title: treeNodeData.name,
+          title: tabTitle,
           type: WorkspaceTabType.EditTableData,
           uniqueData: {
             dataSourceId: treeNodeData.extraParams!.dataSourceId!,

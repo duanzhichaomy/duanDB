@@ -7,6 +7,7 @@ import lodash from 'lodash';
 import { v4 as uuid } from 'uuid';
 import i18n from '@/i18n';
 import ScreeningResult from '@/components/SearchResult/components/ScreeningResult';
+import { getPageSize } from '@/store/setting';
 // import { Context } from '@/components/SearchResult';
 
 // 样式
@@ -69,7 +70,7 @@ export interface IUpdateData {
 }
 
 export enum USER_FILLED_VALUE {
-  DEFAULT = 'CHAT2DB_UPDATE_TABLE_DATA_USER_FILLED_DEFAULT',
+  DEFAULT = 'DUANDB_UPDATE_TABLE_DATA_USER_FILLED_DEFAULT',
 }
 
 const SupportBaseTable: any = styled(BaseTable)`
@@ -90,17 +91,17 @@ const SupportBaseTable: any = styled(BaseTable)`
   }
 `;
 
-const preCode = '$$chat2db_';
+const preCode = '$$duandb_';
 
 // No列的code
 const colNoCode = `${preCode}0No.`;
 
-const defaultPaginationConfig: IResultConfig = {
+const getDefaultPaginationConfig = (): IResultConfig => ({
   pageNo: 1,
-  pageSize: 200,
+  pageSize: getPageSize(),
   total: 0,
   hasNextPage: true,
-};
+});
 
 export const TableContext = React.createContext({} as any);
 
@@ -109,7 +110,7 @@ export default function TableBox(props: ITableProps) {
   const { className, outerQueryResultData, isActive, concealTabHeader } = props;
   const [viewTableCellData, setViewTableCellData] = useState<IViewTableCellData | null>(null);
   const [, contextHolder] = message.useMessage();
-  const [paginationConfig, setPaginationConfig] = useState<IResultConfig>(defaultPaginationConfig);
+  const [paginationConfig, setPaginationConfig] = useState<IResultConfig>(getDefaultPaginationConfig);
   // sql查询结果
   const [queryResultData, setQueryResultData] = useState<IManageResultData>(outerQueryResultData);
   // tableData：带列标识的表数据 可以传给Table组件 进行渲染
@@ -629,7 +630,7 @@ export default function TableBox(props: ITableProps) {
     return (queryResultData.headerList || []).map((item, colIndex) => {
       const { dataType, name } = item;
       const isNumber = dataType === TableDataType.NUMERIC;
-      const isNumericalOrder = dataType === TableDataType.CHAT2DB_ROW_NUMBER;
+      const isNumericalOrder = dataType === TableDataType.DUANDB_ROW_NUMBER;
       const colId = `${preCode}${colIndex}${name}`;
 
       if (isNumericalOrder) {
@@ -658,9 +659,9 @@ export default function TableBox(props: ITableProps) {
             const rowId = rowData[colNoCode];
             return (
               <div
-                data-chat2db-general-can-copy-element
-                data-chat2db-edit-table-data-can-paste
-                data-chat2db-edit-table-data-can-right-click
+                data-duandb-general-can-copy-element
+                data-duandb-edit-table-data-can-paste
+                data-duandb-edit-table-data-can-right-click
                 onClick={() => {
                   handelRowNoClick(rowId);
                 }}
@@ -688,9 +689,9 @@ export default function TableBox(props: ITableProps) {
           const content = renderTableCellValue(value);
           return (
             <div
-              data-chat2db-general-can-copy-element
-              data-chat2db-edit-table-data-can-paste
-              data-chat2db-edit-table-data-can-right-click
+              data-duandb-general-can-copy-element
+              data-duandb-edit-table-data-can-paste
+              data-duandb-edit-table-data-can-right-click
               className={tableCellStyle(value, rowId, colId)}
               onClick={handleClickTableItem.bind(null, colId, rowId, value, false)}
               onDoubleClick={handleClickTableItem.bind(null, colId, rowId, value, true)}

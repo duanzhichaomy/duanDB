@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { VerticalLeftOutlined, VerticalRightOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import cs from 'classnames';
-import { Button, InputNumber, Popover, Select } from 'antd';
+import { InputNumber, Select } from 'antd';
 import { IResultConfig } from '@/typings';
-import i18n from '@/i18n';
 import _ from 'lodash';
 import styles from './index.less';
 
@@ -17,7 +15,7 @@ type IIconType = 'pre' | 'next' | 'first' | 'last';
 export default function Pagination(props: IProps) {
   const { onPageNoChange, onPageSizeChange, paginationConfig } = props;
   const [inputValue, setInputValue] = useState<number | null>(1);
-  const [totalLoading, setTotalLoading] = useState(false);
+  const [lastLoading, setLastLoading] = useState(false);
 
   useEffect(() => {
     setInputValue(paginationConfig?.pageNo ?? 1);
@@ -36,15 +34,6 @@ export default function Pagination(props: IProps) {
     }
   };
 
-  const handleClickTotalBtn = async () => {
-    if (!props.onClickTotalBtn) return;
-    setTotalLoading(true);
-
-    const res = await props.onClickTotalBtn();
-    setTotalLoading(false);
-    return res;
-  };
-
   const handleClickIcon = async (type: IIconType) => {
     if (!onPageNoChange || !paginationConfig) return;
     if (handleIsDisabled(type)) return;
@@ -53,12 +42,16 @@ export default function Pagination(props: IProps) {
         onPageNoChange(1);
         break;
       case 'last':
-        {
-          const total = await handleClickTotalBtn();
+        if (!props.onClickTotalBtn) return;
+        setLastLoading(true);
+        try {
+          const total = await props.onClickTotalBtn();
           const { pageSize } = paginationConfig || {};
           if (_.isNumber(total) && _.isNumber(pageSize)) {
-            props.onPageNoChange && props.onPageNoChange(Math.ceil(total / pageSize));
+            onPageNoChange(Math.ceil(total / pageSize));
           }
+        } finally {
+          setLastLoading(false);
         }
         break;
       case 'pre':
@@ -76,10 +69,7 @@ export default function Pagination(props: IProps) {
     if (!paginationConfig) {
       return false;
     }
-    if (type === 'first') {
-      return paginationConfig?.pageNo === 1;
-    }
-    if (type === 'pre') {
+    if (type === 'first' || type === 'pre') {
       return paginationConfig?.pageNo === 1;
     }
 
@@ -92,30 +82,27 @@ export default function Pagination(props: IProps) {
       return !paginationConfig?.hasNextPage;
     }
 
-    // if (type === 'last') {
-    //   if (isNumber) {
-    //     return totalShow > (paginationConfig.total as number);
-    //   }
-    //   return return !paginationConfig?.hasNextPage;;
-    // }
-
     return true;
   };
 
   return (
     <div className={styles.paginationWrapper}>
-      <VerticalRightOutlined
+      <span
         className={cs(styles['item-icon'], {
           [styles['item-icon-disabled']]: handleIsDisabled('first'),
         })}
         onClick={() => handleClickIcon('first')}
-      />
-      <LeftOutlined
+      >
+        «
+      </span>
+      <span
         className={cs(styles['item-icon'], {
           [styles['item-icon-disabled']]: handleIsDisabled('pre'),
         })}
         onClick={() => handleClickIcon('pre')}
-      />
+      >
+        ‹
+      </span>
       <InputNumber
         className={styles['input-number']}
         size="small"
@@ -126,19 +113,22 @@ export default function Pagination(props: IProps) {
         onBlur={onInputNumberBlur}
         onChange={onInputNumberChange}
       />
-
-      <RightOutlined
+      <span
         className={cs(styles['item-icon'], {
           [styles['item-icon-disabled']]: handleIsDisabled('next'),
         })}
         onClick={() => handleClickIcon('next')}
-      />
-      <VerticalLeftOutlined
+      >
+        ›
+      </span>
+      <span
         className={cs(styles['item-icon'], {
-          [styles['item-icon-disabled']]: handleIsDisabled('last'),
+          [styles['item-icon-disabled']]: lastLoading || handleIsDisabled('last'),
         })}
         onClick={() => handleClickIcon('last')}
-      />
+      >
+        »
+      </span>
 
       <Select
         popupMatchSelectWidth={false}
@@ -154,12 +144,6 @@ export default function Pagination(props: IProps) {
           { label: 1000, value: 1000 },
         ]}
       />
-
-      <Popover mouseEnterDelay={0.8} content={i18n('workspace.table.total.tip')}>
-        <Button type="link" loading={totalLoading} onClick={handleClickTotalBtn}>
-          {i18n('workspace.table.total')}：{paginationConfig?.total}
-        </Button>
-      </Popover>
     </div>
   );
 }

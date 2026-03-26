@@ -33,7 +33,7 @@ function useCopyFocusData() {
   useEffect(() => {
     const handleClick = (event) => {
       const targetElement = event.target  as Element;
-      if (!targetElement.closest('[data-chat2db-general-can-copy-element]')) {
+      if (!targetElement.closest('[data-duandb-general-can-copy-element]')) {
         setFocusedContent(null)
       }
     };

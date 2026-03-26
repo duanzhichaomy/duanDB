@@ -24,6 +24,7 @@ import i18n from '@/i18n';
 import sqlServer, { IExecuteSqlParams } from '@/service/sql';
 import { v4 as uuidV4 } from 'uuid';
 import { Spin } from 'antd';
+import { getPageSize } from '@/store/setting';
 
 interface IProps {
   className?: string;
@@ -34,12 +35,12 @@ interface IProps {
   isActive?: boolean;
 }
 
-const defaultResultConfig: IResultConfig = {
+const getDefaultResultConfig = (): IResultConfig => ({
   pageNo: 1,
-  pageSize: 200,
+  pageSize: getPageSize(),
   total: 0,
   hasNextPage: true,
-};
+});
 
 export interface ISearchResultRef {
   handleExecuteSQL: (sql: string) => void;
@@ -82,7 +83,7 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
     const executeSQLParams: IExecuteSqlParams = {
       sql: _sql,
       tableName: executeSqlParams?.tableName,
-      ...defaultResultConfig,
+      ...getDefaultResultConfig(),
       ...executeSqlParams,
       type: executeSqlParams.databaseType, // 兼容写法，希望后端可以统一把type改成databaseType
     };

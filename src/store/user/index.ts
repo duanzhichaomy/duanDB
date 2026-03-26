@@ -40,6 +40,6 @@ export const queryCurUser = async () => {
   useUserStore.setState({ curUser });
   // 向cookie中写入当前用户id
   const date = new Date('2030-12-30 12:30:00').toUTCString();
-  document.cookie = `CHAT2DB.USER_ID=${curUser?.id};Expires=${date}`;
+  document.cookie = `DUANDB.USER_ID=${curUser?.id};Expires=${date}`;
   return curUser
 };

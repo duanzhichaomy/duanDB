@@ -7,7 +7,7 @@ export type IAiConfigBooleans = {
 };
 
 const AITypeName = {
-  [AIType.CHAT2DBAI]: 'Chat2DB',
+  [AIType.CHAT2DBAI]: 'DuanDB',
   [AIType.ZHIPUAI]: i18n('setting.tab.aiType.zhipu'),
   [AIType.BAICHUANAI]: i18n('setting.tab.aiType.baichuan'),
   [AIType.WENXINAI]: i18n('setting.tab.aiType.wenxin'),

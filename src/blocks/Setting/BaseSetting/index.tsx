@@ -9,6 +9,7 @@ import { Select } from 'antd';
 import Iconfont from '@/components/Iconfont';
 import { setLang as setLangLocalStorage } from '@/utils/localStorage';
 import { useTheme } from '@/hooks/useTheme';
+import { useSettingStore, setPageSize } from '@/store/setting';
 
 import styles from './index.less';
 
@@ -43,8 +44,6 @@ const themeList = [
 const languageOptions = [
   { value: LangType.ZH_CN, label: '简体中文' },
   { value: LangType.EN_US, label: 'English' },
-  { value: LangType.TR_TR, label: 'Turkish' },
-  { value: LangType.JA_JP, label: '日本語' },
 ]
 
 const colorList = [
@@ -95,6 +94,7 @@ export default function BaseSetting() {
   const [appTheme, setAppTheme] = useTheme();
   const [currentTheme, setCurrentTheme] = useState<ThemeType>(appTheme.backgroundColor);
   const [currentPrimaryColor, setCurrentPrimaryColor] = useState(localStorage.getItem('primary-color'));
+  const pageSize = useSettingStore((state) => state.pageSize);
 
   const changePrimaryColor = (item: any) => {
     const html = document.documentElement;
@@ -111,7 +111,7 @@ export default function BaseSetting() {
     setLangLocalStorage(e);
     //切换语言时，需要设置cookie，用来改变后台服务的Locale
     const date = new Date('2030-12-30 12:30:00').toUTCString();
-    document.cookie = `CHAT2DB.LOCALE=${e};Expires=${date}`;
+    document.cookie = `DUANDB.LOCALE=${e};Expires=${date}`;
     location.reload();
   }
 
@@ -145,16 +145,27 @@ export default function BaseSetting() {
       </ul>
       <div className={styles.title}>{i18n('setting.title.language')}</div>
       <div className={styles.langBox}>
-        {/* <Radio.Group onChange={changeLang} value={currentLang}>
-          <Radio value={LangType.ZH_CN}>简体中文</Radio>
-          <Radio value={LangType.EN_US}>English</Radio>
-          <Radio value={LangType.TR_TR}>Turkish</Radio>
-        </Radio.Group> */}
         <Select
           style={{ width: 120 }}
           onChange={changeLang}
           value={currentLang}
           options={languageOptions}
+        />
+      </div>
+      <div className={styles.title}>{i18n('setting.title.pageSize')}</div>
+      <div className={styles.langBox}>
+        <Select
+          style={{ width: 120 }}
+          onChange={setPageSize}
+          value={pageSize}
+          options={[
+            { label: 10, value: 10 },
+            { label: 50, value: 50 },
+            { label: 100, value: 100 },
+            { label: 200, value: 200 },
+            { label: 500, value: 500 },
+            { label: 1000, value: 1000 },
+          ]}
         />
       </div>
       <div className={styles.title}>{i18n('setting.title.themeColor')}</div>

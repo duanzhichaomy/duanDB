@@ -125,7 +125,7 @@ function ConsoleEditor(props: IProps, ref: ForwardedRef<IConsoleRef>) {
   // ---------------- new-code ----------------
 
   /**
-   * 当前选择的AI类型是Chat2DBAI
+   * 当前选择的AI类型是DuanDBAI
    */
   const isChat2DBAI = useMemo(() => aiConfig?.aiSqlSource === AIType.CHAT2DBAI, [aiConfig?.aiSqlSource]);
 

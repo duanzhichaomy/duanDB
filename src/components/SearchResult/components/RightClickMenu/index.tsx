@@ -42,7 +42,7 @@ export default memo<IProps>((props) => {
   useEffect(() => {
     const handleClick = (event) => {
       const targetElement = event.target as Element;
-      if (targetElement.closest('[data-chat2db-edit-table-data-can-right-click]')) {
+      if (targetElement.closest('[data-duandb-edit-table-data-can-right-click]')) {
         setCanContextmenu(true);
       } else {
         setCanContextmenu(false);

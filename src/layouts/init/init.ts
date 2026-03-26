@@ -24,7 +24,7 @@ const initLang = () => {
     setLang(LangType.EN_US);
     document.documentElement.setAttribute('lang', LangType.EN_US);
     const date = new Date('2030-12-30 12:30:00').toUTCString();
-    document.cookie = `CHAT2DB.LOCALE=${lang};Expires=${date}`;
+    document.cookie = `DUANDB.LOCALE=${lang};Expires=${date}`;
   }
 };
 
