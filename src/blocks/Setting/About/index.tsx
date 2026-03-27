@@ -30,9 +30,9 @@ export default function AboutUs(props: IProps) {
   });
 
   const onChangeUpdateRul = (e) => {
-    configService.setAppUpdateType(e.target.value).then(() => {
-      setUpdateRule(e.target.value);
-    });
+    const value = e.target.value;
+    localStorage.setItem('duandb-update-type', value);
+    setUpdateRule(value);
   };
 
   useEffect(() => {

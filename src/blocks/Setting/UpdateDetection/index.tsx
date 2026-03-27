@@ -41,9 +41,9 @@ const UpdateDetection = memo(
     const [notificationApi, notificationDom] = notification.useNotification();
     const timesRef = React.useRef(0);
 
-    // useEffect(() => {
-    //   checkUpdate();
-    // }, []);
+    useEffect(() => {
+      checkUpdate();
+    }, []);
 
     const close = () => {};
 
@@ -269,12 +269,27 @@ const UpdateDetection = memo(
       if (!_updateDetectionData) {
         return;
       }
-      configService.updateDesktopVersion(_updateDetectionData).then(() => {
-        timesRef.current = 0;
-        isUpdateSuccess(_updateDetectionData);
+      setUpdateDetectionData({
+        ..._updateDetectionData,
+        updatedStatusEnum: UpdatedStatusEnum.UPDATING,
+      });
+      configService.updateDesktopVersion(_updateDetectionData).then((res) => {
+        if (res) {
+          setUpdateDetectionData({
+            ..._updateDetectionData,
+            updatedStatusEnum: UpdatedStatusEnum.UPDATED,
+          });
+          openNotificationAuto(_updateDetectionData);
+        } else {
+          setUpdateDetectionData({
+            ..._updateDetectionData,
+            updatedStatusEnum: UpdatedStatusEnum.TIMEOUT,
+          });
+        }
+      }).catch(() => {
         setUpdateDetectionData({
           ..._updateDetectionData,
-          updatedStatusEnum: UpdatedStatusEnum.UPDATING,
+          updatedStatusEnum: UpdatedStatusEnum.TIMEOUT,
         });
       });
     };

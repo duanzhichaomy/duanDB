@@ -5,3 +5,4 @@ pub mod database;
 pub mod metadata;
 pub mod sql;
 pub mod table;
+pub mod updater;

@@ -86,10 +86,10 @@ const API_COMMAND_MAP: Record<string, string> = {
   // AI 白名单检测
   'GET:/api/ai/embedding/white/check': '_noop',
 
-  // 版本更新（本地模式无需检测）
-  'GET:/api/system/get_latest_version': '_noop',
+  // 版本更新
+  'GET:/api/system/get_latest_version': 'check_update',
+  'POST:/api/system/update_desktop_version': 'download_and_install_update',
   'GET:/api/system/is_update_success': '_noop',
-  'POST:/api/system/update_desktop_version': '_noop',
   'POST:/api/system/set_update_type': '_noop',
 };
 
@@ -347,12 +347,37 @@ export async function tauriInvoke<R>(
     case 'history_list':
       invokeArgs = { params: cleanParams };
       break;
+    case 'check_update':
+    case 'download_and_install_update':
+      invokeArgs = {};
+      break;
     default:
       invokeArgs = cleanParams;
   }
 
   try {
     const response = await invoke<any>(command, invokeArgs);
+
+    // check_update 返回 {version, body} | null，需转换为 ILatestVersion 格式
+    if (command === 'check_update') {
+      if (!response) {
+        return { desktop: true, version: __APP_VERSION__, type: 'manual', hotUpgradeUrl: null } as any;
+      }
+      return {
+        desktop: true,
+        version: response.version,
+        hotUpgradeUrl: null,
+        type: localStorage.getItem('duandb-update-type') || 'manual',
+        updateLog: response.body,
+        downloadLink: null,
+      } as any;
+    }
+
+    // download_and_install_update 返回 bool
+    if (command === 'download_and_install_update') {
+      return response as R;
+    }
+
     // Rust 端返回 ApiResponse<T>，前端需要取 data
     if (response && typeof response === 'object' && 'success' in response) {
       if (!response.success) {
