@@ -4,6 +4,5 @@
 - src-tauri/tauri.conf.json → version
 
 2. 提交并打 tag：
-git add -A && git commit -m "release: v0.2.0"
-git tag v0.2.0
+git tag v0.1.1
 git push origin main --tags
