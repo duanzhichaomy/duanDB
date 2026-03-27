@@ -158,7 +158,7 @@ const SaveList = () => {
                   >
                     <div className={styles.saveItemText}>
                       <div className={styles.iconBox}>
-                        <Iconfont code={workspaceTabConfig[t.operationType]?.icon} />
+                        <Iconfont code="&#xe8ad;" />
                       </div>
                       <div className={styles.itemName} dangerouslySetInnerHTML={{ __html: t.name }} />
                     </div>

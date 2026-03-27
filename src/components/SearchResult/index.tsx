@@ -22,6 +22,7 @@ import styles from './index.less';
 import EmptyImg from '@/assets/img/empty.svg';
 import i18n from '@/i18n';
 import sqlServer, { IExecuteSqlParams } from '@/service/sql';
+import historyServer from '@/service/history';
 import { v4 as uuidV4 } from 'uuid';
 import { getPageSize } from '@/store/setting';
 import LoadingIndicator from './components/LoadingIndicator';
@@ -122,6 +123,16 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
         if(!notChangedSql){
           setNotChangedSql(_sql);
         }
+
+        // 记录执行历史
+        const currentParams = executeSqlParamsRef.current;
+        historyServer.createHistory({
+          name: _sql.substring(0, 100),
+          ddl: _sql,
+          dataSourceId: currentParams?.dataSourceId,
+          databaseName: currentParams?.databaseName,
+          type: currentParams?.databaseType,
+        }).catch(() => {});
       })
       .finally(() => {
         unlistenRef.current?.();

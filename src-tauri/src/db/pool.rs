@@ -40,17 +40,22 @@ pub async fn get_or_create_pool(
 
     // 创建新连接池
     let pool = MySqlPoolOptions::new()
-        .max_connections(5)
-        .min_connections(0)
+        .max_connections(10)
+        .min_connections(1)
         .acquire_timeout(std::time::Duration::from_secs(10))
         .idle_timeout(std::time::Duration::from_secs(300))
         .max_lifetime(std::time::Duration::from_secs(1800))
-        .test_before_acquire(true)
+        .test_before_acquire(false)
         .connect(url)
         .await
         .map_err(|e| format!("连接 MySQL 失败: {}", e))?;
 
     let mut write = pools.write().await;
+    // Double-check：可能其他线程已经创建了
+    if let Some(existing) = write.get(pool_key) {
+        pool.close().await;
+        return Ok(existing.clone());
+    }
     write.insert(pool_key.to_string(), pool.clone());
     Ok(pool)
 }

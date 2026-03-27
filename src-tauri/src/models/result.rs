@@ -25,6 +25,27 @@ pub struct ExecuteResult {
     pub table_name: Option<String>,
 }
 
+impl ExecuteResult {
+    pub fn error(sql: &str, message: String, duration: i64) -> Self {
+        Self {
+            sql: sql.to_string(),
+            original_sql: None,
+            description: String::new(),
+            message,
+            success: false,
+            header_list: vec![],
+            data_list: vec![],
+            duration,
+            fuzzy_total: None,
+            has_next_page: false,
+            sql_type: "UNKNOWN".into(),
+            update_count: None,
+            can_edit: None,
+            table_name: None,
+        }
+    }
+}
+
 /// 表头信息
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

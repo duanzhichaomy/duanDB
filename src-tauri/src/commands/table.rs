@@ -56,10 +56,16 @@ pub async fn table_detail(
     _refresh: Option<bool>,
 ) -> Result<ApiResponse<EditTableInfo>, String> {
     let pool = get_mysql_pool(&state, data_source_id).await?;
-    let columns = mysql_meta::get_columns(&pool, &database_name, &table_name).await?;
-    let indexes = mysql_meta::get_indexes(&pool, &database_name, &table_name).await?;
-    let (engine, collation, auto_inc, comment) =
-        mysql_meta::get_table_detail_info(&pool, &database_name, &table_name).await?;
+
+    // 并行查询列、索引、表信息
+    let (columns_result, indexes_result, detail_result) = tokio::join!(
+        mysql_meta::get_columns(&pool, &database_name, &table_name),
+        mysql_meta::get_indexes(&pool, &database_name, &table_name),
+        mysql_meta::get_table_detail_info(&pool, &database_name, &table_name)
+    );
+    let columns = columns_result?;
+    let indexes = indexes_result?;
+    let (engine, collation, auto_inc, comment) = detail_result?;
 
     // 从 collation 提取 charset
     let charset = collation.as_ref().and_then(|c| {

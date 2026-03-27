@@ -1,83 +1,106 @@
+# DuanDB
+
+桌面端数据库管理工具，基于 Tauri 2 (Rust) + React 18 / Umi 4 构建。支持 MySQL 连接管理、SQL 编辑执行、表结构浏览与内联编辑。
+
 ## 技术选型
 
-1. 脚手架：umi v4
-2. 组件库：antd v5
-3. 状态管理库 dva
-4. 图表库
-5. 国际化
+- **前端**: Umi v4 + React 18 + Ant Design 5 + Zustand (状态管理) + Monaco Editor (SQL 编辑器)
+- **后端**: Tauri 2 + Rust + SQLx (MySQL/SQLite)
+- **桌面**: Tauri 2 (跨平台桌面应用)
+- **国际化**: 自研 i18n 方案，支持中英文
 
-目录结构 tree ./ -L 2 -I node_modules
+## 项目结构
+
+```
+├── src/                    # 前端源码
+│   ├── assets/             # 静态资源
+│   ├── blocks/             # 通用业务块
+│   ├── components/         # 通用组件 (MonacoEditor, Iconfont, SearchResult 等)
+│   ├── constants/          # 常量定义
+│   ├── hooks/              # 自定义 Hooks
+│   ├── i18n/               # 国际化文案 (中/英)
+│   ├── indexedDB/          # IndexedDB 本地缓存
+│   ├── layouts/            # 页面布局
+│   ├── pages/              # 页面 (workspace, connection, dashboard, team)
+│   ├── service/            # API 服务层 + Tauri Bridge
+│   ├── store/              # Zustand 全局状态
+│   ├── styles/             # 全局样式 & CSS 变量
+│   ├── theme/              # 主题配置
+│   ├── typings/            # TypeScript 类型定义
+│   └── utils/              # 工具函数 (IntelliSense, SQL 格式化等)
+├── src-tauri/              # Rust 后端源码
+│   └── src/
+│       ├── commands/       # Tauri 命令 (connection, sql, table, database, metadata, console)
+│       ├── db/             # 数据库管理 (SQLite 本地存储, MySQL 连接池)
+│       ├── models/         # 数据模型 (请求/响应结构体)
+│       ├── mysql/          # MySQL 元数据查询, DDL 构建, 类型映射
+│       ├── lib.rs          # Tauri 应用入口 & 命令注册
+│       └── state.rs        # 应用状态 (SQLite pool + MySQL pools)
+├── public/                 # 公共静态文件
+├── mock/                   # Mock 数据
+└── dist/                   # 构建产物
+```
 
 ## 启动项目
 
+环境要求：Node.js 18+、pnpm、Rust toolchain。
 
-使用 pnpm 管理依赖，node 版本要求 16 以上。 `npm i -g pnpm` `pnpm install` `pnpm build:web:prod` `cp -r dist ../chat2db-server/chat2db-server-start/src/main/resources/static/front` (复制打包结果到指定目录。windows 可能命令不一样，可以手动复制下) 之后就可以启动后端了 `mvn clean package -B '-Dmaven.test.skip=true' -f chat2db-server/pom.xml`
+```bash
+# 安装依赖
+pnpm install
 
-启动前端项目调试 `pnpm start:web` 注意：因为 electron 包比较难下载，如果 pnpm install 时 electron 下载失败或超时，可以删除掉 chat2db-client/package.json 下的 electron，再次 pnpm install
+# 启动桌面应用（前端 + Tauri 同时启动）
+pnpm tauri:dev
 
-## TS书写规范
+# 仅启动前端开发服务器（HMR）
+pnpm dev:hot
 
-  1. 所有的interface 与 type 必须已I开头
-    `interface IState { name: string }` // good
-    `interface State { name: string }` // bad
+# 仅启动前端开发服务器
+pnpm dev
+```
 
-## 如何在 js 与 css 中使用颜色
+## 构建
 
-具体转换在 /theme/index.ts 中的 injectThemeVar
+```bash
+# 构建前端
+pnpm build:web
 
-- js 在 window.\_AppThemePack 中去取 eg：`window._AppThemePack.controlItemBgActive` // good
-- css eg: `background: var(--control-item-bg-active)` // good
-- css `color: #fff` // bad
+# 构建桌面应用
+pnpm tauri:build
 
-## 如何使用国际化
+# 仅编译 Rust 后端
+cd src-tauri && cargo build
+```
 
-所有 key 参考格式为 `模块名称.文案类型.文案描述`。若文案包含可变部分，可使用 `{1}`、`{2}`、`{3}` 代替。
+## 代码规范
 
-`src/i18n/index.ts` 中默认导出 `i18n` 转换方法，可以将 key 转换为对应的实际文案。文案中的 `{1}` 将被替换为第二个入参，以此类推。例如：
+### TypeScript
+
+- 所有的 interface 与 type 必须以 `I` 开头：
+  ```ts
+  interface IState { name: string }  // good
+  interface State { name: string }   // bad
+  ```
+
+### 颜色使用
+
+- CSS 中使用 CSS 变量：`background: var(--control-item-bg-active)` // good
+- JS 中使用主题包：`window._AppThemePack.controlItemBgActive` // good
+- 禁止硬编码颜色值：`color: #fff` // bad
+
+### 国际化
+
+所有 key 格式为 `模块名称.文案类型.文案描述`，占位符使用 `{1}`、`{2}`。
 
 ```tsx
+import i18n from '@/i18n';
+
 // 'home.tip.welcome': '欢迎您，{1}！'
 i18n('home.tip.welcome', user.name); // => '欢迎您，张三！'
 ```
 
-也可以使用 `src/i18n/index.ts` 中导出的 `i18nElement` 方法，可以将文案中的占位符替换为 JSX 元素。例如：
+### Rust 规范
 
-```tsx
-i18nElement('home.tip.welcome', <b>{user.name}</b>); // => <>欢迎您，<b>张三</b>！</>'
-```
-
-```code
-├── dist
-│   ├── index.html
-│   ├── layouts__index.async.js
-│   ├── layouts__index.chunk.css
-│   ├── p__docs.async.js
-│   ├── p__index.async.js
-│   └── umi.js
-├── package.json
-├── readme.md
-├── release
-│   ├── Chat2DB-1.0.0-arm64-mac.zip
-│   ├── Chat2DB-1.0.0-arm64-mac.zip.blockmap
-│   ├── Chat2DB-1.0.0-arm64.dmg
-│   ├── Chat2DB-1.0.0-arm64.dmg.blockmap
-│   ├── builder-debug.yml
-│   ├── builder-effective-config.yaml
-│   └── mac-arm64
-├── src
-│   ├── assets
-│   ├── blocks
-│   ├── components
-│   ├── config
-│   ├── constant
-│   ├── layouts
-│   ├── locales
-│   ├── main
-│   ├── models
-│   ├── pages
-│   ├── typings
-│   └── utils
-├── tsconfig.json
-├── typings.d.ts
-└── pnpm-lock.yaml
-```
+- 响应统一使用 `ApiResponse::ok(data)` / `ApiResponse::err(message)`
+- 错误传播使用 `.map_err(|e| e.to_string())?`
+- SQL 值转义使用 MySQL 标准双单引号 `''`

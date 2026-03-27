@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect, useRef, useCallback} from 'react';
 import { ConsoleStatus } from '@/constants';
 import { message } from 'antd';
 import indexedDB from '@/indexedDB';
@@ -6,6 +6,7 @@ import historyServer from '@/service/history';
 import i18n from '@/i18n';
 import { getCookie } from '@/utils';
 import { getSavedConsoleList } from '@/pages/main/workspace/store/console';
+import { useWorkspaceStore } from '@/pages/main/workspace/store';
 
 
 interface IProps {
@@ -22,15 +23,31 @@ export const useSaveEditorData = (props: IProps) => {
     // 上一次同步的console数据
   const lastSyncConsole = useRef<any>(defaultValue);
   const [saveStatus, setSaveStatus] = useState<ConsoleStatus>(boundInfo.status || ConsoleStatus.DRAFT);
+  const [saveNameModalOpen, setSaveNameModalOpen] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const pendingSaveValue = useRef<string>('');
 
-  const saveConsole = (value?: string, noPrompting?: boolean) => {
+  const doSave = useCallback((value: string, name?: string, noPrompting?: boolean) => {
     const p: any = {
       id: boundInfo.consoleId,
       status: ConsoleStatus.RELEASE,
       ddl: value,
     };
+    if (name) {
+      p.name = name;
+    }
 
     historyServer.updateSavedConsole(p).then(() => {
+      // 如果改了名字，同步更新 tab 标题
+      if (name) {
+        const workspaceTabList = useWorkspaceStore.getState().workspaceTabList;
+        if (workspaceTabList) {
+          const updatedList = workspaceTabList.map((tab) =>
+            tab.id === boundInfo.consoleId ? { ...tab, title: name } : tab,
+          );
+          useWorkspaceStore.setState({ workspaceTabList: updatedList });
+        }
+      }
       getSavedConsoleList();
       indexedDB.deleteData('duandb', 'workspaceConsoleDDL', boundInfo.consoleId!);
       lastSyncConsole.current = value;
@@ -41,7 +58,32 @@ export const useSaveEditorData = (props: IProps) => {
       message.success(i18n('common.tips.saveSuccessfully'));
       timingAutoSave(ConsoleStatus.RELEASE);
     });
-  };
+  }, [boundInfo.consoleId]);
+
+  const saveConsole = useCallback((value?: string, noPrompting?: boolean) => {
+    const val = value || '';
+    // 首次保存（DRAFT -> RELEASE），弹出命名弹窗
+    if (saveStatus !== ConsoleStatus.RELEASE && !noPrompting) {
+      pendingSaveValue.current = val;
+      setSaveName('');
+      setSaveNameModalOpen(true);
+      return;
+    }
+    doSave(val, undefined, noPrompting);
+  }, [saveStatus, doSave]);
+
+  const handleSaveNameConfirm = useCallback(() => {
+    if (!saveName.trim()) {
+      message.warning(i18n('common.tips.pleaseEnterName'));
+      return;
+    }
+    setSaveNameModalOpen(false);
+    doSave(pendingSaveValue.current, saveName.trim());
+  }, [saveName, doSave]);
+
+  const handleSaveNameCancel = useCallback(() => {
+    setSaveNameModalOpen(false);
+  }, []);
 
   function timingAutoSave(_status?: ConsoleStatus) {
     if (timerRef.current) {
@@ -53,7 +95,7 @@ export const useSaveEditorData = (props: IProps) => {
         return;
       }
       if (saveStatus === ConsoleStatus.RELEASE || _status === ConsoleStatus.RELEASE) {
-        saveConsole(curValue, true);
+        doSave(curValue, undefined, true);
       } else {
         indexedDB
           .updateData('duandb', 'workspaceConsoleDDL', {
@@ -83,7 +125,7 @@ export const useSaveEditorData = (props: IProps) => {
         return;
       }
       if (saveStatus === ConsoleStatus.RELEASE) {
-        saveConsole(curValue, true);
+        doSave(curValue, undefined, true);
       } else {
         indexedDB
           .updateData('duandb', 'workspaceConsoleDDL', {
@@ -124,5 +166,13 @@ export const useSaveEditorData = (props: IProps) => {
     }
   }, []);
 
-  return {saveConsole, saveStatus}
+  return {
+    saveConsole,
+    saveStatus,
+    saveNameModalOpen,
+    saveName,
+    setSaveName,
+    handleSaveNameConfirm,
+    handleSaveNameCancel,
+  }
 }

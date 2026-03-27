@@ -13,6 +13,7 @@ pub struct ConsoleItem {
     pub name: String,
     pub ddl: Option<String>,
     pub data_source_id: Option<i64>,
+    pub data_source_name: Option<String>,
     pub database_name: Option<String>,
     pub schema_name: Option<String>,
     pub db_type: Option<String>,
@@ -41,6 +42,11 @@ pub struct ConsoleUpdateRequest {
     pub name: Option<String>,
     pub ddl: Option<String>,
     pub status: Option<String>,
+    pub data_source_id: Option<i64>,
+    pub database_name: Option<String>,
+    pub schema_name: Option<String>,
+    #[serde(rename = "type")]
+    pub db_type: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -71,7 +77,7 @@ pub async fn console_create(
     .bind(&params.schema_name)
     .bind(params.db_type.as_deref().unwrap_or("MYSQL"))
     .bind(params.status.as_deref().unwrap_or("DRAFT"))
-    .bind(params.operation_type.as_deref().unwrap_or("CONSOLE"))
+    .bind(params.operation_type.as_deref().unwrap_or("console"))
     .execute(&state.local_db)
     .await
     .map_err(|e| e.to_string())?;
@@ -95,6 +101,18 @@ pub async fn console_update(
     if params.status.is_some() {
         set_parts.push("status = ?".to_string());
     }
+    if params.data_source_id.is_some() {
+        set_parts.push("data_source_id = ?".to_string());
+    }
+    if params.database_name.is_some() {
+        set_parts.push("database_name = ?".to_string());
+    }
+    if params.schema_name.is_some() {
+        set_parts.push("schema_name = ?".to_string());
+    }
+    if params.db_type.is_some() {
+        set_parts.push("db_type = ?".to_string());
+    }
     set_parts.push("updated_at = CURRENT_TIMESTAMP".to_string());
 
     let sql = format!("UPDATE console SET {} WHERE id = ?", set_parts.join(", "));
@@ -108,6 +126,18 @@ pub async fn console_update(
     }
     if let Some(ref status) = params.status {
         query = query.bind(status);
+    }
+    if let Some(data_source_id) = params.data_source_id {
+        query = query.bind(data_source_id);
+    }
+    if let Some(ref database_name) = params.database_name {
+        query = query.bind(database_name);
+    }
+    if let Some(ref schema_name) = params.schema_name {
+        query = query.bind(schema_name);
+    }
+    if let Some(ref db_type) = params.db_type {
+        query = query.bind(db_type);
     }
     query = query.bind(params.id);
 
@@ -131,13 +161,13 @@ pub async fn console_list(
 
     let mut where_parts = Vec::new();
     if let Some(ds_id) = params.data_source_id {
-        where_parts.push(format!("data_source_id = {}", ds_id));
+        where_parts.push(format!("c.data_source_id = {}", ds_id));
     }
     if let Some(ref db) = params.database_name {
-        where_parts.push(format!("database_name = '{}'", db.replace('\'', "''")));
+        where_parts.push(format!("c.database_name = '{}'", db.replace('\'', "''")));
     }
     if let Some(ref status) = params.status {
-        where_parts.push(format!("status = '{}'", status.replace('\'', "''")));
+        where_parts.push(format!("c.status = '{}'", status.replace('\'', "''")));
     }
 
     let where_clause = if where_parts.is_empty() {
@@ -152,14 +182,14 @@ pub async fn console_list(
         "ASC"
     };
 
-    let count_sql = format!("SELECT COUNT(*) FROM console {}", where_clause);
+    let count_sql = format!("SELECT COUNT(*) FROM console c {}", where_clause);
     let total: i64 = sqlx::query_scalar(&count_sql)
         .fetch_one(&state.local_db)
         .await
         .unwrap_or(0);
 
     let sql = format!(
-        "SELECT * FROM console {} ORDER BY id {} LIMIT {} OFFSET {}",
+        "SELECT c.*, ds.alias as data_source_name FROM console c LEFT JOIN data_source ds ON c.data_source_id = ds.id {} ORDER BY c.id {} LIMIT {} OFFSET {}",
         where_clause, order, page_size, offset
     );
 
@@ -175,6 +205,7 @@ pub async fn console_list(
             name: row.try_get("name").unwrap_or_default(),
             ddl: row.try_get("ddl").ok(),
             data_source_id: row.try_get("data_source_id").ok(),
+            data_source_name: row.try_get("data_source_name").ok(),
             database_name: row.try_get("database_name").ok(),
             schema_name: row.try_get("schema_name").ok(),
             db_type: row.try_get("db_type").ok(),

@@ -237,6 +237,7 @@ const lucideMap: Record<string, LucideIcon> = {
 
 // 将各种 code 格式统一为 unicode 字符
 function normalizeCode(code: string): string {
+  if (!code) return '';
   // HTML entity 格式: &#xe637; 或 &#x100be;
   const htmlEntityMatch = code.match(/^&#x([0-9a-fA-F]+);$/);
   if (htmlEntityMatch) {

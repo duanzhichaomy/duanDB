@@ -117,96 +117,100 @@ export function monacoSqlAutocomplete(
     triggerCharacters:
       ' $.:{}=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
     provideCompletionItems: async () => {
-      const currentEditVersion = editVersion;
-      const parseResult: IParseResult = await currentParserPromise;
+      try {
+        const currentEditVersion = editVersion;
+        const parseResult: IParseResult = await currentParserPromise;
 
-      if (currentEditVersion !== editVersion) {
-        return returnCompletionItemsByVersion([], opts.monacoEditorVersion);
-      }
+        if (!parseResult?.ast || currentEditVersion !== editVersion) {
+          return returnCompletionItemsByVersion([], opts.monacoEditorVersion);
+        }
 
-      const cursorInfo = await reader.getCursorInfo(
-        parseResult.ast,
-        parseResult.cursorKeyPath,
-      );
-
-      const parserSuggestion = opts.pipeKeywords(parseResult.nextMatchings);
-
-      if (!cursorInfo) {
-        return returnCompletionItemsByVersion(
-          parserSuggestion,
-          opts.monacoEditorVersion,
+        const cursorInfo = await reader.getCursorInfo(
+          parseResult.ast,
+          parseResult.cursorKeyPath,
         );
-      }
 
-      switch (cursorInfo.type) {
-        case 'tableField':
-          const cursorRootStatementFields = await reader.getFieldsFromStatement(
-            parseResult.ast,
-            parseResult.cursorKeyPath,
-            opts.onSuggestTableFields,
-          );
+        const parserSuggestion = opts.pipeKeywords(parseResult.nextMatchings);
 
-          // group.fieldName
-          const groups = _.groupBy(
-            cursorRootStatementFields.filter((cursorRootStatementField) => {
-              return cursorRootStatementField.groupPickerName !== null;
-            }),
-            'groupPickerName',
-          );
-
-          const functionNames = await opts.onSuggestFunctionName(
-            cursorInfo.token.value,
-          );
-
-          return returnCompletionItemsByVersion(
-            cursorRootStatementFields
-              .concat(parserSuggestion)
-              .concat(functionNames)
-              .concat(
-                groups
-                  ? Object.keys(groups).map((groupName) => {
-                      return opts.onSuggestFieldGroup(groupName);
-                    })
-                  : [],
-              ),
-            opts.monacoEditorVersion,
-          );
-        case 'tableFieldAfterGroup':
-          // 字段 . 后面的部分
-          const cursorRootStatementFieldsAfter =
-            await reader.getFieldsFromStatement(
-              parseResult.ast,
-              parseResult.cursorKeyPath as any,
-              opts.onSuggestTableFields,
-            );
-
-          return returnCompletionItemsByVersion(
-            cursorRootStatementFieldsAfter
-              .filter((cursorRootStatementField: any) => {
-                return (
-                  cursorRootStatementField.groupPickerName ===
-                  (cursorInfo as ICursorInfo<{ groupName: string }>).groupName
-                );
-              })
-              .concat(parserSuggestion),
-            opts.monacoEditorVersion,
-          );
-        case 'tableName':
-          const tableNames = await opts.onSuggestTableNames(
-            cursorInfo as ICursorInfo<ITableInfo>,
-          );
-
-          return returnCompletionItemsByVersion(
-            tableNames.concat(parserSuggestion),
-            opts.monacoEditorVersion,
-          );
-        case 'functionName':
-          return opts.onSuggestFunctionName(cursorInfo.token.value);
-        default:
+        if (!cursorInfo) {
           return returnCompletionItemsByVersion(
             parserSuggestion,
             opts.monacoEditorVersion,
           );
+        }
+
+        switch (cursorInfo.type) {
+          case 'tableField':
+            const cursorRootStatementFields = await reader.getFieldsFromStatement(
+              parseResult.ast,
+              parseResult.cursorKeyPath,
+              opts.onSuggestTableFields,
+            );
+
+            // group.fieldName
+            const groups = _.groupBy(
+              cursorRootStatementFields.filter((cursorRootStatementField) => {
+                return cursorRootStatementField.groupPickerName !== null;
+              }),
+              'groupPickerName',
+            );
+
+            const functionNames = await opts.onSuggestFunctionName(
+              cursorInfo.token.value,
+            );
+
+            return returnCompletionItemsByVersion(
+              cursorRootStatementFields
+                .concat(parserSuggestion)
+                .concat(functionNames)
+                .concat(
+                  groups
+                    ? Object.keys(groups).map((groupName) => {
+                        return opts.onSuggestFieldGroup(groupName);
+                      })
+                    : [],
+                ),
+              opts.monacoEditorVersion,
+            );
+          case 'tableFieldAfterGroup':
+            // 字段 . 后面的部分
+            const cursorRootStatementFieldsAfter =
+              await reader.getFieldsFromStatement(
+                parseResult.ast,
+                parseResult.cursorKeyPath as any,
+                opts.onSuggestTableFields,
+              );
+
+            return returnCompletionItemsByVersion(
+              cursorRootStatementFieldsAfter
+                .filter((cursorRootStatementField: any) => {
+                  return (
+                    cursorRootStatementField.groupPickerName ===
+                    (cursorInfo as ICursorInfo<{ groupName: string }>).groupName
+                  );
+                })
+                .concat(parserSuggestion),
+              opts.monacoEditorVersion,
+            );
+          case 'tableName':
+            const tableNames = await opts.onSuggestTableNames(
+              cursorInfo as ICursorInfo<ITableInfo>,
+            );
+
+            return returnCompletionItemsByVersion(
+              tableNames.concat(parserSuggestion),
+              opts.monacoEditorVersion,
+            );
+          case 'functionName':
+            return opts.onSuggestFunctionName(cursorInfo.token.value);
+          default:
+            return returnCompletionItemsByVersion(
+              parserSuggestion,
+              opts.monacoEditorVersion,
+            );
+        }
+      } catch {
+        return returnCompletionItemsByVersion([], opts.monacoEditorVersion);
       }
     },
   });
@@ -279,6 +283,7 @@ export function monacoSqlAutocomplete(
 const worker: Worker = new (MyWorker as any)();
 
 let parserIndex = 0;
+let prevResolve: any = null;
 
 const asyncParser = async (
   text: string,
@@ -288,25 +293,32 @@ const asyncParser = async (
   parserIndex++;
   const currentParserIndex = parserIndex;
 
-  let resolve: any = null;
-  let reject: any = null;
+  // 旧的 promise 如果还在等待，用空结果 resolve 掉，避免永远挂起
+  if (prevResolve) {
+    prevResolve({ ast: null, cursorKeyPath: null, nextMatchings: [], error: null });
+    prevResolve = null;
+  }
 
-  const promise = new Promise((promiseResolve, promiseReject) => {
-    resolve = promiseResolve;
-    reject = promiseReject;
+  const promise = new Promise<IParseResult>((resolve) => {
+    prevResolve = resolve;
+
+    worker.postMessage({ text, index, parserType });
+
+    worker.onmessage = (event) => {
+      if (currentParserIndex === parserIndex) {
+        prevResolve = null;
+        resolve(event.data);
+      }
+      // 旧请求的 message 直接忽略，对应的 promise 会被下一次调用 resolve 掉
+    };
   });
 
-  worker.postMessage({ text, index, parserType });
+  // 超时保护：10 秒后自动 resolve 空结果
+  const timeout = new Promise<IParseResult>((resolve) =>
+    setTimeout(() => resolve({ ast: null, cursorKeyPath: null, nextMatchings: [], error: null }), 10000),
+  );
 
-  worker.onmessage = (event) => {
-    if (currentParserIndex === parserIndex) {
-      resolve(event.data);
-    } else {
-      reject();
-    }
-  };
-
-  return promise as Promise<IParseResult>;
+  return Promise.race([promise, timeout]);
 };
 
 function returnCompletionItemsByVersion(

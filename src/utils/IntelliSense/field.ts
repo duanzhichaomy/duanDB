@@ -4,6 +4,7 @@ import sqlService from '@/service/sql';
 import i18n from '@/i18n';
 
 let fieldList: Record<string, Array<{ name: string; tableName: string }>> = {};
+let pendingRequests: Record<string, boolean> = {};
 
 /** 当前库下的表 */
 let intelliSenseField = monaco.languages.registerCompletionItemProvider('sql', {
@@ -26,14 +27,24 @@ const addIntelliSenseField = async (props: {
 }) => {
   const { tableName, dataSourceId, databaseName, schemaName } = props;
 
-  if (!fieldList[tableName]) {
-    const data = await sqlService.getAllFieldByTable({
-      dataSourceId,
-      databaseName,
-      schemaName,
-      tableName,
-    });
-    fieldList[tableName] = data;
+  if (!fieldList[tableName] && !pendingRequests[tableName]) {
+    pendingRequests[tableName] = true;
+    try {
+      const data = await Promise.race([
+        sqlService.getAllFieldByTable({
+          dataSourceId,
+          databaseName,
+          schemaName,
+          tableName,
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
+      ]);
+      fieldList[tableName] = data;
+    } catch {
+      // 超时或请求失败，静默忽略
+    } finally {
+      delete pendingRequests[tableName];
+    }
   }
 };
 
@@ -53,9 +64,10 @@ function checkFieldContext(text) {
 const registerIntelliSenseField = (tableList: string[], dataSourceId, databaseName, schemaName) => {
   resetSenseField();
   fieldList = {};
+  pendingRequests = {};
   intelliSenseField = monaco.languages.registerCompletionItemProvider('sql', {
     triggerCharacters: [' ', ',', '.', '('],
-    provideCompletionItems: async (model, position) => {
+    provideCompletionItems: async (model, position, _context, token) => {
       // 获取到当前行文本
       const textUntilPosition = model.getValueInRange({
         startLineNumber: position.lineNumber,
@@ -73,16 +85,30 @@ const registerIntelliSenseField = (tableList: string[], dataSourceId, databaseNa
       }
 
       if (!word) {
-        return; // 如果没有匹配到，直接返回
+        return { suggestions: [] };
       }
-      if (word && tableList.includes(word) && !fieldList[word]) {
-        const data = await sqlService.getAllFieldByTable({
-          dataSourceId,
-          databaseName,
-          schemaName,
-          tableName: word,
-        });
-        fieldList[word] = data;
+
+      if (word && tableList.includes(word) && !fieldList[word] && !pendingRequests[word]) {
+        pendingRequests[word] = true;
+        try {
+          const data = await Promise.race([
+            sqlService.getAllFieldByTable({
+              dataSourceId,
+              databaseName,
+              schemaName,
+              tableName: word,
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
+          ]);
+          if (token.isCancellationRequested) {
+            return { suggestions: [] };
+          }
+          fieldList[word] = data;
+        } catch {
+          // 超时或请求失败，返回已有的建议
+        } finally {
+          delete pendingRequests[word];
+        }
       }
 
       const suggestions: monaco.languages.CompletionItem[] = Object.keys(fieldList).reduce((acc, cur) => {

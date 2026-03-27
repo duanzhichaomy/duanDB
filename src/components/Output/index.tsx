@@ -8,7 +8,7 @@ import * as monaco from 'monaco-editor';
 import i18n from '@/i18n';
 import { copy } from '@/utils';
 import { createConsole } from '@/pages/main/workspace/store/console';
-import { Popover } from 'antd';
+import { Popover, message } from 'antd';
 
 interface IProps {
   className?: string;
@@ -28,7 +28,6 @@ export default memo<IProps>((props) => {
   const getHistoryList = () => {
     return historyService
       .getHistoryList({
-        // dataSourceId:props.curWorkspaceParams.dataSourceId,
         pageNo: curPageRef.current++,
         pageSize: 40,
       })
@@ -36,8 +35,6 @@ export default memo<IProps>((props) => {
         finishedRef.current = !res.hasNextPage;
         const promiseList = res.data.map((item) => {
           return new Promise((resolve) => {
-            // 不换行
-            // const ddl = (item.ddl || '')?.replace(/\n/g, ' ');
             const ddl = item.ddl || '';
             monaco.editor.colorize(ddl, 'sql', {}).then((_res) => {
               resolve({
@@ -55,6 +52,7 @@ export default memo<IProps>((props) => {
 
   const copySql = (text: IDatasource['ddl']) => {
     copy(text || '');
+    message.success(i18n('common.tips.saveSuccessfully'));
   }
 
   const openSql = (data: IDatasource) => {
@@ -65,15 +63,21 @@ export default memo<IProps>((props) => {
       databaseType: data.type!,
       databaseName: data.databaseName!,
       schemaName: data.schemaName!,
-      // operationType: WorkspaceTabType,
     })
   }
+
+  const formatTime = (timeStr: string | undefined) => {
+    if (!timeStr) return '';
+    // 只显示时:分:秒
+    const match = timeStr.match(/(\d{2}:\d{2}:\d{2})/);
+    return match ? match[1] : timeStr;
+  };
 
   return (
     <div className={classnames(styles.output, className)}>
       <div className={styles.outputTitle}>
-        {/* <Iconfont code="&#xe8ad;" /> */}
-        {i18n('common.title.executiveLogging')}
+        <Iconfont code="&#xe8ad;" size={14} />
+        <span>{i18n('common.title.executiveLogging')}</span>
       </div>
       <div className={styles.outputContent} ref={outputContentRef}>
         <ScrollLoading
@@ -84,29 +88,41 @@ export default memo<IProps>((props) => {
         >
           <>
             {dataSource.map((item, index) => {
-              const nameList = [item.dataSourceName, item.databaseName, item.schemaName];
+              const dbPath = [item.databaseName, item.schemaName].filter(Boolean).join(' > ');
               return (
                 <div key={index} className={styles.outputItem}>
-                  <div className={styles.timeBox}>
-                    <Iconfont classNameBox={classnames(styles.timeBoxIcon, { [styles.failureIconBox]: item.status !== 'success' })} box boxSize={20} code="&#xe650;" />
-                    <span className={styles.timeSpan}>[{item.gmtCreate}]</span>
-                    {/* {!!item.operationRows && <span>{item.operationRows} rows</span>} */}
-                    {!!item.useTime && <span>{i18n('common.text.executionTime', item.useTime)}</span>}
-                  </div>
-                  <div className={styles.executedDatabaseBox}>
-                    <Popover mouseEnterDelay={0.8} content={i18n('workspace.tips.openExecutiveLogging')}>
-                      <Iconfont classNameBox={styles.iconBox} box boxSize={20} code="&#xe6bb;" onClick={()=>{openSql(item)}} />
-                    </Popover>
-                    <div className={styles.executedDatabase}>
-                      {nameList.filter((name) => name).join(' > ')}
+                  <div className={styles.itemHeader}>
+                    <div className={styles.headerLeft}>
+                      <Iconfont
+                        code={item.status === 'success' ? '&#xe650;' : '&#xe755;'}
+                        size={12}
+                        className={item.status === 'success' ? styles.statusSuccess : styles.statusError}
+                      />
+                      <span className={styles.timeText}>{formatTime(item.gmtCreate)}</span>
+                      {!!item.useTime && (
+                        <span className={styles.durationText}>{item.useTime}ms</span>
+                      )}
+                    </div>
+                    <div className={styles.headerRight}>
+                      <Popover mouseEnterDelay={0.8} content={i18n('common.button.copy')}>
+                        <div className={styles.actionBtn} onClick={() => copySql(item.ddl)}>
+                          <Iconfont code="&#xec7a;" size={12} />
+                        </div>
+                      </Popover>
+                      <Popover mouseEnterDelay={0.8} content={i18n('workspace.tips.openExecutiveLogging')}>
+                        <div className={styles.actionBtn} onClick={() => openSql(item)}>
+                          <Iconfont code="&#xe6bb;" size={12} />
+                        </div>
+                      </Popover>
                     </div>
                   </div>
-                  <div className={styles.sqlBox}>
-                    <Popover mouseEnterDelay={0.8} content={i18n('common.button.copy')}>
-                      <Iconfont classNameBox={styles.iconBox} box boxSize={20} code="&#xec7a;" onClick={()=>{copySql(item.ddl)}} />
-                    </Popover>
-                    <div className={styles.sqlContent} dangerouslySetInnerHTML={{ __html: item.highlightedCode }} />
-                  </div>
+                  {dbPath && (
+                    <div className={styles.dbPath}>
+                      <Iconfont code="&#xe669;" size={11} className={styles.dbPathIcon} />
+                      <span>{dbPath}</span>
+                    </div>
+                  )}
+                  <div className={styles.sqlContent} dangerouslySetInnerHTML={{ __html: item.highlightedCode }} />
                 </div>
               );
             })}

@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { formatParams } from '@/utils/url';
 import connectToEventSource from '@/utils/eventSource';
-import { Spin, Drawer, Modal } from 'antd';
+import { Spin, Drawer, Modal, Input } from 'antd';
 import ChatInput, { SyncModelType } from './components/ChatInput';
 import MonacoEditor, { IEditorOptions, IExportRefFunction, IRangeType } from '../MonacoEditor';
 import aiServer from '@/service/ai';
@@ -116,7 +116,14 @@ function ConsoleEditor(props: IProps, ref: ForwardedRef<IConsoleRef>) {
   });
 
   // ---------------- new-code ----------------
-  const { saveConsole } = useSaveEditorData({
+  const {
+    saveConsole,
+    saveNameModalOpen,
+    saveName,
+    setSaveName,
+    handleSaveNameConfirm,
+    handleSaveNameCancel,
+  } = useSaveEditorData({
     editorRef,
     isActive,
     boundInfo: props.boundInfo,
@@ -464,6 +471,21 @@ function ConsoleEditor(props: IProps, ref: ForwardedRef<IConsoleRef>) {
           }}
         >
           <Popularize {...modalProps} />
+        </Modal>
+        <Modal
+          title={i18n('common.tips.saveName')}
+          open={saveNameModalOpen}
+          onOk={handleSaveNameConfirm}
+          onCancel={handleSaveNameCancel}
+          destroyOnClose
+        >
+          <Input
+            placeholder={i18n('common.tips.saveNamePlaceholder')}
+            value={saveName}
+            onChange={(e) => setSaveName(e.target.value)}
+            onPressEnter={handleSaveNameConfirm}
+            autoFocus
+          />
         </Modal>
       </div>
     </IntelligentEditorContext.Provider>

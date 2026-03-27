@@ -46,7 +46,7 @@ pub async fn init_local_db(app_data_dir: PathBuf) -> Result<SqlitePool, sqlx::Er
             schema_name TEXT,
             db_type TEXT DEFAULT 'MYSQL',
             status TEXT DEFAULT 'DRAFT',
-            operation_type TEXT DEFAULT 'CONSOLE',
+            operation_type TEXT DEFAULT 'console',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
