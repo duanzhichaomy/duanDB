@@ -188,6 +188,80 @@
   }
 }
 
+.searchBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-base);
+  flex-shrink: 0;
+
+  .searchBarLeft {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .searchBarIcon {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+
+  .searchBarInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--color-text);
+    font-size: 12px;
+    height: 28px;
+    line-height: 28px;
+
+    &::placeholder {
+      color: var(--color-text-quaternary);
+    }
+  }
+
+  .searchBarRight {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .searchBarCount {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+
+  .searchBarBtn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+
+    &:hover {
+      background-color: var(--color-hover-bg);
+    }
+
+    i {
+      font-size: 12px;
+    }
+  }
+}
+
 .supportBaseTableBox {
   flex: 1;
   overflow-y: auto;

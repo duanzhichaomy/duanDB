@@ -1,40 +1,30 @@
-
 .consoleOptionsWrapper {
-  position: absolute;
-  bottom: 0px;
-  left: 0;
-  right: 0;
-  height: 40px;
   display: flex;
   align-items: center;
-
-  display: flex;
-  margin: 0 12px;
-  justify-content: space-between;
-  align-items: center;
+  height: 36px;
+  padding: 0 8px;
+  gap: 2px;
 }
 
-.consoleOptionsLeft {
+.toolBtn {
   display: flex;
   align-items: center;
-  margin: 0px -6px;
-  button {
-    margin: 0px 6px;
-  }
-}
-
-.runButton {
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
+  justify-content: center;
+  width: 28px;
   height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text);
+
+  &:hover {
+    background-color: var(--color-hover-bg);
+  }
 
   i {
-    margin-right: 4px;
+    font-size: 16px;
   }
 }
 
-.saveButton {
-  width: 70px;
-  height: 28px;
+.toolBtnPrimary {
+  color: var(--custom-primary-color, #8A2BE2);
 }

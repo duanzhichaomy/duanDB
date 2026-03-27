@@ -90,6 +90,9 @@ export default {
   'common.button.add': 'Add',
   'common.text.errorMessage': 'Error Message',
   'common.button.cancelRequest': 'Cancel Request',
+  'common.text.fetching': 'Fetching',
+  'common.text.fetchedRows': 'Rows: ',
+  'common.button.stop': 'Stop',
   'common.button.executionError': 'Execution Error',
   'common.text.affectedRows': 'Affected rows: {1}',
   'common.text.selectFile': 'Select File',
@@ -120,4 +123,8 @@ export default {
   'common.label.LocalFile': 'LocalFile',
   'common.text.rename': 'Rename',
   'common.title.info': 'Info',
+  'common.text.searchResultData': 'Search result data',
+  'common.button.executeSingle': 'Execute Current Statement',
+  'common.button.explain': 'Explain Plan',
+  'common.button.saveAsFile': 'Save As File',
 };

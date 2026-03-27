@@ -23,8 +23,9 @@ import EmptyImg from '@/assets/img/empty.svg';
 import i18n from '@/i18n';
 import sqlServer, { IExecuteSqlParams } from '@/service/sql';
 import { v4 as uuidV4 } from 'uuid';
-import { Spin } from 'antd';
 import { getPageSize } from '@/store/setting';
+import LoadingIndicator from './components/LoadingIndicator';
+import { isTauri } from '@/service/tauri-bridge';
 
 interface IProps {
   className?: string;
@@ -55,10 +56,14 @@ interface IContext {
 export const Context = createContext<IContext>({} as any);
 
 export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) => {
-  const { className, sql, executeSqlParams, concealTabHeader, viewTable, isActive } = props;
+  const { className, sql, concealTabHeader, viewTable, isActive } = props;
+  const executeSqlParamsRef = useRef(props.executeSqlParams);
+  executeSqlParamsRef.current = props.executeSqlParams;
   const [resultDataList, setResultDataList] = useState<IManageResultData[]>();
   const [tableLoading, setTableLoading] = useState(false);
+  const [loadingRowCount, setLoadingRowCount] = useState<number | undefined>();
   const controllerRef = useRef<AbortController>();
+  const unlistenRef = useRef<(() => void) | null>(null);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [notChangedSql, setNotChangedSql] = useState<string>('');
 
@@ -76,16 +81,30 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
    * 执行SQL
    * @param sql
    */
-  const handleExecuteSQL = (_sql: string) => {
+  const handleExecuteSQL = async (_sql: string) => {
     setTableLoading(true);
+    setLoadingRowCount(undefined);
+
+    // 监听 Rust 端的流式进度事件
+    if (isTauri()) {
+      try {
+        const { listen } = await import('@tauri-apps/api/event');
+        const unlisten = await listen<number>('sql_progress', (event) => {
+          setLoadingRowCount(event.payload);
+        });
+        unlistenRef.current = unlisten;
+      } catch {}
+    }
+
     const api = viewTable ? sqlServer.viewTable : sqlServer.executeSql;
+    const currentParams = executeSqlParamsRef.current;
 
     const executeSQLParams: IExecuteSqlParams = {
       sql: _sql,
-      tableName: executeSqlParams?.tableName,
+      tableName: currentParams?.tableName,
       ...getDefaultResultConfig(),
-      ...executeSqlParams,
-      type: executeSqlParams.databaseType, // 兼容写法，希望后端可以统一把type改成databaseType
+      ...currentParams,
+      type: currentParams.databaseType, // 兼容写法，希望后端可以统一把type改成databaseType
     };
 
     controllerRef.current = new AbortController();
@@ -105,6 +124,8 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
         }
       })
       .finally(() => {
+        unlistenRef.current?.();
+        unlistenRef.current = null;
         setTableLoading(false);
       });
   };
@@ -193,6 +214,8 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
 
   const stopExecuteSql = () => {
     controllerRef.current && controllerRef.current.abort();
+    unlistenRef.current?.();
+    unlistenRef.current = null;
     setResultDataList([]);
     setTableLoading(false);
   };
@@ -206,12 +229,7 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
     >
       <div className={classnames(className, styles.searchResult)}>
         {tableLoading ? (
-          <div className={styles.tableLoading}>
-            <Spin />
-            <div className={styles.stopExecuteSql} onClick={stopExecuteSql}>
-              {i18n('common.button.cancelRequest')}
-            </div>
-          </div>
+          <LoadingIndicator onStop={stopExecuteSql} rowCount={loadingRowCount} />
         ) : (
           <>
             {tabsList?.length ? (

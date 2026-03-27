@@ -3,6 +3,7 @@ import cs from 'classnames';
 import { InputNumber, Select } from 'antd';
 import { IResultConfig } from '@/typings';
 import _ from 'lodash';
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import styles from './index.less';
 
 interface IProps {
@@ -85,65 +86,71 @@ export default function Pagination(props: IProps) {
     return true;
   };
 
+  // 计算总数显示
+  const totalDisplay = (() => {
+    const { total } = paginationConfig;
+    if (total === 0 || total === undefined || total === null) return null;
+    return String(total);
+  })();
+
   return (
     <div className={styles.paginationWrapper}>
-      <span
-        className={cs(styles['item-icon'], {
-          [styles['item-icon-disabled']]: handleIsDisabled('first'),
-        })}
-        onClick={() => handleClickIcon('first')}
-      >
-        «
-      </span>
-      <span
-        className={cs(styles['item-icon'], {
-          [styles['item-icon-disabled']]: handleIsDisabled('pre'),
-        })}
-        onClick={() => handleClickIcon('pre')}
-      >
-        ‹
-      </span>
-      <InputNumber
-        className={styles['input-number']}
-        size="small"
-        min={1}
-        value={inputValue}
-        controls={false}
-        onPressEnter={onInputNumberBlur}
-        onBlur={onInputNumberBlur}
-        onChange={onInputNumberChange}
-      />
-      <span
-        className={cs(styles['item-icon'], {
-          [styles['item-icon-disabled']]: handleIsDisabled('next'),
-        })}
-        onClick={() => handleClickIcon('next')}
-      >
-        ›
-      </span>
-      <span
-        className={cs(styles['item-icon'], {
-          [styles['item-icon-disabled']]: lastLoading || handleIsDisabled('last'),
-        })}
-        onClick={() => handleClickIcon('last')}
-      >
-        »
-      </span>
+      <div className={styles.navGroup}>
+        <span
+          className={cs(styles.navBtn, { [styles.navBtnDisabled]: handleIsDisabled('first') })}
+          onClick={() => handleClickIcon('first')}
+        >
+          <ChevronsLeft size={14} strokeWidth={1.5} />
+        </span>
+        <span
+          className={cs(styles.navBtn, { [styles.navBtnDisabled]: handleIsDisabled('pre') })}
+          onClick={() => handleClickIcon('pre')}
+        >
+          <ChevronLeft size={14} strokeWidth={1.5} />
+        </span>
+        <InputNumber
+          className={styles.pageInput}
+          size="small"
+          min={1}
+          value={inputValue}
+          controls={false}
+          onPressEnter={onInputNumberBlur}
+          onBlur={onInputNumberBlur}
+          onChange={onInputNumberChange}
+        />
+        <span
+          className={cs(styles.navBtn, { [styles.navBtnDisabled]: handleIsDisabled('next') })}
+          onClick={() => handleClickIcon('next')}
+        >
+          <ChevronRight size={14} strokeWidth={1.5} />
+        </span>
+        <span
+          className={cs(styles.navBtn, { [styles.navBtnDisabled]: lastLoading || handleIsDisabled('last') })}
+          onClick={() => handleClickIcon('last')}
+        >
+          <ChevronsRight size={14} strokeWidth={1.5} />
+        </span>
+      </div>
 
-      <Select
-        popupMatchSelectWidth={false}
-        size="small"
-        value={paginationConfig?.pageSize ?? 200}
-        onChange={onPageSizeChange}
-        options={[
-          { label: 10, value: 10 },
-          { label: 50, value: 50 },
-          { label: 100, value: 100 },
-          { label: 200, value: 200 },
-          { label: 500, value: 500 },
-          { label: 1000, value: 1000 },
-        ]}
-      />
+      <div className={styles.sizeGroup}>
+        <Select
+          className={styles.sizeSelect}
+          popupMatchSelectWidth={false}
+          size="small"
+          variant="borderless"
+          value={paginationConfig?.pageSize ?? 200}
+          onChange={onPageSizeChange}
+          options={[
+            { label: '10 / page', value: 10 },
+            { label: '50 / page', value: 50 },
+            { label: '100 / page', value: 100 },
+            { label: '200 / page', value: 200 },
+            { label: '500 / page', value: 500 },
+            { label: '1000 / page', value: 1000 },
+          ]}
+        />
+        {totalDisplay && <span className={styles.totalLabel}>{totalDisplay} rows</span>}
+      </div>
     </div>
   );
 }

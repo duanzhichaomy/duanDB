@@ -80,12 +80,11 @@ const WorkspaceLeft = memo(() => {
     <>
       <div className={classnames(styles.workspaceLeft)}>
         {connectionList?.length ? (
-          showLeftSaveList ? (
-            <div className={styles.saveListPanel}>
+          <>
+            <div className={styles.saveListPanel} style={{ display: showLeftSaveList ? undefined : 'none' }}>
               <SaveList />
             </div>
-          ) : (
-            <>
+            <div style={{ display: showLeftSaveList ? 'none' : 'contents' }}>
               <OperationLine
                 getTreeData={(refresh) => refreshTreeRef.current(refresh)}
                 searchValue={searchValue}
@@ -106,8 +105,8 @@ const WorkspaceLeft = memo(() => {
                   onRegisterRefresh={(fn) => { refreshTreeRef.current = fn; }}
                 />
               )}
-            </>
-          )
+            </div>
+          </>
         ) : (
           <div className={styles.noConnectionList}>
             <Iconfont className={styles.noConnectionListIcon} code="&#xe638;" />

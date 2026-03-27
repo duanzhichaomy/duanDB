@@ -88,6 +88,9 @@ export default {
   'common.button.add': '添加',
   'common.text.errorMessage': '错误信息',
   'common.button.cancelRequest': '取消请求',
+  'common.text.fetching': '正在获取',
+  'common.text.fetchedRows': '获取记录：',
+  'common.button.stop': '停止',
   'common.button.executionError': '执行错误',
   'common.text.affectedRows': '受影响行：{1}',
   'common.text.selectFile' : '选择文件',
@@ -119,5 +122,9 @@ export default {
   'common.label.LocalFile': '本地',
   'common.text.rename': '重命名',
   'common.title.info': '信息',
+  'common.text.searchResultData': '搜索结果数据',
+  'common.button.executeSingle': '执行当前语句',
+  'common.button.explain': '执行计划',
+  'common.button.saveAsFile': '另存为文件',
 
 };

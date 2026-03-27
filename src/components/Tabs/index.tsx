@@ -211,6 +211,12 @@ export default memo<IProps>((props) => {
             onDoubleClick={() => {
               onDoubleClick(t);
             }}
+            onMouseDown={(e) => {
+              if (e.button === 1 && showClosed()) {
+                e.preventDefault();
+                deleteTab(t);
+              }
+            }}
             style={t.styles}
             className={classnames(styles.tabItem, { [styles.activeTab]: t.key === internalActiveTab })}
           >

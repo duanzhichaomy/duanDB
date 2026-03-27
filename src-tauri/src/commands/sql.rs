@@ -2,30 +2,26 @@ use crate::commands::helpers::*;
 use crate::models::common::*;
 use crate::models::result::*;
 use crate::state::AppState;
+use futures::StreamExt;
 use sqlx::mysql::MySqlRow;
 use sqlx::{Column, Row, TypeInfo};
 use std::time::Instant;
-use tauri::State;
+use tauri::{AppHandle, Emitter, State};
 
 /// 执行 SQL
 #[tauri::command]
 pub async fn sql_execute(
+    app: AppHandle,
     state: State<'_, AppState>,
     params: ExecuteSqlParams,
 ) -> Result<ApiResponse<Vec<ExecuteResult>>, String> {
     let data_source_id = params.data_source_id.unwrap_or(0);
-    let pool = get_mysql_pool(&state, data_source_id).await?;
-
-    // 切换数据库
-    if let Some(ref db) = params.database_name {
-        if !db.is_empty() {
-            let use_sql = format!("USE `{}`", db.replace('`', "``"));
-            sqlx::raw_sql(&use_sql)
-                .execute(&pool)
-                .await
-                .map_err(|e| e.to_string())?;
-        }
-    }
+    let pool = get_mysql_pool_with_db(
+        &state,
+        data_source_id,
+        params.database_name.as_deref(),
+    )
+    .await?;
 
     let sql_text = params.sql.as_deref().unwrap_or("");
     if sql_text.trim().is_empty() {
@@ -51,7 +47,7 @@ pub async fn sql_execute(
             || sql_upper.starts_with("EXPLAIN");
 
         if is_select {
-            let result = execute_query(&pool, trimmed, &params).await;
+            let result = execute_query(&pool, trimmed, &params, &app).await;
             let duration = start.elapsed().as_millis() as i64;
             match result {
                 Ok(mut r) => {
@@ -128,6 +124,7 @@ pub async fn sql_execute(
 /// 执行查看表数据
 #[tauri::command]
 pub async fn sql_execute_table(
+    app: AppHandle,
     state: State<'_, AppState>,
     params: ExecuteSqlParams,
 ) -> Result<ApiResponse<Vec<ExecuteResult>>, String> {
@@ -145,7 +142,7 @@ pub async fn sql_execute_table(
         ..params
     };
 
-    sql_execute(state, new_params).await
+    sql_execute(app, state, new_params).await
 }
 
 /// 执行 DDL
@@ -155,14 +152,12 @@ pub async fn sql_execute_ddl(
     params: ExecuteSqlParams,
 ) -> Result<ApiResponse<DdlExecuteResult>, String> {
     let data_source_id = params.data_source_id.unwrap_or(0);
-    let pool = get_mysql_pool(&state, data_source_id).await?;
-
-    if let Some(ref db) = params.database_name {
-        if !db.is_empty() {
-            let use_sql = format!("USE `{}`", db.replace('`', "``"));
-            sqlx::raw_sql(&use_sql).execute(&pool).await.ok();
-        }
-    }
+    let pool = get_mysql_pool_with_db(
+        &state,
+        data_source_id,
+        params.database_name.as_deref(),
+    )
+    .await?;
 
     let sql_text = params.sql.as_deref().unwrap_or("");
 
@@ -330,14 +325,12 @@ pub async fn sql_count(
     params: ExecuteSqlParams,
 ) -> Result<ApiResponse<i64>, String> {
     let data_source_id = params.data_source_id.unwrap_or(0);
-    let pool = get_mysql_pool(&state, data_source_id).await?;
-
-    if let Some(ref db) = params.database_name {
-        if !db.is_empty() {
-            let use_sql = format!("USE `{}`", db.replace('`', "``"));
-            sqlx::raw_sql(&use_sql).execute(&pool).await.ok();
-        }
-    }
+    let pool = get_mysql_pool_with_db(
+        &state,
+        data_source_id,
+        params.database_name.as_deref(),
+    )
+    .await?;
 
     let sql_text = params.sql.as_deref().unwrap_or("");
     let count_sql = format!("SELECT COUNT(*) AS cnt FROM ({}) AS t", sql_text);
@@ -375,36 +368,24 @@ async fn execute_query(
     pool: &sqlx::MySqlPool,
     sql: &str,
     params: &ExecuteSqlParams,
+    app: &AppHandle,
 ) -> Result<ExecuteResult, String> {
     let page_no = params.page_no.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(500);
 
     // 检查是否已有 LIMIT
     let sql_upper = sql.to_uppercase();
-    let final_sql = if !sql_upper.contains("LIMIT") {
+    let has_user_limit = sql_upper.contains("LIMIT");
+    let final_sql = if !has_user_limit {
         format!("{} LIMIT {}, {}", sql, (page_no - 1) * page_size, page_size + 1)
     } else {
         sql.to_string()
     };
 
-    let rows: Vec<MySqlRow> = sqlx::raw_sql(&final_sql)
-        .fetch_all(pool)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let has_next_page = if !sql_upper.contains("LIMIT") {
-        rows.len() as i64 > page_size
-    } else {
-        false
-    };
-
-    let actual_rows = if has_next_page && !sql_upper.contains("LIMIT") {
-        &rows[..rows.len() - 1]
-    } else {
-        &rows[..]
-    };
-
-    // 构建 header：第一列固定为序号列（DUANDB_ROW_NUMBER）
+    // 流式获取行
+    let mut stream = sqlx::raw_sql(&final_sql).fetch(pool);
+    let mut rows: Vec<MySqlRow> = Vec::new();
+    let mut headers_built = false;
     let mut headers = vec![TableHeader {
         name: "DUANDB_ROW_NUMBER".to_string(),
         data_type: "DUANDB_ROW_NUMBER".to_string(),
@@ -416,26 +397,55 @@ async fn execute_query(
         nullable: None,
         primary_key: None,
     }];
-    if let Some(first_row) = rows.first() {
-        for col in first_row.columns() {
-            headers.push(TableHeader {
-                name: col.name().to_string(),
-                data_type: map_mysql_type(col.type_info().name()),
-                auto_increment: None,
-                column_size: None,
-                comment: None,
-                decimal_digits: None,
-                default_value: None,
-                nullable: None,
-                primary_key: None,
-            });
+
+    while let Some(result) = stream.next().await {
+        let row = result.map_err(|e| e.to_string())?;
+
+        // 从第一行构建 header
+        if !headers_built {
+            for col in row.columns() {
+                headers.push(TableHeader {
+                    name: col.name().to_string(),
+                    data_type: map_mysql_type(col.type_info().name()),
+                    auto_increment: None,
+                    column_size: None,
+                    comment: None,
+                    decimal_digits: None,
+                    default_value: None,
+                    nullable: None,
+                    primary_key: None,
+                });
+            }
+            headers_built = true;
+        }
+
+        rows.push(row);
+
+        // 每 50 行发送一次进度事件
+        if rows.len() % 50 == 0 {
+            let _ = app.emit("sql_progress", rows.len());
         }
     }
 
-    // 构建数据：每行首位插入行号（作为前端唯一 rowId，从1开始）
+    // 发送最终行数
+    let _ = app.emit("sql_progress", rows.len());
+
+    let has_next_page = if !has_user_limit {
+        rows.len() as i64 > page_size
+    } else {
+        false
+    };
+
+    let actual_rows = if has_next_page && !has_user_limit {
+        &rows[..rows.len() - 1]
+    } else {
+        &rows[..]
+    };
+
+    // 构建数据：每行首位插入行号
     let mut data_list = Vec::new();
     for (row_idx, row) in actual_rows.iter().enumerate() {
-        let mut row_data = vec![Some((row_idx + 1).to_string())]; // 序号列值
+        let mut row_data = vec![Some((row_idx + 1).to_string())];
         for i in 0..headers.len() - 1 {
             row_data.push(cell_to_string(row, i));
         }
@@ -447,12 +457,13 @@ async fn execute_query(
 
     // 查询主键列并填充到 header 中
     if let Some(ref tbl) = table_name {
-        if let Ok(pk_rows) = sqlx::raw_sql(&format!(
+        let pk_sql = format!(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}' AND COLUMN_KEY = 'PRI'",
             tbl.replace('\'', "''")
-        ))
-        .fetch_all(pool)
-        .await
+        );
+        if let Ok(pk_rows) = sqlx::raw_sql(&pk_sql)
+            .fetch_all(pool)
+            .await
         {
             let pk_cols: Vec<String> = pk_rows
                 .iter()
@@ -609,11 +620,7 @@ fn cell_to_string(row: &MySqlRow, col_idx: usize) -> Option<String> {
         }
     }
 
-    // 双精度/小数类型
-    if matches!(type_name.as_str(), "DOUBLE" | "DECIMAL" | "NUMERIC")
-        || type_name.starts_with("DECIMAL")
-        || type_name.starts_with("NUMERIC")
-    {
+    if type_name == "DOUBLE" {
         if let Ok(v) = row.try_get::<f64, _>(col_idx) {
             return Some(v.to_string());
         }
@@ -650,6 +657,26 @@ fn cell_to_string(row: &MySqlRow, col_idx: usize) -> Option<String> {
         }
     }
 
-    // 其余（VARCHAR、TEXT、CHAR、ENUM、SET、JSON、TIME 回退等）
-    row.try_get::<String, _>(col_idx).ok()
+    // DECIMAL / NUMERIC 类型（SUM、AVG 等聚合函数也返回此类型）
+    if type_name.contains("DECIMAL") || type_name.contains("NUMERIC") {
+        if let Ok(v) = row.try_get::<rust_decimal::Decimal, _>(col_idx) {
+            return Some(v.to_string());
+        }
+    }
+
+    // 兜底：尝试常见 Rust 类型
+    if let Ok(v) = row.try_get::<String, _>(col_idx) {
+        return Some(v);
+    }
+    if let Ok(v) = row.try_get::<i64, _>(col_idx) {
+        return Some(v.to_string());
+    }
+    if let Ok(v) = row.try_get::<f64, _>(col_idx) {
+        return Some(v.to_string());
+    }
+    if let Ok(v) = row.try_get::<rust_decimal::Decimal, _>(col_idx) {
+        return Some(v.to_string());
+    }
+
+    None
 }

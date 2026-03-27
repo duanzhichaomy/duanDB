@@ -56,11 +56,11 @@ export default memo<IProps>((props) => {
     if (onRegisterRefresh) {
       onRegisterRefresh(getTreeData);
     }
-  }, [currentConnectionDetails]);
+  }, [currentConnectionDetails?.id]);
 
   useEffect(() => {
     getTreeData();
-  }, [currentConnectionDetails]);
+  }, [currentConnectionDetails?.id]);
 
   const filteredTreeData = useMemo(() => {
     if (!treeData || !selectedDbNames) return treeData;

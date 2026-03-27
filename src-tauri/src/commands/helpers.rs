@@ -24,13 +24,26 @@ async fn build_connect_url(state: &AppState, data_source_id: i64) -> Result<Stri
     }
 }
 
-/// 获取指定数据源的 MySQL 连接池
+/// 获取指定数据源的 MySQL 连接池（不带数据库）
 pub async fn get_mysql_pool(state: &AppState, data_source_id: i64) -> Result<MySqlPool, String> {
+    get_mysql_pool_with_db(state, data_source_id, None).await
+}
+
+/// 获取指定数据源的 MySQL 连接池（可指定数据库，确保连接池已设置目标数据库）
+pub async fn get_mysql_pool_with_db(
+    state: &AppState,
+    data_source_id: i64,
+    database_name: Option<&str>,
+) -> Result<MySqlPool, String> {
+    let pool_key = match database_name {
+        Some(db) if !db.is_empty() => format!("{}:{}", data_source_id, db),
+        _ => data_source_id.to_string(),
+    };
+
     // 先看连接池里有没有
     {
         let pools = state.mysql_pools.read().await;
-        if let Some(p) = pools.get(&data_source_id) {
-            // 检查池是否已关闭
+        if let Some(p) = pools.get(&pool_key) {
             if !p.is_closed() {
                 return Ok(p.clone());
             }
@@ -38,18 +51,36 @@ pub async fn get_mysql_pool(state: &AppState, data_source_id: i64) -> Result<MyS
     }
 
     // 池不存在或已关闭，先清理再重建
-    pool::close_pool(&state.mysql_pools, data_source_id).await;
+    pool::close_pool(&state.mysql_pools, &pool_key).await;
 
-    let connect_url = build_connect_url(state, data_source_id).await?;
-    let p = pool::get_or_create_pool(&state.mysql_pools, data_source_id, &connect_url).await?;
+    let base_url = build_connect_url(state, data_source_id).await?;
+    let connect_url = match database_name {
+        Some(db) if !db.is_empty() => {
+            // 替换 URL 中的数据库部分（处理 base_url 可能已包含数据库路径的情况）
+            if let Some(at_pos) = base_url.rfind('@') {
+                // 找到 host:port 后的第一个 /
+                if let Some(slash_pos) = base_url[at_pos..].find('/') {
+                    // 截取到 host:port 部分，替换数据库
+                    let base = &base_url[..at_pos + slash_pos];
+                    format!("{}/{}", base, urlencoding::encode(db))
+                } else {
+                    format!("{}/{}", base_url, urlencoding::encode(db))
+                }
+            } else {
+                format!("{}/{}", base_url.trim_end_matches('/'), urlencoding::encode(db))
+            }
+        }
+        _ => base_url.clone(),
+    };
+
+    let p = pool::get_or_create_pool(&state.mysql_pools, &pool_key, &connect_url).await?;
 
     // 验证连接可用，如果不可用则清理并重试一次
     match sqlx::query("SELECT 1").execute(&p).await {
         Ok(_) => Ok(p),
         Err(_) => {
-            pool::close_pool(&state.mysql_pools, data_source_id).await;
-            let connect_url = build_connect_url(state, data_source_id).await?;
-            pool::get_or_create_pool(&state.mysql_pools, data_source_id, &connect_url).await
+            pool::close_pool(&state.mysql_pools, &pool_key).await;
+            pool::get_or_create_pool(&state.mysql_pools, &pool_key, &connect_url).await
         }
     }
 }

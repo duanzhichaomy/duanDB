@@ -65,7 +65,7 @@ export const createConsole = (params: ICreateConsoleParams) => {
   const currentConnectionDetails = useWorkspaceStore.getState().currentConnectionDetails;
   const newConsole = {
     ...params,
-    name: params.name || `untitled-${params.databaseName || params.schemaName} (${params.dataSourceName})`,
+    name: params.name || `${params.databaseName || params.schemaName || 'untitled'}(${params.dataSourceName})`,
     ddl: params.ddl || '',
     status: ConsoleStatus.DRAFT,
     operationType: params.operationType || WorkspaceTabType.CONSOLE,

@@ -162,7 +162,7 @@ pub async fn connection_update(
     .map_err(|e| e.to_string())?;
 
     // 关闭旧连接池
-    pool::close_pool(&state.mysql_pools, params.id).await;
+    pool::close_pools_by_prefix(&state.mysql_pools, params.id).await;
 
     Ok(ApiResponse::ok(()))
 }
@@ -173,7 +173,7 @@ pub async fn connection_delete(
     state: State<'_, AppState>,
     id: i64,
 ) -> Result<ApiResponse<()>, String> {
-    pool::close_pool(&state.mysql_pools, id).await;
+    pool::close_pools_by_prefix(&state.mysql_pools, id).await;
 
     sqlx::query("DELETE FROM data_source WHERE id = ?")
         .bind(id)
@@ -209,7 +209,7 @@ pub async fn connection_close(
     state: State<'_, AppState>,
     id: i64,
 ) -> Result<ApiResponse<()>, String> {
-    pool::close_pool(&state.mysql_pools, id).await;
+    pool::close_pools_by_prefix(&state.mysql_pools, id).await;
     Ok(ApiResponse::ok(()))
 }
 

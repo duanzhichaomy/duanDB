@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { IAiConfig, IBoundInfo } from '@/typings';
 import Popularize from '@/components/Popularize';
 import OperationLine from './components/OperationLine';
+import SelectBoundInfo from './components/SelectBoundInfo';
 import { chatErrorForKey, chatErrorToLogin } from '@/constants/chat';
 import { AIType } from '@/typings/ai';
 import i18n from '@/i18n';
@@ -414,6 +415,16 @@ function ConsoleEditor(props: IProps, ref: ForwardedRef<IConsoleRef>) {
               }}
             />
           )}
+          <div className={styles.topToolbar}>
+            <OperationLine
+              saveConsole={saveConsole}
+              executeSQL={executeSQL}
+              editorRef={editorRef}
+              hasSaveBtn={hasSaveBtn}
+              boundInfo={boundInfo}
+            />
+            <SelectBoundInfo setBoundInfo={setBoundInfo} boundInfo={boundInfo} />
+          </div>
           <MonacoEditor
             id={uid}
             defaultValue={defaultValue}
@@ -444,14 +455,6 @@ function ConsoleEditor(props: IProps, ref: ForwardedRef<IConsoleRef>) {
             </Spin>
           </Drawer>
         </Spin>
-        <OperationLine
-          boundInfo={boundInfo}
-          saveConsole={saveConsole}
-          executeSQL={executeSQL}
-          editorRef={editorRef}
-          setBoundInfo={setBoundInfo}
-          hasSaveBtn={hasSaveBtn}
-        />
         <Modal
           open={popularizeModal}
           footer={false}

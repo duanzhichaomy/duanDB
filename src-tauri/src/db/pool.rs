@@ -27,13 +27,13 @@ pub fn build_mysql_url(
 /// 获取或创建 MySQL 连接池
 pub async fn get_or_create_pool(
     pools: &MysqlPools,
-    data_source_id: i64,
+    pool_key: &str,
     url: &str,
 ) -> Result<MySqlPool, String> {
     // 先读取，看是否已存在
     {
         let read = pools.read().await;
-        if let Some(pool) = read.get(&data_source_id) {
+        if let Some(pool) = read.get(pool_key) {
             return Ok(pool.clone());
         }
     }
@@ -51,15 +51,31 @@ pub async fn get_or_create_pool(
         .map_err(|e| format!("连接 MySQL 失败: {}", e))?;
 
     let mut write = pools.write().await;
-    write.insert(data_source_id, pool.clone());
+    write.insert(pool_key.to_string(), pool.clone());
     Ok(pool)
 }
 
 /// 关闭指定连接池
-pub async fn close_pool(pools: &MysqlPools, data_source_id: i64) {
+pub async fn close_pool(pools: &MysqlPools, pool_key: &str) {
     let mut write = pools.write().await;
-    if let Some(pool) = write.remove(&data_source_id) {
+    if let Some(pool) = write.remove(pool_key) {
         pool.close().await;
+    }
+}
+
+/// 关闭某个数据源的所有连接池（包括带数据库名的）
+pub async fn close_pools_by_prefix(pools: &MysqlPools, data_source_id: i64) {
+    let prefix = data_source_id.to_string();
+    let mut write = pools.write().await;
+    let keys_to_remove: Vec<String> = write
+        .keys()
+        .filter(|k| *k == &prefix || k.starts_with(&format!("{}:", prefix)))
+        .cloned()
+        .collect();
+    for key in keys_to_remove {
+        if let Some(pool) = write.remove(&key) {
+            pool.close().await;
+        }
     }
 }
 
