@@ -1,6 +1,6 @@
 # 发布流程
 
-目前版本号：0.1.3
+目前版本号：0.1.4
 
 ## 步骤
 
@@ -58,3 +58,4 @@ git push origin main --tags
 - 从 GitHub Release 下载安装包
 - 安装后检查"设置 → 关于我们"中的版本号是否正确
 - 验证新功能是否正常工作
+- xattr -cr /Applications/DuanDB.app
