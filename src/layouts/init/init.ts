@@ -5,8 +5,12 @@ import registerMessage from './registerMessage';
 import registerNotification from './registerNotification';
 import { getLang, setLang } from '@/utils/localStorage';
 import { LangType } from '@/constants';
+import { initLogInterceptor } from '@/store/log';
 
 const init = () => {
+  // 尽早初始化日志拦截，捕获所有后续日志
+  initLogInterceptor();
+
   clearOlderLocalStorage();
 
   initLang();

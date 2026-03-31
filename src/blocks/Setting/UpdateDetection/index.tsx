@@ -207,7 +207,7 @@ const UpdateDetection = memo(
             type="link"
             size="small"
             onClick={() => {
-              openSettingModal(3);
+              openSettingModal(2);
               notificationApi.destroy();
             }}
           >

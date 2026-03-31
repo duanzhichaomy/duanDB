@@ -34,6 +34,7 @@ import CustomLayout from '@/components/CustomLayout';
 import Workspace from './workspace';
 import Connection from './connection';
 import Setting from '@/blocks/Setting';
+import LogViewer from '@/blocks/LogViewer';
 
 import styles from './index.less';
 import { useUpdateEffect } from '@/hooks';
@@ -271,6 +272,7 @@ function MainPage() {
           {/* <Tooltip placement="right" title="个人中心">
             {userInfo?.roleCode !== IRole.DESKTOP ? renderUser() : null}
           </Tooltip> */}
+          <LogViewer className={styles.setIcon} />
           <Setting className={styles.setIcon} />
         </div>
       </div>

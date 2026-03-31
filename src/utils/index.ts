@@ -271,8 +271,24 @@ export function clipboardToArray(text: string): Array<Array<string | null>> {
 
 // Copy
 export function copy(message: string) {
-  // clipboardCopy(message);
-  navigator.clipboard.writeText(message);
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(message).catch(() => {
+      fallbackCopy(message);
+    });
+  } else {
+    fallbackCopy(message);
+  }
+}
+
+function fallbackCopy(text: string) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
 }
 
 // 二维数组复制

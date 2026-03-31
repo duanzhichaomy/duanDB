@@ -1,0 +1,79 @@
+@import '../../styles/var.less';
+
+.triggerBox {
+  .f-icon-button();
+}
+
+.logIcon {
+  color: var(--custom-color-icon);
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logList {
+  flex: 1;
+  overflow-y: auto;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 4px 0;
+}
+
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-quaternary);
+}
+
+.logEntry {
+  display: flex;
+  align-items: flex-start;
+  padding: 2px 12px;
+  cursor: pointer;
+  white-space: pre-wrap;
+  word-break: break-all;
+
+  &:hover {
+    background-color: var(--color-hover-bg);
+  }
+}
+
+.level-warn {
+  background-color: rgba(250, 173, 20, 0.06);
+}
+
+.level-error {
+  background-color: rgba(255, 77, 79, 0.06);
+}
+
+.time {
+  flex-shrink: 0;
+  color: var(--color-text-quaternary);
+  margin-right: 8px;
+}
+
+.level {
+  flex-shrink: 0;
+  width: 42px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.source {
+  flex-shrink: 0;
+  color: var(--color-text-quaternary);
+  margin-right: 8px;
+}
+
+.message {
+  flex: 1;
+  color: var(--color-text);
+}

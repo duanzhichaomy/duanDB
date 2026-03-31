@@ -16,6 +16,7 @@ function useCopyFocusData() {
     const handleCopy = (e: KeyboardEvent) => {
       if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
         if (!focusedContent) return
+        e.preventDefault();
         // 如果是数据是数组，就调用tableCopy
         if (Array.isArray(focusedContent)) {
           tableCopy(focusedContent as any)
