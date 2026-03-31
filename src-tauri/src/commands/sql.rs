@@ -435,7 +435,7 @@ async fn execute_query(
 
     Ok(ExecuteResult {
         sql: sql.to_string(),
-        original_sql: None,
+        original_sql: Some(sql.to_string()),
         description: format!("共 {} 行", row_count),
         message: String::new(),
         success: true,
