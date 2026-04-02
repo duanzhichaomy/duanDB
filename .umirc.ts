@@ -25,23 +25,11 @@ export default defineConfig({
       component: '@/layouts/GlobalLayout',
       routes: [
         {
-          path: '/login',
-          component: '@/pages/login',
-        },
-        {
           path: '/demo',
           component: '@/pages/demo',
         },
         {
           path: '/connections',
-          component: 'main',
-        },
-        {
-          path: '/dashboard',
-          component: 'main',
-        },
-        {
-          path: '/team',
           component: 'main',
         },
         {
@@ -63,10 +51,6 @@ export default defineConfig({
   proxy: {
     '/api': {
       target: 'http://127.0.0.1:10821',
-      changeOrigin: true,
-    },
-    '/client/remaininguses/': {
-      target: 'http://127.0.0.1:1889',
       changeOrigin: true,
     },
   },

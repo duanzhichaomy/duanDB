@@ -2,16 +2,13 @@ import createRequest from './base';
 import {
   IPageResponse,
   IPageParams,
-  IUniversalTableParams,
   IManageResultData,
   IRoutines,
   IDatabaseSupportField,
   IEditTableInfo,
   ITable,
-  ISequenceInfo,
 } from '@/typings';
 import { DatabaseTypeCode } from '@/constants';
-import { ExportSizeEnum, ExportTypeEnum } from '@/typings/resultTable';
 
 export interface IGetTableListParams extends IPageParams {
   dataSourceId: number;
@@ -39,6 +36,7 @@ export interface IExecuteSqlResponse {
   headerList: any[];
   dataList: any[];
 }
+
 export interface IConnectConsoleParams {
   consoleId: number;
   dataSourceId: number;
@@ -71,7 +69,7 @@ export interface IExecuteTableParams {
 export interface IColumn {
   name: string;
   dataType: string;
-  columnType: string; // 列的类型 比如 varchar(100) ,double(10,6)
+  columnType: string;
   nullable: boolean;
   primaryKey: boolean;
   defaultValue: string;
@@ -105,7 +103,6 @@ export interface Schema {
 }
 
 const deleteTable = createRequest<ITableParams, void>('/api/rdb/ddl/delete', { method: 'post' });
-const deleteSequence = createRequest<ITableParams, void>('/api/rdb/sequence/delete', { method: 'post' });
 const createTableExample = createRequest<{ dbType: DatabaseTypeCode }, string>('/api/rdb/ddl/create/example', {
   method: 'get',
 });
@@ -123,10 +120,6 @@ const getIndexList = createRequest<ITableParams, IColumn[]>('/api/rdb/ddl/index_
   method: 'get',
   delayTime: 200,
 });
-const getSequenceList = createRequest<ITableParams, IColumn[]>('/api/rdb/sequence/list', { 
-  method: 'get',
-  delayTime: 200,
-});
 const getKeyList = createRequest<ITableParams, IColumn[]>('/api/rdb/ddl/key_list', { method: 'get', delayTime: 200 });
 const getSchemaList = createRequest<ISchemaParams, ISchemaResponse[]>('/api/rdb/ddl/schema_list', {
   method: 'get',
@@ -138,23 +131,8 @@ const getDatabaseSchemaList = createRequest<{ dataSourceId: number }, MetaSchema
   { method: 'get' },
 );
 
-const addTablePin = createRequest<IUniversalTableParams, void>('/api/pin/table/add', { method: 'post' });
-
-const deleteTablePin = createRequest<IUniversalTableParams, void>('/api/pin/table/delete', { method: 'post' });
-
 /** 获取当前执行SQL 所有行 */
 const getDMLCount = createRequest<IExecuteSqlParams, number>('/api/rdb/dml/count', { method: 'post' });
-
-export interface IExportParams extends IExecuteSqlParams {
-  originalSql: string;
-  exportType: ExportTypeEnum;
-  exportSize: ExportSizeEnum;
-}
-/**
- * 导出-表格
- */
-// const exportResultTable = createRequest<IExportParams, any>('/api/rdb/dml/export', { method: 'post' });
-const exportCreateSequenceSql = createRequest<ITableParams, string>('/api/rdb/sequence/export', { method: 'get' });
 
 /** 获取视图列表 */
 const getViewList = createRequest<IGetTableListParams, IPageResponse<IRoutines>>('/api/rdb/view/list', {
@@ -180,8 +158,6 @@ const getProcedureList = createRequest<IGetTableListParams, IPageResponse<IRouti
 const getViewColumnList = createRequest<IGetTableListParams, IPageResponse<IRoutines>>('/api/rdb/view/column_list', {
   method: 'get',
 });
-
-
 
 /** 获取视图详情 */
 const getViewDetail = createRequest<
@@ -227,9 +203,6 @@ const getProcedureDetail = createRequest<
   { procedureBody: string }
 >('/api/rdb/procedure/detail', { method: 'get' });
 
-
-
-
 /** 格式化sql */
 const sqlFormat = createRequest<
   {
@@ -259,6 +232,7 @@ const getTableDetails = createRequest<
   },
   IEditTableInfo
 >('/api/rdb/table/query', { method: 'get' });
+
 /** 获取库的所有表 */
 const getAllTableList = createRequest<
   { dataSourceId: number; databaseName?: string | null; schemaName?: string | null },
@@ -286,34 +260,7 @@ const getModifyTableSql = createRequest<IModifyTableSqlParams, { sql: string }[]
   method: 'post',
 });
 
-export interface IModifySequenceSqlParams {
-  dataSourceId: number;
-  databaseName: string;
-  schemaName?: string | null;
-  sequenceName?: string;
-  oldSequence?: ISequenceInfo;
-  newSequence: ISequenceInfo;
-  refresh: boolean;
-}
-/** 获取序列的详情 */
-const getSequenceDetails = createRequest<
-  {
-    dataSourceId: number;
-    databaseName: string;
-    schemaName?: string | null;
-    sequenceName: string;
-    refresh: boolean;
-  },
-  ISequenceInfo
->('/api/rdb/sequence/query', { method: 'get' });
-/**
- * 获取修改序列的sql
-*/
-const getModifySequenceSql = createRequest<IModifySequenceSqlParams, { sql: string }[]>('/api/rdb/sequence/modify/sql', {
-  method: 'post',
-});
-
-/** 执行编辑表的sql, 专为编辑表而生 */
+/** 执行编辑表的sql */
 const executeDDL = createRequest<IExecuteSqlParams, { success: boolean; message: string; originalSql: string }>(
   '/api/rdb/dml/execute_ddl',
   { method: 'post' },
@@ -328,28 +275,13 @@ const executeUpdateDataSql = createRequest<IExecuteSqlParams, { success: boolean
 /** 获取修改表数据的接口 */
 const getExecuteUpdateSql = createRequest<any, string>('/api/rdb/dml/get_update_sql', { method: 'post' });
 
-/** 创建数据库  */ 
+/** 创建数据库 */
 const getCreateDatabaseSql = createRequest<{
   dataSourceId: number;
   databaseName: string;
 }, { sql: string }>('/api/rdb/database/create_database_sql', { method: 'post' });
 
-/** 创建schema  */ 
-const getCreateSchemaSql = createRequest<{
-  dataSourceId: number;
-  databaseName?: string;
-  schemaName?: string;
-}, {sql:string}>('/api/rdb/schema/create_schema_sql', { method: 'post' });
-
-/** 查询数据库用户名列表  */
-const getDatabaseUserNameList = createRequest<{
-  dataSourceId: number;
-  databaseName: string;
-  schemaName?: string | null;
-  refresh: boolean;
-}, string[]>('/api/rdb/database/database_username_list', { method: 'get' });
 export default {
-  getCreateSchemaSql,
   getCreateDatabaseSql,
   executeUpdateDataSql,
   executeDDL,
@@ -381,16 +313,7 @@ export default {
   getKeyList,
   getSchemaList,
   getDatabaseSchemaList,
-  addTablePin,
-  deleteTablePin,
   getDMLCount,
-  // exportResultTable
   getAllTableList,
   getAllFieldByTable,
-  getSequenceList,
-  exportCreateSequenceSql,
-  getModifySequenceSql,
-  getSequenceDetails,
-  deleteSequence,
-  getDatabaseUserNameList,
 };

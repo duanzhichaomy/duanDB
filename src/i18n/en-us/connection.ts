@@ -15,6 +15,7 @@ export default {
   'connection.label.sshConfiguration': 'SSH Configuration',
   'connection.button.addConnection': 'Add Connection',
   'connection.button.connect': 'Connect',
+  'connection.button.disconnect': 'Disconnect',
   'connection.button.remove': 'Remove',
   'connection.message.testConnectResult': 'Test connection is {1}',
   'connection.message.testSshConnection': 'Test the ssh connection',

@@ -6,7 +6,7 @@ import classnames from 'classnames';
 import lodash from 'lodash';
 import { v4 as uuid } from 'uuid';
 import i18n from '@/i18n';
-import ScreeningResult from '@/components/SearchResult/components/ScreeningResult';
+import ScreeningResult, { IScreeningResultRefFunction } from '@/components/SearchResult/components/ScreeningResult';
 import { getPageSize } from '@/store/setting';
 // import { Context } from '@/components/SearchResult';
 
@@ -143,6 +143,8 @@ export default function TableBox(props: ITableProps) {
   const editDataInputRef = React.useRef<any>(null);
   // monacoEditorRef
   const monacoEditorRef = React.useRef<any>(null);
+  // ScreeningResult ref
+  const screeningResultRef = React.useRef<IScreeningResultRefFunction>(null);
   // 表格loading
   const [tableLoading, setTableLoading] = useState<boolean>(false);
   // 列宽数组
@@ -280,6 +282,31 @@ export default function TableBox(props: ITableProps) {
       })),
     [queryResultData.headerList],
   );
+
+  const [sorts, setSorts] = useState<SortItem[]>(defaultSorts);
+
+  useEffect(() => {
+    setSorts(defaultSorts);
+  }, [defaultSorts]);
+
+  // 点击列头排序箭头时，生成 ORDER BY 子句并触发服务端查询
+  const onChangeSorts = (nextSorts: SortItem[]) => {
+    setSorts(nextSorts);
+    // 找到有排序方向的项
+    const activeSorts = nextSorts.filter((s) => s.order !== 'none');
+    const orderByClause = activeSorts
+      .map((s) => `\`${s.code}\` ${s.order === 'asc' ? 'ASC' : 'DESC'}`)
+      .join(', ');
+
+    // 同步到 ORDER BY 输入栏
+    if (screeningResultRef.current) {
+      screeningResultRef.current.setOrderByValue(orderByClause);
+      // 使用 setTimeout 确保编辑器值已更新后再触发搜索
+      setTimeout(() => {
+        screeningResultRef.current?.search();
+      }, 0);
+    }
+  };
 
   function monacoEditorEditData() {
     const editorData = monacoEditorRef?.current?.getAllContent();
@@ -602,11 +629,17 @@ export default function TableBox(props: ITableProps) {
       ...(params || {}),
     };
 
-    return sqlService.executeSql(executeSQLParams).then((res) => {
-      setTableLoading(false);
-      setQueryResultData(res?.[0]);
-      setUpdateData([]);
-    });
+    return sqlService
+      .executeSql(executeSQLParams)
+      .then((res) => {
+        setTableLoading(false);
+        setQueryResultData(res?.[0]);
+        setUpdateData([]);
+      })
+      .catch((err) => {
+        setTableLoading(false);
+        message.error(err?.message || String(err));
+      });
   };
 
   // sql执行成功后的回调
@@ -807,10 +840,10 @@ export default function TableBox(props: ITableProps) {
     .use(
       features.sort({
         mode: 'single',
-        defaultSorts,
+        sorts,
+        onChangeSorts: concealTabHeader ? onChangeSorts : undefined,
+        defaultSorts: concealTabHeader ? undefined : defaultSorts,
         highlightColumnWhenActive: true,
-        // sorts,
-        // onChangeSorts,
       }),
     )
     .use(
@@ -1134,7 +1167,7 @@ export default function TableBox(props: ITableProps) {
               </Dropdown>
             </div>
           </div>
-          {concealTabHeader && <ScreeningResult getTableData={getTableData} promptWord={queryResultData.headerList} />}
+          {concealTabHeader && <ScreeningResult ref={screeningResultRef} getTableData={getTableData} promptWord={queryResultData.headerList} />}
           <div className={styles.searchBar}>
             <div className={styles.searchBarLeft}>
               <Iconfont code="&#xe600;" className={styles.searchBarIcon} />

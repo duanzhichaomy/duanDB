@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { memo, useEffect, useContext } from 'react';
+import React, { useEffect, useContext, forwardRef, useImperativeHandle } from 'react';
 import classnames from 'classnames';
 import styles from './index.less';
 import Iconfont from '@/components/Iconfont';
@@ -12,6 +12,11 @@ interface IProps {
   className?: string;
   promptWord: any[];
   getTableData: (params?: Partial<IExecuteSqlParams>) => void;
+}
+
+export interface IScreeningResultRefFunction {
+  setOrderByValue: (value: string) => void;
+  search: () => void;
 }
 
 const keywordHintList = [
@@ -32,7 +37,7 @@ const keywordHintList = [
   'DESC',
 ]
 
-export default memo<IProps>((props) => {
+export default forwardRef<IScreeningResultRefFunction, IProps>((props, ref) => {
   const { promptWord, getTableData } = props;
   const { notChangedSql } = useContext(Context);
   const [isActive, setIsActive] = React.useState(false);
@@ -96,6 +101,13 @@ export default memo<IProps>((props) => {
   const focusChange = (_isActive: boolean) => {
     setIsActive(_isActive);
   };
+
+  useImperativeHandle(ref, () => ({
+    setOrderByValue: (value: string) => {
+      orderBySingleFileMonacoEditorRef.current?.setValue(value);
+    },
+    search,
+  }));
 
   return (
     <div className={styles.screeningResult}>

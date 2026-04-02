@@ -52,10 +52,17 @@ export const closeWindow = async () => {
 
 export const quitApp = async () => {
   try {
-    // Tauri v2: process API 通过 @tauri-apps/plugin-process 提供
-    // 这里使用 core invoke 直接调用退出
     const { invoke } = await import('@tauri-apps/api/core');
     await invoke('plugin:process|exit', { code: 0 });
+  } catch {
+    window.close();
+  }
+};
+
+export const relaunchApp = async () => {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('plugin:process|restart');
   } catch {
     window.close();
   }

@@ -31,13 +31,6 @@ export const defaultBindings: Record<string, IShortcutBinding> = {
     code: 'Digit1',
     displayText: `${modKey}+1`,
   },
-  switchToDashboard: {
-    key: 'switchToDashboard',
-    label: '切换到数据看板',
-    modifiers: [isMac ? 'metaKey' : 'ctrlKey'],
-    code: 'Digit2',
-    displayText: `${modKey}+2`,
-  },
   closeCurrentTab: {
     key: 'closeCurrentTab',
     label: '关闭当前会话',

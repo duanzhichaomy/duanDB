@@ -1,4 +1,4 @@
-import { ITreeNode, IConnectionDetails } from '@/typings';
+import { ITreeNode } from '@/typings';
 import { TreeNodeType, OperationColumn } from '@/constants';
 import connectionService from '@/service/connection';
 import { v4 as uuid } from 'uuid';
@@ -77,13 +77,6 @@ export const switchIcon: Partial<{ [key in TreeNodeType]: { icon: string; unfold
     icon: '\ueac5',
     unfoldIcon: '\ueac7',
   },
-  [TreeNodeType.SEQUENCES]: {
-    icon: '\ueac5',
-    unfoldIcon: '\ueac7',
-  },
-  [TreeNodeType.SEQUENCE]: {
-    icon: '\ue63e',
-  },
 };
 
 export interface ITreeConfigItem {
@@ -153,7 +146,7 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
           });
       });
     },
-    operationColumn: [OperationColumn.EditSource, OperationColumn.Refresh, OperationColumn.ShiftOut],
+    operationColumn: [OperationColumn.CreateConsole, OperationColumn.Refresh, OperationColumn.Disconnect],
     next: TreeNodeType.DATABASE,
   },
 
@@ -188,8 +181,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
     },
     operationColumn: [
       OperationColumn.CreateConsole,
-      OperationColumn.CreateSchema,
-      // OperationColumn.CreateTable,
       OperationColumn.CopyName,
       OperationColumn.Refresh,
     ],
@@ -239,15 +230,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
             extraParams: parentData.extraParams,
           },
         ];
-        if((parentData.extraParams?.databaseType === 'POSTGRESQL'|| parentData.extraParams?.databaseType === 'ORACLE')&& schemaName==='public'){
-          data.push({
-            uuid: uuid(),
-            key: `${preCode}-sequences`,
-            name: 'sequences',
-            treeNodeType: TreeNodeType.SEQUENCES,
-            extraParams: parentData.extraParams,
-          });
-        }
         r(data);
       });
     },
@@ -646,46 +628,5 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
   [TreeNodeType.INDEX]: {
     icon: '\ue65b',
     operationColumn: [OperationColumn.CreateConsole, OperationColumn.CopyName],
-  },
-  [TreeNodeType.SEQUENCES]: {
-    icon: '\ueabe', // 使用现有图标（如文件夹折叠）
-   
-    getChildren: (params) => {
-      const _extraParams = params.extraParams;
-      delete params.extraParams;
-      return new Promise((r: (value: ITreeNode[]) => void, j) => {
-        mysqlServer
-          .getSequenceList(params)
-          .then((res) => {
-            const data: ITreeNode[] = res?.map((item:any) => {
-              return {
-                uuid: uuid(),
-                key: item.name,
-                name: item.name,
-                treeNodeType: TreeNodeType.SEQUENCE,
-                sequenceName: item.name,
-                isLeaf: true,
-                extraParams: {
-                  ..._extraParams,
-                  sequenceName: item.name,
-                },
-              };
-            });
-            r(data);
-          })
-          .catch((error) => {
-            j(error);
-          });
-      })
-    },
-    operationColumn: [
-      OperationColumn.CreateSequence,
-      OperationColumn.CopyName,
-      OperationColumn.Refresh,
-    ],
-  },
-  [TreeNodeType.SEQUENCE]: {
-    icon: '\ue611',
-    operationColumn: [OperationColumn.OpenSequence, OperationColumn.EditSequence, OperationColumn.CopyName,OperationColumn.DeleteSequence],
   },
 };

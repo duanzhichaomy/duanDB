@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button, Dropdown, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import classnames from 'classnames';
 
 import Iconfont from '@/components/Iconfont';
 import BrandLogo from '@/components/BrandLogo';
 
 import i18n from '@/i18n';
-import { userLogout } from '@/service/user';
 import { INavItem } from '@/typings/main';
-import { IRole } from '@/typings/user';
 
 // ----- hooks -----
 import getConnectionEnvList from './functions/getConnection';
@@ -17,7 +14,6 @@ import getConnectionEnvList from './functions/getConnection';
 // ----- store -----
 import { useMainStore, setMainPageActiveTab } from '@/pages/main/store/main';
 import { getConnectionList } from '@/pages/main/store/connection';
-import { useUserStore, setCurUser } from '@/store/user';
 import { setAppTitleBarRightComponent } from '@/store/common/appTitleBarConfig';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import { setShowLeftSaveList } from '@/pages/main/workspace/store/common';
@@ -51,12 +47,6 @@ const initNavConfig: INavItem[] = [
 ];
 
 function MainPage() {
-  const navigate = useNavigate();
-  const { userInfo } = useUserStore((state) => {
-    return {
-      userInfo: state.curUser,
-    };
-  });
   const showLeftSaveList = useWorkspaceStore((state) => state.showLeftSaveList);
   const [navConfig, setNavConfig] = useState<INavItem[]>(initNavConfig);
   const mainPageActiveTab = useMainStore((state) => state.mainPageActiveTab);
@@ -148,13 +138,6 @@ function MainPage() {
         setMainPageActiveTab('workspace');
         return;
       }
-
-      if (matchBinding('switchToDashboard')) {
-        e.preventDefault();
-        e.stopPropagation();
-        setMainPageActiveTab('dashboard');
-        return;
-      }
     };
 
     window.addEventListener('keydown', handler, true);
@@ -162,7 +145,6 @@ function MainPage() {
   }, []);
 
   useEffect(() => {
-    handleInitPage();
     getConnectionList();
     getConnectionEnvList();
   }, []);
@@ -185,49 +167,9 @@ function MainPage() {
     }
   }, [activeNavKey]);
 
-  const handleInitPage = async () => {
-    const cloneNavConfig = [...navConfig];
-    if (userInfo) {
-    }
-    setNavConfig([...cloneNavConfig]);
-  };
-
   const switchingNav = (key: string) => {
     setActiveNavKey(key);
     setMainPageActiveTab(key);
-  };
-
-  const handleLogout = () => {
-    userLogout().then(() => {
-      setCurUser(undefined);
-      navigate('/login');
-    });
-  };
-
-  const renderUser = () => {
-    return (
-      <Dropdown
-        menu={{
-          items: [
-            {
-              key: '1',
-              label: (
-                <div className={styles.userDropdown} onClick={handleLogout}>
-                  <Iconfont code="&#xe6b2;" />
-                  {i18n('login.text.logout')}
-                </div>
-              ),
-            },
-          ],
-        }}
-        placement="bottomRight"
-        trigger={['click']}
-      >
-        <div className={styles.userBox}>
-          <Iconfont code="&#xe64c;" className={styles.questionIcon} />
-        </div>
-      </Dropdown>
-    );
   };
 
   return (
@@ -269,9 +211,6 @@ function MainPage() {
           )}
         </ul>
         <div className={styles.footer}>
-          {/* <Tooltip placement="right" title="个人中心">
-            {userInfo?.roleCode !== IRole.DESKTOP ? renderUser() : null}
-          </Tooltip> */}
           <LogViewer className={styles.setIcon} />
           <Setting className={styles.setIcon} />
         </div>

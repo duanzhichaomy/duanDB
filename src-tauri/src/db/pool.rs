@@ -45,7 +45,7 @@ pub async fn get_or_create_pool(
         .acquire_timeout(std::time::Duration::from_secs(10))
         .idle_timeout(std::time::Duration::from_secs(300))
         .max_lifetime(std::time::Duration::from_secs(1800))
-        .test_before_acquire(false)
+        .test_before_acquire(true)
         .connect(url)
         .await
         .map_err(|e| format!("连接 MySQL 失败: {}", e))?;

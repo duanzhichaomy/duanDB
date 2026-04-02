@@ -19,11 +19,8 @@ interface IProps {
   executedCallback?: () => void;
 }
 
-export type CreateType = 'database' | 'schema';
-
 export interface ICreateDatabase {
   databaseName?: string;
-  schemaName?: string;
   comment?: string;
 }
 
@@ -39,7 +36,6 @@ const CreateDatabase = () => {
     null,
   );
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const [createType, setCreateType] = useState<CreateType>('database');
   const [relyOnParams, setRelyOnParams] = useState<IProps['relyOnParams'] | null>(null);
   const executedCallbackRef = React.useRef<IProps['executedCallback']>();
 
@@ -51,43 +47,25 @@ const CreateDatabase = () => {
     }
   }, [open]);
 
-  const config = useMemo(() => {
-    return createType === 'database'
-      ? {
-          title: `${i18n('common.title.create')} Database`,
-          api: sqlService.getCreateDatabaseSql,
-          formName: 'databaseName',
-        }
-      : {
-          title: `${i18n('common.title.create')} Schema`,
-          api: sqlService.getCreateSchemaSql,
-          formName: 'schemaName',
-        };
-  }, [createType]);
-
   const labelCol = { flex: '70px' };
 
   const handleFieldsChange = useCallback(
     debounce(() => {
       const formData: ICreateDatabase = form.getFieldsValue();
-      if (!formData.databaseName && createType === 'database') {
-        return;
-      }
-      if (!formData.schemaName && createType === 'schema') {
+      if (!formData.databaseName) {
         return;
       }
       const params = {
         databaseType: relyOnParams?.databaseType,
         dataSourceId: relyOnParams?.dataSourceId,
-        databaseName: relyOnParams?.databaseName,
-        ...formData,
+        databaseName: formData.databaseName,
       };
-      config.api(params as any).then((res) => {
+      sqlService.getCreateDatabaseSql(params as any).then((res) => {
         const { sql } = res;
         monacoEditorRef.current?.setValue(sql, 'cover');
       });
     }, 500),
-    [relyOnParams, createType, monacoEditorRef, config],
+    [relyOnParams, monacoEditorRef],
   );
 
   const executeUpdateDataSql = (sql: string) => {
@@ -120,7 +98,7 @@ const CreateDatabase = () => {
   };
 
   const openCreateDatabaseModal = (params: {
-    type: CreateType;
+    type: 'database';
     relyOnParams: {
       databaseType: DatabaseTypeCode;
       dataSourceId: number;
@@ -129,7 +107,6 @@ const CreateDatabase = () => {
     executedCallback?: () => void;
   }) => {
     setOpen(true);
-    setCreateType(params.type);
     setRelyOnParams(params.relyOnParams);
     executedCallbackRef.current = params.executedCallback;
   };
@@ -143,7 +120,7 @@ const CreateDatabase = () => {
       onCancel={() => {
         setOpen(false);
       }}
-      title={config.title}
+      title={`${i18n('common.title.create')} Database`}
       destroyOnClose
       confirmLoading={confirmLoading}
       open={open}
@@ -151,7 +128,7 @@ const CreateDatabase = () => {
     >
       <div className={styles.createDatabaseDom}>
         <Form labelAlign="left" form={form} labelCol={labelCol} onFieldsChange={handleFieldsChange} name="create">
-          <Form.Item label={i18n('common.label.name')} name={config.formName}>
+          <Form.Item label={i18n('common.label.name')} name="databaseName">
             <Input autoComplete="off" />
           </Form.Item>
           {noCommentDatabase.includes(relyOnParams.databaseType) ? null : (
@@ -185,7 +162,6 @@ const CreateDatabase = () => {
       </div>
     </Modal>
   ))
-
 };
 
 export default CreateDatabase;

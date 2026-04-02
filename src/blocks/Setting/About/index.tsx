@@ -5,13 +5,11 @@ import classnames from 'classnames';
 import BrandLogo from '@/components/BrandLogo';
 import { APP_NAME, WEBSITE_DOC } from '@/constants/appConfig';
 import { Button, Radio, Space, Checkbox } from 'antd';
-import configService from '@/service/config';
 import { DownloadOutlined } from '@ant-design/icons';
 import { IUpdateDetectionData } from '../index';
 import { IUpdateDetectionRef, UpdatedStatusEnum } from '../UpdateDetection';
 import Iconfont from '@/components/Iconfont';
 import { useSettingStore, setHoldingService } from '@/store/setting';
-import s from '@/service/misc'
 
 interface IProps {
   updateDetectionData: IUpdateDetectionData | null;
@@ -44,7 +42,7 @@ export default function AboutUs(props: IProps) {
   };
 
   const restartApp = () => {
-    import('@/utils/tauri').then(({ quitApp }) => quitApp());
+    import('@/utils/tauri').then(({ relaunchApp }) => relaunchApp());
   };
 
   const updateButton = useMemo(() => {
@@ -124,10 +122,9 @@ export default function AboutUs(props: IProps) {
               <span>{i18n('setting.text.isLatestVersion')}</span>
             )}
           </div>
-          {updateDetectionData?.desktop && (
+          {updateDetectionData?.desktop && updateButton && (
             <div className={styles.updateButton}>
               {updateButton}
-              <Button onClick={jumpDoc}>{i18n('setting.button.changeLog')}</Button>
             </div>
           )}
         </div>

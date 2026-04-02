@@ -26,7 +26,6 @@ export const openView = (props:{
           tableName: treeNodeData.name
         } as any)
         .then((res) => {
-          // 更新ddl
           resolve(res.ddl);
         });
       });
@@ -59,7 +58,6 @@ export const openFunction = (props:{
           functionName: treeNodeData.name
         } as any)
         .then((res) => {
-          // 更新ddl
           resolve(res.functionBody);
         });
       });
@@ -91,7 +89,6 @@ export const openProcedure = (props:{
           procedureName: treeNodeData.name
         } as any)
         .then((res) => {
-          // 更新ddl
           resolve(res.procedureBody);
         });
       });
@@ -123,45 +120,9 @@ export const openTrigger = (props:{
           triggerName: treeNodeData.name
         } as any)
         .then((res) => {
-          // 更新ddl
           resolve(res.triggerBody);
         });
       });
     }
   })
 }
-
-export const openSequence = (props:{
-  treeNodeData: any;
-  addWorkspaceTab?: any;
-}) => {
-  const { treeNodeData } = props;
-  createConsole({
-    name: treeNodeData.name,
-    operationType: WorkspaceTabType.SEQUENCE,
-    dataSourceId: treeNodeData.extraParams!.dataSourceId!,
-    dataSourceName: treeNodeData.extraParams!.dataSourceName!,
-    databaseType: treeNodeData.extraParams!.databaseType!,
-    databaseName: treeNodeData.extraParams?.databaseName,
-    schemaName: treeNodeData.extraParams?.schemaName,
-    loadSQL: ()=>{
-      return new Promise((resolve) => {
-        sqlService
-        .exportCreateSequenceSql({
-          dataSourceId: treeNodeData.extraParams!.dataSourceId!,
-          databaseType: treeNodeData.extraParams!.databaseType!,
-          databaseName: treeNodeData.extraParams!.databaseName!,
-          schemaName: treeNodeData.extraParams?.schemaName,
-          name: treeNodeData.name
-        } as any)
-        .then((res) => {
-          // 更新ddl
-          resolve(res);
-        });
-      });
-    }
-  })
-}
-
-
-

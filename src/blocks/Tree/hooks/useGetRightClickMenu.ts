@@ -16,11 +16,13 @@ import { createConsole, addWorkspaceTab } from '@/pages/main/workspace/store/con
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 
 // ---- functions -----
-import { openView, openFunction, openProcedure, openTrigger, openSequence} from '../functions/openAsyncSql';
+import { openView, openFunction, openProcedure, openTrigger } from '../functions/openAsyncSql';
 import { handelPinTable } from '../functions/pinTable';
 import { viewDDL } from '../functions/viewDDL';
 import { deleteTable } from '../functions/deleteTable';
-import { deleteSequence } from '../functions/deleteSequence';
+
+// ----- services -----
+import connectionService from '@/service/connection';
 
 // ----- utils -----
 import { compatibleDataBaseName } from '@/utils/database';
@@ -59,8 +61,7 @@ export const useGetRightClickMenu = (props: IProps) => {
     };
   });
 
-  const handelOpenCreateDatabaseModal = (type: 'database' | 'schema') => {
-
+  const handelOpenCreateDatabaseModal = () => {
     const relyOnParams = {
       databaseType: treeNodeData.extraParams!.databaseType,
       dataSourceId: treeNodeData.extraParams!.dataSourceId!,
@@ -68,7 +69,7 @@ export const useGetRightClickMenu = (props: IProps) => {
     }
 
     openCreateDatabaseModal?.({
-      type,
+      type: 'database',
       relyOnParams,
       executedCallback: () => {
         loadData({
@@ -106,6 +107,18 @@ export const useGetRightClickMenu = (props: IProps) => {
     }
 
     const operationColumnConfig: { [key in string]: IOperationColumnConfigItem } = {
+      // 断开连接
+      [OperationColumn.Disconnect]: {
+        text: i18n('connection.button.disconnect'),
+        icon: '\ue6b2',
+        handle: () => {
+          const dataSourceId = treeNodeData.extraParams?.dataSourceId;
+          if (dataSourceId) {
+            connectionService.close({ id: dataSourceId });
+          }
+        },
+      },
+
       // 刷新
       [OperationColumn.Refresh]: {
         text: i18n('common.button.refresh'),
@@ -149,7 +162,6 @@ export const useGetRightClickMenu = (props: IProps) => {
               schemaName: treeNodeData.extraParams?.schemaName,
             },
           })
-          
         },
       },
 
@@ -319,89 +331,13 @@ export const useGetRightClickMenu = (props: IProps) => {
         },
       },
 
-      // 打开序列
-      [OperationColumn.OpenSequence]: {
-        text: i18n('workspace.menu.view'),
-        icon: '\ue651',
-        doubleClickTrigger: true,
-        handle: () => {
-          openSequence({
-            addWorkspaceTab,
-            treeNodeData,
-          });
-        },
-      },
-      //创建序列
-      [OperationColumn.CreateSequence]:{
-        text: i18n('editSequence.button.createSequence'),
-        icon: '\ue792',
-        handle: () => {
-          addWorkspaceTab({
-            id: uuid(),
-            title: i18n('editSequence.button.createSequence'),
-            type: WorkspaceTabType.CreateSequence,
-            uniqueData: {
-              dataSourceId: treeNodeData.extraParams!.dataSourceId!,
-              databaseType: treeNodeData.extraParams!.databaseType!,
-              databaseName: treeNodeData.extraParams?.databaseName,
-              schemaName: treeNodeData.extraParams?.schemaName,
-              submitCallback: () => {loadData?.({refresh: true})},
-            },
-          });
-        },
-        discard: (treeNodeData.treeNodeType === TreeNodeType.SEQUENCE && currentConnectionDetails?.supportSchema),
-      },
-      // 编辑序列
-      [OperationColumn.EditSequence]: {
-        text: i18n('workspace.menu.editSequence'),
-        icon: '\ue602',
-        handle: () => {
-          addWorkspaceTab({
-            id: `${OperationColumn.EditSequence}-${treeNodeData.uuid}`,
-            title: treeNodeData?.name,
-            type: WorkspaceTabType.EditSequence,
-            uniqueData: {
-              dataSourceId: treeNodeData.extraParams!.dataSourceId!,
-              databaseType: treeNodeData.extraParams!.databaseType!,
-              databaseName: treeNodeData.extraParams?.databaseName,
-              schemaName: treeNodeData.extraParams?.schemaName,
-              tableName: treeNodeData?.name,
-              submitCallback: () => {
-                loadData({
-                  treeNodeData: treeNodeData.parentNode,
-                  refresh: true
-                })
-              },
-            },
-          });
-        },
-      },
-      // 删除序列
-      [OperationColumn.DeleteSequence]: {
-        text: i18n('workspace.menu.deleteSequence'),
-        icon: '\ue6a7',
-        handle: () => {
-          deleteSequence(treeNodeData,loadData);
-        },
-      },
-
       // 创建数据库
       [OperationColumn.CreateDatabase]: {
         text: i18n('workspace.menu.createDatabase'),
         icon: '\ue816',
         handle: () => {
-          handelOpenCreateDatabaseModal('database');
+          handelOpenCreateDatabaseModal();
         },
-      },
-
-      // 创建schema
-      [OperationColumn.CreateSchema]: {
-        text: i18n('workspace.menu.createSchema'),
-        icon: '\ue696',
-        handle: () => {
-          handelOpenCreateDatabaseModal('schema');
-        },
-        discard: !currentConnectionDetails?.supportSchema,
       },
     };
 
@@ -434,8 +370,7 @@ export const getRightClickMenu = (props: IProps) => {
   const openCreateDatabaseModal = useWorkspaceStore.getState().openCreateDatabaseModal;
   const currentConnectionDetails = useWorkspaceStore.getState().currentConnectionDetails;
 
-  const handelOpenCreateDatabaseModal = (type: 'database' | 'schema') => {
-
+  const handelOpenCreateDatabaseModal = () => {
     const relyOnParams = {
       databaseType: treeNodeData.extraParams!.databaseType,
       dataSourceId: treeNodeData.extraParams!.dataSourceId!,
@@ -443,7 +378,7 @@ export const getRightClickMenu = (props: IProps) => {
     }
 
     openCreateDatabaseModal?.({
-      type,
+      type: 'database',
       relyOnParams,
       executedCallback: () => {
         loadData({
@@ -480,6 +415,18 @@ export const getRightClickMenu = (props: IProps) => {
   }
 
   const operationColumnConfig: { [key in string]: IOperationColumnConfigItem } = {
+    // 断开连接
+    [OperationColumn.Disconnect]: {
+      text: i18n('connection.button.disconnect'),
+      icon: '\ue6b2',
+      handle: () => {
+        const dataSourceId = treeNodeData.extraParams?.dataSourceId;
+        if (dataSourceId) {
+          connectionService.close({ id: dataSourceId });
+        }
+      },
+    },
+
     // 刷新
     [OperationColumn.Refresh]: {
       text: i18n('common.button.refresh'),
@@ -523,7 +470,6 @@ export const getRightClickMenu = (props: IProps) => {
             schemaName: treeNodeData.extraParams?.schemaName,
           },
         })
-        
       },
     },
 
@@ -656,48 +602,7 @@ export const getRightClickMenu = (props: IProps) => {
         });
       },
     },
-    
-    // 打开序列
-    [OperationColumn.OpenSequence]: {
-      text: i18n('workspace.menu.view'),
-      icon: '\ue651',
-      doubleClickTrigger: true,
-      handle: () => {
-        openSequence({
-          addWorkspaceTab,
-          treeNodeData,
-        });
-      },
-    },
 
-    // 删除序列
-    [OperationColumn.DeleteSequence]: {
-      text: i18n('workspace.menu.deleteSequence'),
-      icon: '\ue6a7',
-      handle: () => {
-        deleteSequence(treeNodeData);
-      },
-    },
-    // 创建序列
-    [OperationColumn.CreateSequence]: {
-      text: i18n('editSequence.button.createSequence'),
-      icon: '\ue792',
-      handle: () => {
-        addWorkspaceTab({
-          id: uuid(),
-          title: i18n('editSequence.button.createSequence'),
-          type: WorkspaceTabType.CreateSequence,
-          uniqueData: {
-            dataSourceId: treeNodeData.extraParams!.dataSourceId!,
-            databaseType: treeNodeData.extraParams!.databaseType!,
-            databaseName: treeNodeData.extraParams?.databaseName,
-            schemaName: treeNodeData.extraParams?.schemaName,
-            submitCallback: () => {treeNodeData.loadData?.({refresh: true})},
-          },
-        });
-      },
-      discard: (treeNodeData.treeNodeType === TreeNodeType.SEQUENCES && currentConnectionDetails?.supportSchema),
-    },
     // 打开存储过程
     [OperationColumn.OpenProcedure]: {
       text: i18n('workspace.menu.view'),
@@ -729,21 +634,11 @@ export const getRightClickMenu = (props: IProps) => {
       text: i18n('workspace.menu.createDatabase'),
       icon: '\ue816',
       handle: () => {
-        handelOpenCreateDatabaseModal('database');
+        handelOpenCreateDatabaseModal();
       },
-    },
-
-    // 创建schema
-    [OperationColumn.CreateSchema]: {
-      text: i18n('workspace.menu.createSchema'),
-      icon: '\ue696',
-      handle: () => {
-        handelOpenCreateDatabaseModal('schema');
-      },
-      discard: !currentConnectionDetails?.supportSchema,
     },
   };
-  
+
   // 根据配置生成右键菜单
   const finalList: IRightClickMenu[] = [];
   excludeSomeOperation().forEach((t,i) => {

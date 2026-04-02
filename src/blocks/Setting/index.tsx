@@ -4,23 +4,18 @@ import Iconfont from '@/components/Iconfont';
 import { Modal, Tooltip } from 'antd';
 import i18n from '@/i18n';
 import BaseSetting from './BaseSetting';
-import AISetting from './AiSetting';
-import ProxySetting from './ProxySetting';
 import ShortcutKeySetting from './ShortcutKeySetting';
 import About from './About';
 import styles from './index.less';
 import { ILatestVersion } from '@/service/config';
 import UpdateDetection, { IUpdateDetectionRef, UpdatedStatusEnum } from '@/blocks/Setting/UpdateDetection';
 
-// ---- store -----
-import { useSettingStore, getAiSystemConfig, setAiSystemConfig } from '@/store/setting';
-
 interface IProps {
   className?: string;
   render?: ReactNode;
-  noLogin?: boolean; // 用于在没有登录的页面使用，不显示ai设置等需要登录的功能
-  defaultArouse?: boolean; // 是否默认弹出
-  defaultMenu?: number; // 默认选中的菜单
+  noLogin?: boolean;
+  defaultArouse?: boolean;
+  defaultMenu?: number;
 }
 export interface IUpdateDetectionData extends ILatestVersion {
   updatedStatusEnum: UpdatedStatusEnum;
@@ -28,28 +23,15 @@ export interface IUpdateDetectionData extends ILatestVersion {
 }
 
 function Setting(props: IProps) {
-  const { className, noLogin = false, defaultArouse, defaultMenu = 0 } = props;
+  const { className, defaultArouse, defaultMenu = 0 } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentMenu, setCurrentMenu] = useState<number>(defaultMenu);
   const [updateDetectionData, setUpdateDetectionData] = useState<IUpdateDetectionData | null>(null);
   const updateDetectionRef = React.useRef<IUpdateDetectionRef>(null);
-  const aiConfig = useSettingStore((state) => state.aiConfig);
 
   useEffect(() => {
     if (defaultArouse) {
       showModal();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isModalVisible && !noLogin) {
-      getAiSystemConfig();
-    }
-  }, [isModalVisible]);
-
-  useEffect(() => {
-    if (!noLogin) {
-      getAiSystemConfig();
     }
   }, []);
 
@@ -77,18 +59,6 @@ function Setting(props: IProps) {
       body: <BaseSetting />,
       code: 'basic',
     },
-    // {
-    //   label: i18n('setting.nav.customAi'),
-    //   icon: '\ue646',
-    //   body: <AISetting aiConfig={aiConfig} handleApplyAiConfig={setAiSystemConfig} />,
-    //   code: 'ai',
-    // },
-    // {
-    //   label: i18n('setting.nav.proxy'),
-    //   icon: '\ue63f',
-    //   body: <ProxySetting />,
-    //   code: 'proxy',
-    // },
     {
       label: '快捷键',
       icon: '\ue63a',
@@ -141,10 +111,6 @@ function Setting(props: IProps) {
           <div className={styles.menus}>
             <div className={classnames(styles.menusTitle)}>{i18n('setting.title.setting')}</div>
             {menusList.map((t, index) => {
-              // 如果是没有登录的页面，不显示ai设置等需要登录的功能
-              if (noLogin && index === 1) {
-                return false;
-              }
               return (
                 <div
                   key={index}

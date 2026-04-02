@@ -16,7 +16,7 @@ import { getConnectionList } from '@/pages/main/store/connection';
 
 const { Option } = Select;
 
-type ITabsType = 'ssh' | 'baseInfo' | 'driver';
+type ITabsType = 'ssh' | 'baseInfo';
 
 export enum submitType {
   UPDATE = 'update',

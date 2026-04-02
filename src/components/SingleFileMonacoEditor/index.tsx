@@ -13,6 +13,7 @@ interface IProps {
 
 export interface ISingleFileMonacoEditorRefFunction {
   getAllContent?: () => string;
+  setValue?: (text: string) => void;
 }
 
 const options = {
@@ -73,8 +74,13 @@ const SingleFileMonacoEditor = memo<IProps>(
       return monacoEditorRef.current?.getAllContent() || '';
     };
 
+    const setValue = (text: string) => {
+      monacoEditorRef.current?.setValue(text);
+    };
+
     useImperativeHandle(ref, () => ({
       getAllContent,
+      setValue,
     }));
 
     return (

@@ -21,13 +21,11 @@ export enum TreeNodeType {
   PROCEDURE = 'procedure', // procedure
   TRIGGERS = 'triggers',  // trigger组
   TRIGGER = 'trigger',  // trigger
-  SEQUENCES = 'sequences',
-  SEQUENCE = 'sequence',
 }
 
 // 树右键支持的功能
 export enum OperationColumn {
-  ShiftOut = 'shiftOut', // 移出数据源
+  Disconnect = 'disconnect', // 断开连接
   Refresh = 'refresh', // 刷新各级菜单
   CreateTable = 'createTable', //创建表
   CreateConsole = 'createConsole', // 新建console
@@ -44,11 +42,6 @@ export enum OperationColumn {
   OpenFunction = 'openFunction', // 打开函数
   OpenProcedure = 'openProcedure', // 打开存储过程
   OpenTrigger = 'openTrigger', // 打开触发器
-  CreateSchema = 'createSchema', // 新建schema
   CreateDatabase = 'createDatabase', // 新建database
   ViewAllTable = 'viewAllTable', // 查看所有的表
-  OpenSequence = 'openSequence', // 打开序列
-  CreateSequence = 'createSequence', // 新建序列
-  EditSequence = 'editSequence', /// 编辑序列
-  DeleteSequence = 'deleteSequence' // 删除序列
 }
