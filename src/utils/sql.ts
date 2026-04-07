@@ -17,7 +17,7 @@ export function formatSql(sql: string, dbType: DatabaseTypeCode) {
     'postgresql',
     'redshift',
     'spark',
-    'sqlite',
+
     'sql',
     'trino',
     'transactsql',

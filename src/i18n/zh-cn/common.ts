@@ -57,6 +57,7 @@ export default {
   'common.button.exportMarkdown': '导出到Markdown',
   'common.button.exportPdf': '导出到Pdf',
   'common.text.successfulExecution': '执行成功',
+  'common.text.executionFailed': '执行失败',
   'common.text.result': '结果',
   'common.text.timeConsuming': '耗时',
   'common.text.searchRow': '查询行数',

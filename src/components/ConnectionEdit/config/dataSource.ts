@@ -768,33 +768,6 @@ export const dataSourceFormConfigs: IConnectionConfig[] = [
     },
     ssh: sshConfig,
   },
-  // SQLITE
-  {
-    type: DatabaseTypeCode.SQLITE,
-    baseInfo: {
-      items: [
-        {
-          defaultValue: '@localhost',
-          inputType: InputType.INPUT,
-          labelNameCN: '名称',
-          labelNameEN: 'Name',
-          name: 'alias',
-          required: true,
-        },
-        {
-          defaultValue: '',
-          inputType: InputType.INPUT,
-          labelNameCN: '文件路径',
-          labelNameEN: 'File Path',
-          name: 'file',
-          required: true,
-        },
-      ],
-      pattern: /sqlite:(.*)?/,
-      template: 'sqlite:{file}',
-    },
-    ssh: sshConfig,
-  },
   // MARIADB
   {
     type: DatabaseTypeCode.MARIADB,

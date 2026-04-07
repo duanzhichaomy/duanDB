@@ -143,7 +143,7 @@ export default memo<IProps>((props) => {
           style: items ? {} : { display: 'none' },
         }}
         trigger={['contextMenu']}
-        overlayClassName={styles.dropdownOverlay}
+        classNames={{ root: styles.dropdownOverlay }}
         open={open && canContextmenu}
         onOpenChange={(_open) => {
           setOpen(_open);

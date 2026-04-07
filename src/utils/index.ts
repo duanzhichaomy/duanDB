@@ -1,6 +1,7 @@
 import { ThemeType } from '@/constants';
 import { ITreeNode } from '@/typings';
 import lodash from 'lodash';
+import copyToClipboard from 'copy-to-clipboard';
 
 export function getOsTheme() {
   return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -269,34 +270,36 @@ export function clipboardToArray(text: string): Array<Array<string | null>> {
   }
 }
 
-// Copy
-export function copy(message: string) {
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(message).catch(() => {
-      fallbackCopy(message);
-    });
-  } else {
-    fallbackCopy(message);
+// 写入剪贴板
+export async function copy(text: string) {
+  // 方式1: Tauri 剪贴板插件
+  if ((window as any).__TAURI_INTERNALS__) {
+    try {
+      const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+      await writeText(text);
+      console.log('[clipboard] Tauri plugin 写入成功');
+      return;
+    } catch (e) {
+      console.error('[clipboard] Tauri plugin 失败:', e);
+    }
   }
-}
-
-function fallbackCopy(text: string) {
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.style.position = 'fixed';
-  textarea.style.opacity = '0';
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textarea);
+  // 方式2: navigator.clipboard
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log('[clipboard] navigator.clipboard 写入成功');
+      return;
+    } catch (e) {
+      console.error('[clipboard] navigator.clipboard 失败:', e);
+    }
+  }
+  // 方式3: copy-to-clipboard (execCommand fallback)
+  const ok = copyToClipboard(text);
+  console.log('[clipboard] copy-to-clipboard 结果:', ok);
 }
 
 // 二维数组复制
-export function tableCopy(array2D: Array<Array<string | null>>) {
-  try {
-    const text = array2D.map((row) => row.join('\t')).join('\n');
-    navigator.clipboard.writeText(text);
-  } catch {
-    console.log('copy error');
-  }
+export async function tableCopy(array2D: Array<Array<string | null>>) {
+  const text = array2D.map((row) => row.join('\t')).join('\n');
+  await copy(text);
 }

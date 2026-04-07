@@ -302,9 +302,9 @@ export default memo((props: IProps) => {
           setViewSqlModal(false);
         }}
         width="60vw"
-        maskClosable={false}
+        mask={{ closable: false }}
         footer={false}
-        destroyOnClose={true}
+        destroyOnHidden={true}
       >
         <ExecuteSQL
           initSql={appendValue}

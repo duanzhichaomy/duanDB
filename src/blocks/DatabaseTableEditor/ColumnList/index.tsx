@@ -222,16 +222,12 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
           <div>
             <Checkbox
               onChange={() => {
-                if (databaseType === DatabaseTypeCode.SQLITE && record.editStatus !== EditColumnOperationType.Add) {
-                  return null;
-                }
                 handelNullable(record);
               }}
               checked={nullable === NullableType.Null}
               disabled={
                 editingConfig?.supportNullable === false ||
-                !!record.primaryKey ||
-                (databaseType === DatabaseTypeCode.SQLITE && record.editStatus !== EditColumnOperationType.Add)
+                !!record.primaryKey
               }
             />
           </div>
@@ -246,14 +242,8 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
         return (
           <div>
             <div
-              className={classnames(styles.keyBox, {
-                [styles.disabledKeyBox]:
-                  databaseType === DatabaseTypeCode.SQLITE && record.editStatus !== EditColumnOperationType.Add,
-              })}
+              className={classnames(styles.keyBox)}
               onClick={() => {
-                if (databaseType === DatabaseTypeCode.SQLITE && record.editStatus !== EditColumnOperationType.Add) {
-                  return null;
-                }
                 handelPrimaryKey(record);
               }}
             >
@@ -281,10 +271,6 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
     {
       width: '40px',
       render: (text: string, record: IColumnItemNew) => {
-        // sqlLite不支持删除字段，新增的字段可以删除
-        if (databaseType === DatabaseTypeCode.SQLITE && record.editStatus !== EditColumnOperationType.Add) {
-          return null;
-        }
         return (
           <div
             className={styles.operationBar}
@@ -544,10 +530,6 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
   const onRow = (record: any) => {
     return {
       onClick: () => {
-        // sqlLite不支持修改字段,新增的字段可以修改
-        if (databaseType === DatabaseTypeCode.SQLITE && record.editStatus !== EditColumnOperationType.Add) {
-          return;
-        }
         if (editingData?.key !== record.key) {
           edit(record);
         }

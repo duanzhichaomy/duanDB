@@ -160,6 +160,7 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
                 outerQueryResultData={queryResultData}
                 executeSqlParams={props.executeSqlParams}
                 concealTabHeader={concealTabHeader}
+                viewTable={viewTable}
               />
             ) : (
               <div className={styles.updateCountBox}>

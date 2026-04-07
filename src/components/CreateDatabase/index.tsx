@@ -121,7 +121,7 @@ const CreateDatabase = () => {
         setOpen(false);
       }}
       title={`${i18n('common.title.create')} Database`}
-      destroyOnClose
+      destroyOnHidden
       confirmLoading={confirmLoading}
       open={open}
       onOk={onOk}

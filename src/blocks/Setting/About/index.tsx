@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './index.less';
 import i18n from '@/i18n';
 import classnames from 'classnames';
 import BrandLogo from '@/components/BrandLogo';
 import { APP_NAME, WEBSITE_DOC } from '@/constants/appConfig';
 import { Button, Radio, Space, Checkbox } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { DownloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { IUpdateDetectionData } from '../index';
 import { IUpdateDetectionRef, UpdatedStatusEnum } from '../UpdateDetection';
 import Iconfont from '@/components/Iconfont';
@@ -122,6 +122,18 @@ export default function AboutUs(props: IProps) {
               <span>{i18n('setting.text.isLatestVersion')}</span>
             )}
           </div>
+          {!updateDetectionData?.needUpdate && (
+            <div className={styles.updateButton}>
+              <Button
+                icon={<SyncOutlined />}
+                onClick={() => {
+                  updateDetectionRef?.current?.checkUpdate();
+                }}
+              >
+                {i18n('setting.button.checkUpdate')}
+              </Button>
+            </div>
+          )}
           {updateDetectionData?.desktop && updateButton && (
             <div className={styles.updateButton}>
               {updateButton}

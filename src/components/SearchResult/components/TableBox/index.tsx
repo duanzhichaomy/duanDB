@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Dropdown, Input, MenuProps, message, Modal, Space, Popover, Spin, Button } from 'antd';
 import { BaseTable, ArtColumn, useTablePipeline, features, SortItem } from 'ali-react-table';
 import styled from 'styled-components';
@@ -53,6 +53,7 @@ interface ITableProps {
   tableBoxId: string;
   isActive?: boolean;
   concealTabHeader?: boolean; // concealTabHeader 是否隐藏tab头部, 目前来说隐藏头部都是单表查询。需要显示筛选
+  viewTable?: boolean; // 是否使用 viewTable API（单表查询场景）
 }
 
 interface IViewTableCellData {
@@ -87,6 +88,7 @@ const SupportBaseTable: any = styled(BaseTable)`
     --border-color: var(--color-border-secondary);
     --cell-padding: 0px;
     --row-height: 28px;
+    --header-row-height: 36px;
     --lock-shadow: 0px 1px 2px 0px var(--color-border);
   }
 `;
@@ -107,7 +109,7 @@ export const TableContext = React.createContext({} as any);
 
 export default function TableBox(props: ITableProps) {
   // const {} = useContext(Context);
-  const { className, outerQueryResultData, isActive, concealTabHeader } = props;
+  const { className, outerQueryResultData, isActive, concealTabHeader, viewTable } = props;
   const [viewTableCellData, setViewTableCellData] = useState<IViewTableCellData | null>(null);
   const [, contextHolder] = message.useMessage();
   const [paginationConfig, setPaginationConfig] = useState<IResultConfig>(getDefaultPaginationConfig);
@@ -179,9 +181,9 @@ export default function TableBox(props: ITableProps) {
       total = paginationConfig.total;
     }
 
-    if (!lodash.isNumber(paginationConfig.total)) {
+    if (!lodash.isNumber(paginationConfig.total) && queryResultData.fuzzyTotal) {
       const oldTotal = Number(paginationConfig.total.split('+')[0]);
-      const newTotal = Number(queryResultData.fuzzyTotal.split('+')[0]);
+      const newTotal = Number(String(queryResultData.fuzzyTotal).split('+')[0]);
       if (oldTotal > newTotal) {
         total = paginationConfig.total;
       }
@@ -276,34 +278,57 @@ export default function TableBox(props: ITableProps) {
 
   const defaultSorts: SortItem[] = useMemo(
     () =>
-      (queryResultData.headerList || []).map((item) => ({
-        code: item.name,
-        order: 'none',
+      (queryResultData.headerList || []).map((item, colIndex) => ({
+        code: item.dataType === TableDataType.DUANDB_ROW_NUMBER ? colNoCode : `${preCode}${colIndex}${item.name}`,
+        order: 'none' as const,
       })),
     [queryResultData.headerList],
   );
 
   const [sorts, setSorts] = useState<SortItem[]>(defaultSorts);
+  // 记录用户当前激活的排序，在 headerList 变化时保留
+  const activeSortRef = useRef<SortItem | null>(null);
 
   useEffect(() => {
+    if (activeSortRef.current) {
+      // 保留用户的排序选择
+      const active = activeSortRef.current;
+      const exists = defaultSorts.some((s) => s.code === active.code);
+      if (exists) {
+        setSorts([active]);
+        return;
+      }
+    }
     setSorts(defaultSorts);
   }, [defaultSorts]);
+
+  // 从列 code 中提取真实列名（去掉 $$duandb_ 前缀和索引）
+  const getColumnNameFromCode = (code: string) => {
+    const header = queryResultData.headerList?.find(
+      (item, colIndex) => `${preCode}${colIndex}${item.name}` === code,
+    );
+    return header?.name || code;
+  };
 
   // 点击列头排序箭头时，生成 ORDER BY 子句并触发服务端查询
   const onChangeSorts = (nextSorts: SortItem[]) => {
     setSorts(nextSorts);
     // 找到有排序方向的项
     const activeSorts = nextSorts.filter((s) => s.order !== 'none');
+    // 记录用户的排序选择，防止查询结果返回后被重置
+    activeSortRef.current = activeSorts.length > 0 ? activeSorts[0] : null;
     const orderByClause = activeSorts
-      .map((s) => `\`${s.code}\` ${s.order === 'asc' ? 'ASC' : 'DESC'}`)
+      .map((s) => `\`${getColumnNameFromCode(s.code)}\` ${s.order === 'asc' ? 'ASC' : 'DESC'}`)
       .join(', ');
 
-    // 同步到 ORDER BY 输入栏
+    // 排序时重置到第 1 页
+    setPaginationConfig((prev) => ({ ...prev, pageNo: 1 }));
+
+    // 同步到 ORDER BY 输入栏并触发查询
     if (screeningResultRef.current) {
       screeningResultRef.current.setOrderByValue(orderByClause);
-      // 使用 setTimeout 确保编辑器值已更新后再触发搜索
       setTimeout(() => {
-        screeningResultRef.current?.search();
+        screeningResultRef.current?.search({ pageNo: 1 });
       }, 0);
     }
   };
@@ -375,7 +400,7 @@ export default function TableBox(props: ITableProps) {
     if (value === null) {
       return <span className={styles.cellValueNull}>{'<null>'}</span>;
     } else if (value === USER_FILLED_VALUE.DEFAULT) {
-      return <span className={styles.cellValueNull}>{'<default>'}</span>;
+      return <span />;
     } else if (!value) {
       // 如果为空需要展位
       return <span />;
@@ -578,9 +603,16 @@ export default function TableBox(props: ITableProps) {
         headerList: queryResultData.headerList,
         operations: _updateData || updateData,
       };
-      sqlService.getExecuteUpdateSql(params).then((res) => {
-        resolve(res || '');
-      });
+      sqlService
+        .getExecuteUpdateSql(params)
+        .then((res) => {
+          resolve(res || '');
+        })
+        .catch((e) => {
+          console.error('getExecuteUpdateSql error:', e);
+          message.error(`SQL 生成失败: ${e?.message || e}`);
+          resolve('');
+        });
     });
   };
 
@@ -624,17 +656,21 @@ export default function TableBox(props: ITableProps) {
       dataSourceId: props.executeSqlParams?.dataSourceId,
       databaseName: props.executeSqlParams?.databaseName,
       schemaName: props.executeSqlParams?.schemaName,
+      tableName: props.executeSqlParams?.tableName,
       pageNo: paginationConfig.pageNo,
       pageSize: paginationConfig.pageSize,
       ...(params || {}),
     };
 
-    return sqlService
-      .executeSql(executeSQLParams)
+    // 有自定义 sql（排序/筛选）时用 executeSql，因为 viewTable 会忽略 params.sql
+    const api = viewTable && !params?.sql ? sqlService.viewTable : sqlService.executeSql;
+    return api(executeSQLParams)
       .then((res) => {
         setTableLoading(false);
-        setQueryResultData(res?.[0]);
-        setUpdateData([]);
+        if (res?.[0]) {
+          setQueryResultData(res[0]);
+          setUpdateData([]);
+        }
       })
       .catch((err) => {
         setTableLoading(false);
@@ -834,6 +870,50 @@ export default function TableBox(props: ITableProps) {
     setSearchKeyword('');
   };
 
+  // 自定义排序表头，支持独立点击上/下箭头
+  const CustomSortHeaderCell = useMemo(() => {
+    return function SortHeaderCell({ children, column, onToggle, sortOrder, sortOptions }: any) {
+      const justifyContent = column.align === 'right' ? 'flex-end' : column.align === 'center' ? 'center' : 'flex-start';
+
+      const handleClick = (targetOrder: 'asc' | 'desc') => (e: React.MouseEvent) => {
+        e.stopPropagation();
+        // 点击已激活的箭头 → 取消排序；否则切换到目标排序
+        const nextOrder = sortOrder === targetOrder ? 'none' : targetOrder;
+        const nextSorts = nextOrder === 'none' ? [] : [{ code: column.code, order: nextOrder }];
+        sortOptions.onChangeSorts(nextSorts);
+      };
+
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent, height: '100%' }}>
+          {children}
+          <svg
+            style={{ userSelect: 'none', marginLeft: 2, flexShrink: 0 }}
+            focusable="false"
+            preserveAspectRatio="xMidYMid meet"
+            width="22"
+            height="22"
+            viewBox="0 0 32 32"
+          >
+            <path
+              style={{ cursor: 'pointer' }}
+              fill={sortOrder === 'asc' ? 'var(--color-primary)' : 'var(--color-text-quaternary)'}
+              transform="translate(0, 4)"
+              d="M8 8L16 0 24 8z"
+              onClick={handleClick('asc')}
+            />
+            <path
+              style={{ cursor: 'pointer' }}
+              fill={sortOrder === 'desc' ? 'var(--color-primary)' : 'var(--color-text-quaternary)'}
+              transform="translate(0, -4)"
+              d="M24 24L16 32 8 24z"
+              onClick={handleClick('desc')}
+            />
+          </svg>
+        </div>
+      );
+    };
+  }, []);
+
   // 表格渲染的配置
   const pipeline = useTablePipeline()
     .input({ dataSource: filteredTableData, columns })
@@ -841,9 +921,12 @@ export default function TableBox(props: ITableProps) {
       features.sort({
         mode: 'single',
         sorts,
+        SortHeaderCell: CustomSortHeaderCell,
         onChangeSorts: concealTabHeader ? onChangeSorts : undefined,
         defaultSorts: concealTabHeader ? undefined : defaultSorts,
         highlightColumnWhenActive: true,
+        clickArea: 'icon',
+        keepDataSource: !!concealTabHeader,
       }),
     )
     .use(
@@ -871,7 +954,9 @@ export default function TableBox(props: ITableProps) {
     const newRowDatasList = newRowDatas.map((item) => {
       const _item = lodash.cloneDeep(item);
       delete _item[colNoCode];
-      return Object.keys(_item).map((i) => _item[i]);
+      return Object.keys(_item).map((i) =>
+        _item[i] === USER_FILLED_VALUE.DEFAULT ? null : _item[i],
+      );
     });
     return newRowDatasList;
   };
@@ -882,7 +967,8 @@ export default function TableBox(props: ITableProps) {
     children: [
       {
         callback: () => {
-          const rowIds = curOperationRowNo || [editingCell![1]];
+          const rowIds = curOperationRowNo || [editingCell?.[1]];
+          if (!rowIds?.length) return;
           const newRowDatas = tableData.filter((item) => rowIds.includes(item[colNoCode]!));
           const newRowDatasList = newRowDatas.map((item) => {
             const _item = lodash.cloneDeep(item);
@@ -896,15 +982,21 @@ export default function TableBox(props: ITableProps) {
             };
           });
 
-          getExecuteUpdateSql(_updateDatas).then((res) => {
-            copy(res);
+          getExecuteUpdateSql(_updateDatas).then(async (res) => {
+            if (res) {
+              await copy(res);
+              message.success(i18n('common.button.copySuccessfully'));
+            } else {
+              message.warning('SQL 生成为空');
+            }
           });
         },
         hide: !queryResultData.canEdit,
       },
       {
         callback: () => {
-          const rowIds = curOperationRowNo || [editingCell![1]];
+          const rowIds = curOperationRowNo || [editingCell?.[1]];
+          if (!rowIds?.length) return;
           const newRowDatas = tableData.filter((item) => rowIds.includes(item[colNoCode]!));
           const newRowDatasList = newRowDatas.map((item) => {
             const _item = lodash.cloneDeep(item);
@@ -918,8 +1010,13 @@ export default function TableBox(props: ITableProps) {
             };
           });
 
-          getExecuteUpdateSql(_updateDatas).then((res) => {
-            copy(res);
+          getExecuteUpdateSql(_updateDatas).then(async (res) => {
+            if (res) {
+              await copy(res);
+              message.success(i18n('common.button.copySuccessfully'));
+            } else {
+              message.warning('SQL 生成为空');
+            }
           });
         },
         hide: !queryResultData.canEdit,
@@ -948,7 +1045,9 @@ export default function TableBox(props: ITableProps) {
           const newRowDatasList = newRowDatas.map((item) => {
             const _item = lodash.cloneDeep(item);
             delete _item[colNoCode];
-            return Object.keys(_item).map((i) => _item[i]);
+            return Object.keys(_item).map((i) =>
+              _item[i] === USER_FILLED_VALUE.DEFAULT ? null : _item[i],
+            );
           });
           const headerList = queryResultData.headerList.map((item) => item.name);
           // 去掉No列
@@ -1064,7 +1163,11 @@ export default function TableBox(props: ITableProps) {
     if (!columns.length) {
       return (
         <>
-          <StateIndicator state="success" text={i18n('common.text.successfulExecution')} />
+          {queryResultData.success ? (
+            <StateIndicator state="success" text={i18n('common.text.successfulExecution')} />
+          ) : (
+            <StateIndicator state="error" text={queryResultData.message || i18n('common.text.executionFailed')} />
+          )}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>{bottomStatus}</div>
         </>
       );
@@ -1259,8 +1362,8 @@ export default function TableBox(props: ITableProps) {
         open={!!viewTableCellData?.name}
         onCancel={handleCancel}
         width="60vw"
-        maskClosable={false}
-        destroyOnClose={true}
+        mask={{ closable: false }}
+        destroyOnHidden={true}
         footer={
           queryResultData.canEdit && [
             <Button key="1" type="primary" onClick={monacoEditorEditData}>
@@ -1273,11 +1376,11 @@ export default function TableBox(props: ITableProps) {
       </Modal>
       <Modal
         width="60vw"
-        maskClosable={false}
+        mask={{ closable: false }}
         title={initError ? i18n('common.button.executionError') : i18n('editTable.title.sqlPreview')}
         open={viewUpdateDataSqlModal}
         footer={false}
-        destroyOnClose={true}
+        destroyOnHidden={true}
         onCancel={() => {
           setViewUpdateDataSqlModal(false);
           setUpdateDataSql('');

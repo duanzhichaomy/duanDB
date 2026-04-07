@@ -432,8 +432,8 @@ const TreeNode = memo((props: TreeNodeIProps) => {
           items: dropdownsItems,
           style: dropdownsItems?.length ? {} : { display: 'none' }, // 有菜单项才显示
         }}
-        overlayStyle={{
-          zIndex: 1080,
+        styles={{
+          root: { zIndex: 1080 },
         }}
       >
         <Tooltip placement="right" color={window._AppThemePack?.colorPrimary} title={treeNodeData.comment}>

@@ -28,6 +28,7 @@ interface IProps {
 
 export interface IUpdateDetectionRef {
   openDownload: (data: IUpdateDetectionData) => void;
+  checkUpdate: () => void;
 }
 
 // 轮训间隔时间
@@ -296,6 +297,7 @@ const UpdateDetection = memo(
 
     useImperativeHandle(ref, () => ({
       openDownload,
+      checkUpdate,
     }));
 
     return <>{notificationDom}</>;

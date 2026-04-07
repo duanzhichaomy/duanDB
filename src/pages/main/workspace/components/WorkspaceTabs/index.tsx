@@ -1,10 +1,10 @@
-import React, { memo, useEffect, useMemo, Fragment } from 'react';
+import React, { memo, useEffect, useMemo, useState, Fragment } from 'react';
 import styles from './index.less';
 import i18n from '@/i18n';
-import { Button } from 'antd';
+import { Button, Modal, message } from 'antd';
 
 // ----- constants -----
-import { WorkspaceTabType, workspaceTabConfig } from '@/constants';
+import { WorkspaceTabType, workspaceTabConfig, databaseTypeList } from '@/constants';
 import { IWorkspaceTab } from '@/typings';
 
 // ----- components -----
@@ -15,6 +15,7 @@ import SQLExecute from '../SQLExecute';
 import ViewAllTable from '../ViewAllTable';
 import Iconfont from '@/components/Iconfont';
 import ShortcutKey from '@/components/ShortcutKey';
+import ConnectionEdit from '@/components/ConnectionEdit';
 
 // ---- store -----
 import {
@@ -25,9 +26,11 @@ import {
 } from '@/pages/main/workspace/store/console';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import { useTreeStore } from '@/blocks/Tree/treeStore';
+import { useConnectionStore, getConnectionList } from '@/pages/main/store/connection';
 
 // ----- services -----
 import historyService from '@/service/history';
+import connectionService from '@/service/connection';
 
 import indexedDB from '@/indexedDB';
 
@@ -41,6 +44,15 @@ const WorkspaceTabs = memo(() => {
   });
 
   const currentConnectionDetails = useWorkspaceStore((state) => state.currentConnectionDetails);
+  const connectionList = useConnectionStore((state) => state.connectionList);
+  const [newConnType, setNewConnType] = useState<string | null>(null);
+
+  const handleSaveConnection = async (data: any) => {
+    await connectionService.save(data);
+    await getConnectionList();
+    setNewConnType(null);
+    message.success(i18n('common.message.addedSuccessfully'));
+  };
 
   // 获取console
   useEffect(() => {
@@ -272,6 +284,48 @@ const WorkspaceTabs = memo(() => {
           {i18n('common.button.createConsole')}
         </Button>
       </div>
+    );
+  }
+
+  // 没有连接时显示欢迎页面
+  const hasNoConnection = connectionList !== null && connectionList.length === 0;
+
+  if (hasNoConnection) {
+    return (
+      <>
+        <div className={styles.welcomePage}>
+          <div className={styles.welcomeLetterpress}>DuanDB</div>
+          <div className={styles.welcomeSubtitle}>{i18n('workspace.welcome.subtitle')}</div>
+          <div className={styles.databaseTypeList}>
+            {databaseTypeList.map((db) => (
+              <div
+                key={db.code}
+                className={styles.databaseTypeCard}
+                onClick={() => setNewConnType(db.code)}
+              >
+                <img className={styles.databaseTypeImg} src={db.img} alt={db.name} />
+                <div className={styles.databaseTypeName}>{db.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <Modal
+          open={!!newConnType}
+          footer={null}
+          onCancel={() => setNewConnType(null)}
+          width={560}
+          centered
+          destroyOnHidden
+        >
+          {newConnType && (
+            <ConnectionEdit
+              connectionData={{ type: newConnType } as any}
+              closeCreateConnection={() => setNewConnType(null)}
+              submit={handleSaveConnection}
+            />
+          )}
+        </Modal>
+      </>
     );
   }
 

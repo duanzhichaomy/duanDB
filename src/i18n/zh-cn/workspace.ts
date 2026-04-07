@@ -34,6 +34,7 @@ export default {
   'workspace.tree.delete.tip': '我了解该操作是永久性删除',
   'workspace.tree.delete.table.tip': '确定要删除表{1}吗？',
   'workspace.tips.noConnection': '你还没有创建连接',
+  'workspace.welcome.subtitle': '选择一个数据库类型，创建你的第一个连接',
   'workspace.tips.maxConsole': '最多只能打开20个控制台',
   'workspace.tips.openExecutiveLogging': '打开执行记录',
   'workspace.tree.delete.sequence.tip': '确定要删除序列{1}吗？',

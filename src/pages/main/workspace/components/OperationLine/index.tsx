@@ -146,7 +146,7 @@ const OperationLine = (props: IProps) => {
         onCancel={() => setNewConnType(null)}
         width={560}
         centered
-        destroyOnClose
+        destroyOnHidden
       >
         {newConnType && (
           <ConnectionEdit

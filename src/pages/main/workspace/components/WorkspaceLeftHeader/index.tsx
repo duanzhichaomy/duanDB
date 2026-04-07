@@ -110,7 +110,7 @@ export default memo<IProps>(({ allDbNames, selectedDbNames, onSelectionChange, i
   );
 
   return (
-    <Dropdown menu={{ items: connectionMenuItems }} trigger={['contextMenu']} overlayClassName={styles.connDropdown}>
+    <Dropdown menu={{ items: connectionMenuItems }} trigger={['contextMenu']} classNames={{ root: styles.connDropdown }}>
       <div className={styles.connectionRow}>
         <div
           className={classnames(styles.expandArrow, { [styles.expanded]: isExpanded })}
@@ -133,7 +133,7 @@ export default memo<IProps>(({ allDbNames, selectedDbNames, onSelectionChange, i
             <Dropdown
               open={filterOpen}
               onOpenChange={setFilterOpen}
-              dropdownRender={() => filterPanel}
+              popupRender={() => filterPanel}
               trigger={['click']}
             >
               <span className={styles.dbCount} onClick={(e) => e.stopPropagation()}>

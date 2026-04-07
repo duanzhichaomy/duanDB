@@ -45,13 +45,12 @@ export function handleDatabaseAndSchema(databaseAndSchema: IWorkspaceModelType['
  * @returns
  */
 export function compatibleDataBaseName(databaseName: string, databaseType: DatabaseTypeCode) {
-  //""  oracele  sqlite postgrsql  h2 dm
+  //""  oracele postgrsql  h2 dm
   // ` MYSQL clickhouse MariaDB
   // [ sqlserver
   if (
     [
       DatabaseTypeCode.ORACLE,
-      DatabaseTypeCode.SQLITE,
       DatabaseTypeCode.POSTGRESQL,
       DatabaseTypeCode.H2,
       DatabaseTypeCode.DB2,

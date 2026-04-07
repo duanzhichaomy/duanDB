@@ -170,7 +170,7 @@ function ConsoleEditor(props: IProps, ref: ForwardedRef<IConsoleRef>) {
           open={saveNameModalOpen}
           onOk={handleSaveNameConfirm}
           onCancel={handleSaveNameCancel}
-          destroyOnClose
+          destroyOnHidden
         >
           <Input
             placeholder={i18n('common.tips.saveNamePlaceholder')}

@@ -1,15 +1,18 @@
 import React, { memo, useState, useCallback, useRef } from 'react';
 import i18n from '@/i18n';
 import classnames from 'classnames';
+import { Dropdown, Modal, message } from 'antd';
 import styles from './index.less';
 import TableList from '../TableList';
 import WorkspaceLeftHeader from '../WorkspaceLeftHeader';
 import SaveList from '../SaveList';
 import OperationLine from '../OperationLine';
 import CreateDatabase from '@/components/CreateDatabase';
+import ConnectionEdit from '@/components/ConnectionEdit';
 import Iconfont from '@/components/Iconfont';
-import { useConnectionStore } from '@/pages/main/store/connection';
-import { setMainPageActiveTab } from '@/pages/main/store/main';
+import { databaseTypeList } from '@/constants';
+import connectionService from '@/service/connection';
+import { useConnectionStore, getConnectionList } from '@/pages/main/store/connection';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 
 const DB_FILTER_STORAGE_KEY = 'workspace-db-filter';
@@ -72,8 +75,13 @@ const WorkspaceLeft = memo(() => {
     }
   }, [currentConnectionDetails?.id]);
 
-  const jumpPage = () => {
-    setMainPageActiveTab('connections');
+  const [newConnType, setNewConnType] = useState<string | null>(null);
+
+  const handleSaveConnection = async (data: any) => {
+    await connectionService.save(data);
+    await getConnectionList();
+    setNewConnType(null);
+    message.success(i18n('common.message.addedSuccessfully'));
   };
 
   return (
@@ -112,15 +120,47 @@ const WorkspaceLeft = memo(() => {
             <Iconfont className={styles.noConnectionListIcon} code="&#xe638;" />
             <div className={styles.noConnectionListTips}>{i18n('workspace.tips.noConnection')}</div>
             <div>
-              <span className={styles.create} onClick={jumpPage}>
-                {i18n('common.title.create')}
-              </span>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: databaseTypeList.map((db) => ({
+                    key: db.code,
+                    label: (
+                      <span>
+                        <Iconfont code={db.icon} style={{ marginRight: 6 }} />
+                        <span>{db.name}</span>
+                      </span>
+                    ),
+                    onClick: () => setNewConnType(db.code),
+                  })),
+                }}
+              >
+                <span className={styles.create}>
+                  {i18n('common.title.create')}
+                </span>
+              </Dropdown>
               {i18n('connection.title.connections')}
             </div>
           </div>
         )}
       </div>
       <CreateDatabase />
+      <Modal
+        open={!!newConnType}
+        footer={null}
+        onCancel={() => setNewConnType(null)}
+        width={560}
+        centered
+        destroyOnHidden
+      >
+        {newConnType && (
+          <ConnectionEdit
+            connectionData={{ type: newConnType } as any}
+            closeCreateConnection={() => setNewConnType(null)}
+            submit={handleSaveConnection}
+          />
+        )}
+      </Modal>
     </>
   );
 });

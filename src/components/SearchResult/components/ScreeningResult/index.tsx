@@ -16,7 +16,7 @@ interface IProps {
 
 export interface IScreeningResultRefFunction {
   setOrderByValue: (value: string) => void;
-  search: () => void;
+  search: (extraParams?: Partial<IExecuteSqlParams>) => void;
 }
 
 const keywordHintList = [
@@ -90,12 +90,12 @@ export default forwardRef<IScreeningResultRefFunction, IProps>((props, ref) => {
     });
   };
 
-  const search = () => {
+  const search = (extraParams?: Partial<IExecuteSqlParams>) => {
     const whereValue = whereSingleFileMonacoEditorRef.current?.getAllContent().trim() || '';
     const orderByValue = orderBySingleFileMonacoEditorRef.current?.getAllContent().trim() || '';
     let sql = whereValue ? notChangedSql + ' WHERE ' + whereValue : notChangedSql;
     sql = orderByValue ? sql + ' ORDER BY ' + orderByValue : sql;
-    getTableData({ sql });
+    getTableData({ sql, ...extraParams });
   };
 
   const focusChange = (_isActive: boolean) => {

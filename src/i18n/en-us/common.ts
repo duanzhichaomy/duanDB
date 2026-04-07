@@ -57,6 +57,7 @@ export default {
   'common.button.exportMarkdown': 'Export to Markdown',
   'common.button.exportPdf': 'Export to Pdf',
   'common.text.successfulExecution': 'Successful Execution',
+  'common.text.executionFailed': 'Execution Failed',
   'common.text.result': 'Result',
   'common.text.timeConsuming': 'Time Consumed',
   'common.text.searchRow': 'Query Result',

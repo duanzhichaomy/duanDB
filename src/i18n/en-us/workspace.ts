@@ -35,6 +35,7 @@ export default {
   'workspace.tree.delete.tip': 'I understand that this operation is permanently deleted',
   'workspace.tree.delete.table.tip': 'Are you sure you want to delete the table {1}?',
   'workspace.tips.noConnection': 'You have not created a connection yet',
+  'workspace.welcome.subtitle': 'Select a database type to create your first connection',
   'workspace.tips.maxConsole': 'You can only open up to 20 consoles',
   'workspace.tips.openExecutiveLogging': 'Open this executive logging',
   'workspace.tree.delete.sequence.tip': 'Are you sure you want to delete the sequence {1}?',

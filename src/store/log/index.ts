@@ -115,7 +115,10 @@ export function initLogInterceptor() {
     console[level] = (...args: any[]) => {
       // 调用原始方法，保证浏览器 DevTools 正常输出
       originalConsole[level](...args);
-      addLog(level === 'info' ? 'info' : level, formatArgs(args), 'console');
+      // 延迟写入 store，避免在 React 渲染期间触发状态更新
+      queueMicrotask(() => {
+        addLog(level === 'info' ? 'info' : level, formatArgs(args), 'console');
+      });
     };
   });
 

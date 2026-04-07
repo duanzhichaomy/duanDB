@@ -416,8 +416,8 @@ const IndexList = forwardRef((props: IProps, ref: ForwardedRef<IIndexListRef>) =
         onCancel={() => {
           setIncludeColModalOpen(false);
         }}
-        maskClosable={false}
-        destroyOnClose={true}
+        mask={{ closable: false }}
+        destroyOnHidden={true}
       >
         <IncludeCol includedColumnList={indexIncludedColumnList} ref={includeColRef} />
       </Modal>

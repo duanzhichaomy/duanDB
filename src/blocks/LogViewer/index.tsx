@@ -91,7 +91,7 @@ function LogViewer(props: IProps) {
       <Drawer
         title="应用日志"
         placement="bottom"
-        height="50vh"
+        size="large"
         open={isOpen}
         onClose={() => setLogOpen(false)}
         styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column' } }}

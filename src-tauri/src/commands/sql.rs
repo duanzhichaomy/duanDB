@@ -202,17 +202,49 @@ pub async fn sql_get_update_sql(
                     }
                 }
             }
-            "CREATE" | "UPDATE_COPY" => {
+            "CREATE" => {
                 if let Some(data_list) = &op.data_list {
-                    let cols: Vec<String> = col_headers.iter().map(|h| escape_identifier(&h.name)).collect();
-                    let vals: Vec<String> = (1..=col_headers.len())
-                        .map(|i| escape_value(data_list.get(i).and_then(|v| v.as_ref())))
-                        .collect();
+                    let mut cols = Vec::new();
+                    let mut vals = Vec::new();
+                    for (i, header) in col_headers.iter().enumerate() {
+                        // 跳过自增列
+                        if header.auto_increment == Some(true) {
+                            continue;
+                        }
+                        let data_idx = i + 1;
+                        cols.push(escape_identifier(&header.name));
+                        vals.push(escape_value(data_list.get(data_idx).and_then(|v| v.as_ref())));
+                    }
                     sql_parts.push(format!(
                         "INSERT INTO `{}`.`{}` ({}) VALUES ({});",
                         escaped_db, escaped_table,
                         cols.join(", "),
                         vals.join(", "),
+                    ));
+                }
+            }
+            "UPDATE_COPY" => {
+                if let Some(data_list) = &op.data_list {
+                    let has_primary_key = col_headers.iter().any(|h| h.primary_key == Some(true));
+                    let mut set_parts = Vec::new();
+                    let mut where_parts = Vec::new();
+
+                    for (i, header) in col_headers.iter().enumerate() {
+                        let data_idx = i + 1;
+                        let val = data_list.get(data_idx).and_then(|v| v.as_ref());
+                        let col = escape_identifier(&header.name);
+                        set_parts.push(format!("{} = {}", col, escape_value(val)));
+
+                        if !has_primary_key || header.primary_key == Some(true) {
+                            where_parts.push(escape_where_condition(&col, val));
+                        }
+                    }
+
+                    sql_parts.push(format!(
+                        "UPDATE `{}`.`{}` SET {} WHERE {};",
+                        escaped_db, escaped_table,
+                        set_parts.join(", "),
+                        where_parts.join(" AND "),
                     ));
                 }
             }
@@ -250,6 +282,7 @@ fn escape_identifier(name: &str) -> String {
 fn escape_value(val: Option<&String>) -> String {
     match val {
         None => "NULL".to_string(),
+        Some(v) if v == "DUANDB_UPDATE_TABLE_DATA_USER_FILLED_DEFAULT" => "DEFAULT".to_string(),
         Some(v) => format!("'{}'", v.replace('\'', "''")),
     }
 }
@@ -400,6 +433,44 @@ async fn execute_query(
 
     let _ = app.emit("sql_progress", row_idx);
 
+    // 尝试获取表名（用于 canEdit 和 0 行时补充列信息）
+    let table_name = extract_table_name(sql);
+
+    // 0 行结果时通过 SHOW COLUMNS 补充完整列头
+    if !headers_built {
+        if let Some(ref tbl) = table_name {
+            let cols_sql = format!(
+                "SHOW COLUMNS FROM `{}`",
+                tbl.replace('`', "``")
+            );
+            if let Ok(col_rows) = sqlx::raw_sql(&cols_sql).fetch_all(pool).await {
+                for row in &col_rows {
+                    let name: String = row.try_get(0).unwrap_or_default();
+                    let raw_type: String = row.try_get(1).unwrap_or_default();
+                    // 提取基础类型名（去掉括号内的长度信息，如 int(11) → INT）
+                    let base_type = raw_type
+                        .split('(')
+                        .next()
+                        .unwrap_or(&raw_type)
+                        .trim()
+                        .to_uppercase();
+                    let default_val: Option<String> = row.try_get("Default").ok().flatten();
+                    headers.push(TableHeader {
+                        name,
+                        data_type: map_mysql_type(&base_type),
+                        auto_increment: None,
+                        column_size: None,
+                        comment: None,
+                        decimal_digits: None,
+                        default_value: default_val,
+                        nullable: None,
+                        primary_key: None,
+                    });
+                }
+            }
+        }
+    }
+
     let has_next_page = if !has_user_limit {
         data_list.len() as i64 > page_size
     } else {
@@ -410,9 +481,6 @@ async fn execute_query(
     if has_next_page && !has_user_limit {
         data_list.pop();
     }
-
-    // 尝试获取表名（用于 canEdit）
-    let table_name = extract_table_name(sql);
 
     // 并行查询主键列
     if let Some(ref tbl) = table_name {
@@ -427,6 +495,24 @@ async fn execute_query(
                 .collect();
             for header in headers.iter_mut() {
                 header.primary_key = Some(pk_cols.contains(&header.name));
+            }
+        }
+
+        // 查询各列的默认值
+        let def_sql = format!(
+            "SELECT COLUMN_NAME, COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
+            tbl.replace('\'', "''")
+        );
+        if let Ok(def_rows) = sqlx::raw_sql(&def_sql).fetch_all(pool).await {
+            for def_row in &def_rows {
+                if let (Ok(col_name), Ok(col_default)) = (
+                    def_row.try_get::<String, _>("COLUMN_NAME"),
+                    def_row.try_get::<Option<String>, _>("COLUMN_DEFAULT"),
+                ) {
+                    if let Some(header) = headers.iter_mut().find(|h| h.name == col_name) {
+                        header.default_value = col_default;
+                    }
+                }
             }
         }
     }

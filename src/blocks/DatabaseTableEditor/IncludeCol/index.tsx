@@ -17,7 +17,7 @@ import { Table, Form, Select, Button } from 'antd';
 import { v4 as uuidv4 } from 'uuid';
 import { Context } from '../index';
 import { IColumnItemNew, IIndexIncludeColumnItem } from '@/typings';
-import { DatabaseTypeCode } from '@/constants';
+
 import i18n from '@/i18n';
 import lodash from 'lodash';
 import Iconfont from '@/components/Iconfont';
@@ -181,31 +181,6 @@ const IncludeCol = forwardRef((props: IProps, ref: ForwardedRef<IIncludeColRef>)
     //   },
     // },
   ];
-  // sqlLite 添加排序规则
-  if (databaseType === DatabaseTypeCode.SQLITE) {
-    columns.splice(2, 0, {
-      title: i18n('editTable.label.collation'),
-      dataIndex: 'collation',
-      render: (text: string, record: IIndexIncludeColumnItem) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <Form.Item name="collation" style={{ margin: 0 }}>
-            <Select
-              options={[
-                { label: 'BINARY', value: 'BINARY' },
-                { label: 'NOCASE', value: 'NOCASE' },
-                { label: 'RTRIM', value: 'RTRIM' },
-              ]}
-            />
-          </Form.Item>
-        ) : (
-          <div className={styles.editableCell} onClick={() => edit(record)}>
-            {text}
-          </div>
-        );
-      },
-    });
-  }
 
   const handleFieldsChange = (field: any) => {
     const { value } = field[0];

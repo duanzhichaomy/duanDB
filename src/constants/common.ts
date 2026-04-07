@@ -7,7 +7,7 @@ export enum DatabaseTypeCode {
   H2 = 'H2',
   POSTGRESQL = 'POSTGRESQL',
   SQLSERVER = 'SQLSERVER',
-  SQLITE = 'SQLITE',
+
   MARIADB = 'MARIADB',
   CLICKHOUSE = 'CLICKHOUSE',
   DM = 'DM',

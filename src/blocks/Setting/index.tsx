@@ -105,7 +105,7 @@ function Setting(props: IProps) {
         onCancel={handleCancel}
         footer={false}
         width={800}
-        maskClosable={false}
+        mask={{ closable: false }}
       >
         <div className={styles.modalBox}>
           <div className={styles.menus}>

@@ -75,7 +75,7 @@ const SingleFileMonacoEditor = memo<IProps>(
     };
 
     const setValue = (text: string) => {
-      monacoEditorRef.current?.setValue(text);
+      monacoEditorRef.current?.setValue(text, 'reset');
     };
 
     useImperativeHandle(ref, () => ({
