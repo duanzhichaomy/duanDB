@@ -35,20 +35,11 @@ const antdPrimaryColor: IAntdPrimaryColor = {
 };
 
 const antdLightTheme = {
-  algorithm: [theme.defaultAlgorithm, theme.compactAlgorithm],
+  algorithm: [theme.defaultAlgorithm],
   customName: 'light',
   antdPrimaryColor,
   token: {
     ...commonToken,
-    // colorText: "#232429",
-    colorTextBase: '#232429',
-    colorBgBase: '#ffffff',
-    colorHoverBg: 'rgba(0, 0, 0, 0.04)',
-    colorBgContainer: '#ffffff',
-    colorBgSubtle: '#f4f5f7',
-    colorBgElevated: '#ffffff',
-    colorBorder: '#e1e3e6',
-    colorBorderSecondary: '#ebedf0',
   },
 };
 

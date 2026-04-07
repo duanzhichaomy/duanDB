@@ -498,9 +498,9 @@ async fn execute_query(
             }
         }
 
-        // 查询各列的默认值
+        // 查询各列的默认值和自增信息
         let def_sql = format!(
-            "SELECT COLUMN_NAME, COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
+            "SELECT COLUMN_NAME, COLUMN_DEFAULT, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
             tbl.replace('\'', "''")
         );
         if let Ok(def_rows) = sqlx::raw_sql(&def_sql).fetch_all(pool).await {
@@ -511,6 +511,8 @@ async fn execute_query(
                 ) {
                     if let Some(header) = headers.iter_mut().find(|h| h.name == col_name) {
                         header.default_value = col_default;
+                        let extra: String = def_row.try_get::<String, _>("EXTRA").unwrap_or_default();
+                        header.auto_increment = Some(extra.contains("auto_increment"));
                     }
                 }
             }

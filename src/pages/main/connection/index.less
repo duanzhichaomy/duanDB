@@ -13,7 +13,7 @@
   flex-direction: column;
   width: 220px;
   overflow: hidden;
-  background-color: var(--color-bg-subtle);
+  background-color: var(--color-bg-layout);
   border-right: 1px solid var(--color-border-secondary);
   border-top: 0px;
   border-bottom: 0px;
@@ -74,7 +74,7 @@
     }
 
     &:hover {
-      background-color: var(--color-hover-bg);
+      background-color: var(--control-item-bg-hover);
 
       .moreButton {
         display: block;
@@ -90,7 +90,7 @@
   .menuItemActive {
     color: var(--color-primary);
     // background-color: var(--color-primary-bg);
-    background-color: var(--color-hover-bg);
+    background-color: var(--control-item-bg-hover);
   }
 
   :global {
@@ -165,7 +165,7 @@
   }
 
   &:hover {
-    background-color: var(--color-bg-medium);
+    background-color: var(--color-fill-quaternary);
     color: var(--color-primary);
     border: 1px solid var(--color-primary);
     cursor: pointer;

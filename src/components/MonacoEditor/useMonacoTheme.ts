@@ -4,28 +4,47 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { ThemeType } from '@/constants';
  
 // 如果用户点击的不是可复制的元素，就清空选中的内容
+// 将颜色值标准化为 #RRGGBB 格式（Monaco Editor 要求完整的 6 位十六进制）
+function normalizeColor(color: string): string {
+  if (!color) return '#000000';
+  const s = color.trim();
+  // #RGB → #RRGGBB
+  if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+    return `#${s[1]}${s[1]}${s[2]}${s[2]}${s[3]}${s[3]}`;
+  }
+  // rgb(r, g, b) → #RRGGBB
+  const rgbMatch = s.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
+    const g = parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
+    const b = parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
+    return `#${r}${g}${b}`;
+  }
+  return s;
+}
+
 function useMonacoTheme() {
   const [appTheme] = useTheme();
   // 监听主题色变化切换编辑器主题色
   useEffect(() => {
     const { colorPrimary, colorBgBase, colorTextBase  } = window._AppThemePack || {};
+    const primary = normalizeColor(colorPrimary);
+    const bgBase = normalizeColor(colorBgBase);
+    const textBase = normalizeColor(colorTextBase);
 
     const colors = {
-      'editor.lineHighlightBackground': colorPrimary + '14', // 当前行背景色
-      'editor.selectionBackground': colorPrimary + '50', // 选中文本的背景色
-      // 'editorLineNumber.foreground': colorPrimary, // 行号颜色
-      'editorLineNumber.activeForeground': colorPrimary, // 当前行号颜色
-      // 'editorCursor.foreground': colorPrimary, // 光标颜色
-      'editorRuler.foreground': colorPrimary + '15', // 右侧竖线颜色
-      'editor.foreground': colorTextBase, // 文本颜色
-      'editor.background': colorBgBase, //背景色
+      'editor.lineHighlightBackground': primary + '14', // 当前行背景色
+      'editor.selectionBackground': primary + '50', // 选中文本的背景色
+      'editorLineNumber.activeForeground': primary, // 当前行号颜色
+      'editorRuler.foreground': primary + '15', // 右侧竖线颜色
+      'editor.foreground': textBase, // 文本颜色
+      'editor.background': bgBase, // 背景色
     };
 
     monaco.editor.defineTheme(appTheme.backgroundColor, {
-      // base 如果appTheme.backgroundColor包含dark则为vs-dark，否则为vs
       base: appTheme.backgroundColor.includes(ThemeType.Dark) ? 'vs-dark' : 'vs',
-      inherit: true, // 是否继承vscode默认主题
-      rules: [{ background: '#15161a' }] as any,
+      inherit: true,
+      rules: [],
       colors,
     });
     

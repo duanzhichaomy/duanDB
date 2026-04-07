@@ -183,7 +183,7 @@ const UpdateDetection = memo(
         description: i18n('setting.text.newEditionIsReady'),
         style: {
           width: 260,
-          backgroundColor: 'var(--color-bg-subtle)',
+          backgroundColor: 'var(--color-bg-layout)',
         },
         btn,
         key,
@@ -233,7 +233,7 @@ const UpdateDetection = memo(
         ),
         style: {
           width: 260,
-          backgroundColor: 'var(--color-bg-subtle)',
+          backgroundColor: 'var(--color-bg-layout)',
         },
         btn,
         key,
@@ -258,7 +258,7 @@ const UpdateDetection = memo(
         description: i18n('setting.text.UpdatedLatestVersion', `v${__APP_VERSION__}`),
         style: {
           width: 310,
-          backgroundColor: 'var(--color-bg-subtle)',
+          backgroundColor: 'var(--color-bg-layout)',
         },
         btn: null,
         key,

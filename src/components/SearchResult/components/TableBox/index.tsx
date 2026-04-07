@@ -77,11 +77,11 @@ export enum USER_FILLED_VALUE {
 const SupportBaseTable: any = styled(BaseTable)`
   &.supportBaseTable {
     --bgcolor: var(--color-bg-base);
-    --header-bgcolor: var(--color-bg-subtle);
+    --header-bgcolor: var(--color-bg-layout);
     --hover-bgcolor: transparent;
-    --header-hover-bgcolor: var(--color-bg-subtle);
+    --header-hover-bgcolor: var(--color-bg-layout);
     --highlight-bgcolor: transparent;
-    --header-highlight-bgcolor: var(--color-bg-subtle);
+    --header-highlight-bgcolor: var(--color-bg-layout);
     --color: var(--color-text);
     --header-color: var(--color-text);
     --lock-shadow: rgb(37 37 37 / 0.5) 0 0 6px 2px;

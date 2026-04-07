@@ -34,22 +34,14 @@ const antdPrimaryColor: IAntdPrimaryColor = {
   },
 };
 
-const antdLightTheme = {
-  algorithm: [theme.darkAlgorithm, theme.compactAlgorithm],
+const antdDarkDimmedTheme = {
+  algorithm: [theme.darkAlgorithm],
   customName: 'dark-dimmed',
   antdPrimaryColor,
   token: {
     ...commonToken,
-    colorTextBase: '#f1f1f4',
     colorBgBase: '#1c2128',
-    colorHoverBg: 'hsla(0, 0%, 100%, 0.03)',
-    colorBgContainer: '#1c2128',
-    colorBgSubtle: '#22272e',
-    colorBgElevated: '#1c2128',
-    colorBorder: '#373e4766',
-    colorBorderSecondary: '#373e4766',
-    controlItemBgActive: '#f1f1f414',
   },
 };
 
-export default antdLightTheme;
+export default antdDarkDimmedTheme;
