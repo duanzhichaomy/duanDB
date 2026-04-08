@@ -1,4 +1,5 @@
 @import '../../styles/var.less';
+@import '../../styles/motion.less';
 
 .tab-focus() {
   background-color: var(--color-bg-base);
@@ -43,6 +44,7 @@
 
   .tabsContentItemActive {
     display: block;
+    animation: fadeIn var(--motion-duration-mid) var(--motion-ease-out);
   }
 }
 
@@ -65,7 +67,8 @@
   user-select: none;
   font-size: 12px;
   color: var(--color-text-secondary);
-  transition: color 0.15s, background-color 0.15s;
+  transition: color var(--motion-duration-fast) var(--motion-ease-in-out),
+              background-color var(--motion-duration-fast) var(--motion-ease-in-out);
   border-right: 1px solid var(--color-border-secondary);
 
   &:last-child {
@@ -96,7 +99,7 @@
     cursor: pointer;
     color: var(--color-text-tertiary);
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--motion-duration-fast) var(--motion-ease-in-out);
 
     i {
       font-size: 11px;
@@ -142,6 +145,8 @@
   cursor: pointer;
   border-left: 1px solid var(--color-border-secondary);
   color: var(--color-text-secondary);
+  transition: color var(--motion-duration-fast) var(--motion-ease-in-out),
+              background-color var(--motion-duration-fast) var(--motion-ease-in-out);
 
   &:hover {
     color: var(--color-primary);
@@ -158,6 +163,8 @@
   cursor: pointer;
   border-left: 1px solid var(--color-border-secondary);
   color: var(--color-text-secondary);
+  transition: color var(--motion-duration-fast) var(--motion-ease-in-out),
+              background-color var(--motion-duration-fast) var(--motion-ease-in-out);
 
   &:hover {
     color: var(--color-primary);
