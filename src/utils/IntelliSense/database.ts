@@ -39,7 +39,7 @@ const registerIntelliSenseDatabase = (databaseName: Array<{ name: string; dataSo
       const isTableContext = checkTableContext(lineContentUntilPosition);
 
       return {
-        suggestions: (databaseName || []).map(({ name, dataSourceName }) => ({
+        suggestions: (databaseName || []).filter(({ name }) => name).map(({ name, dataSourceName }) => ({
           label: {
             label: name,
             detail: dataSourceName ? `(${dataSourceName})` : undefined,

@@ -39,8 +39,12 @@ export const viewDDL = (treeNodeData) => {
 export const MonacoEditorAsync = (params: { getSql: any }) => {
   const { getSql } = params;
   const monacoEditorRef = React.useRef<any>();
-  getSql().then((sql) => {
-    monacoEditorRef.current.setValue(sql);
-  });
+  getSql()
+    .then((sql) => {
+      monacoEditorRef.current.setValue(sql);
+    })
+    .catch(() => {
+      // 连接池超时等错误已在 service 层处理
+    });
   return <MonacoEditor id={uuid()} ref={monacoEditorRef} />;
 };

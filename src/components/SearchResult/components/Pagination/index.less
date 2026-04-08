@@ -1,4 +1,5 @@
 @import '../../../../styles/var.less';
+@import '../../../../styles/motion.less';
 
 .paginationWrapper {
   display: flex;
@@ -27,7 +28,7 @@
   color: var(--color-text-secondary);
   cursor: pointer;
   user-select: none;
-  transition: all 0.15s ease;
+  transition: all var(--motion-duration-fast) var(--motion-ease-in-out);
 
   &:hover {
     background-color: var(--color-bg-base);

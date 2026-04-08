@@ -1,5 +1,6 @@
 import React, { memo, useRef, useState, createContext, useEffect, useMemo } from 'react';
-import { Button, Modal, message } from 'antd';
+import { Button, Modal } from 'antd';
+import { message } from '@/utils/globalMessage';
 import i18n from '@/i18n';
 import lodash from 'lodash';
 import styles from './index.less';

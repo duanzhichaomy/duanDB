@@ -46,29 +46,21 @@ const SingleFileMonacoEditor = memo<IProps>(
       return uuid();
     }, []);
 
-    const handleKeydown = useCallback((event) => {
-      if (event.key === 'Enter' && editorRef.current) {
-        const controller = editorRef.current.getContribution('editor.contrib.suggestController') as any;
-        const suggestWidget = controller._widget;
-        if (suggestWidget && suggestWidget.suggestWidgetVisible.get()) {
+    // 用 Monaco 自身的 addCommand 拦截 Enter，避免插入换行
+    const registerShortcutKey = useCallback((_editor, _monaco) => {
+      editorRef.current = _editor;
+      _editor.addCommand(_monaco.KeyCode.Enter, () => {
+        const controller = _editor.getContribution('editor.contrib.suggestController') as any;
+        const suggestWidget = controller?._widget;
+        if (suggestWidget?.suggestWidgetVisible?.get()) {
+          // 补全建议显示时，选中当前建议
+          _editor.trigger('keyboard', 'acceptSelectedSuggestion', {});
           return;
         }
-        // 否则，阻止回车键的默认行为
-        event.preventDefault();
         const value = monacoEditorRef.current?.getAllContent().trim() || '';
-        handelEnter && handelEnter(value);
-      }
-    }, []);
-
-    // 监听keydown事件，阻止回车键的默认行为
-    const registerShortcutKey = useCallback((_editor, _monaco, isActive) => {
-      if (isActive) {
-        editorRef.current = _editor;
-        window.addEventListener('keydown', handleKeydown);
-      } else {
-        window.removeEventListener('keydown', handleKeydown);
-      }
-    }, []);
+        handelEnter?.(value);
+      });
+    }, [handelEnter]);
 
     const getAllContent = () => {
       return monacoEditorRef.current?.getAllContent() || '';

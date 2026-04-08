@@ -17,8 +17,9 @@ import { getConnectionList } from '@/pages/main/store/connection';
 import { setAppTitleBarRightComponent } from '@/store/common/appTitleBarConfig';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import { setShowLeftSaveList } from '@/pages/main/workspace/store/common';
-import { useShortcutKeyStore } from '@/store/shortcutKey';
+import { useShortcutKeyStore, defaultBindings } from '@/store/shortcutKey';
 import { setActiveConsoleId, setWorkspaceTabList, createConsole } from '@/pages/main/workspace/store/console';
+import { setCurrentWorkspaceExtend } from '@/pages/main/workspace/store/common';
 import { useTreeStore } from '@/blocks/Tree/treeStore';
 import historyService from '@/service/history';
 import indexedDB from '@/indexedDB';
@@ -77,7 +78,7 @@ function MainPage() {
 
       // 检查是否匹配某个快捷键
       const matchBinding = (key: string) => {
-        const b = bindings[key];
+        const b = bindings[key] || defaultBindings[key];
         if (!b || !b.code) return false;
         const modMatch = b.modifiers.every((m: string) => (e as any)[m]);
         // 确保没有额外的修饰键
@@ -136,6 +137,14 @@ function MainPage() {
         e.preventDefault();
         e.stopPropagation();
         setMainPageActiveTab('workspace');
+        return;
+      }
+
+      if (matchBinding('openInfoPanel')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const current = useWorkspaceStore.getState().currentWorkspaceExtend;
+        setCurrentWorkspaceExtend(current === 'info' ? null : 'info');
         return;
       }
     };

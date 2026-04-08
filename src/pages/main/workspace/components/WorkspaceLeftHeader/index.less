@@ -1,4 +1,5 @@
 @import '../../../../../styles/var.less';
+@import '../../../../../styles/motion.less';
 
 .connectionRow {
   display: flex;
@@ -9,7 +10,7 @@
   border-radius: 4px;
   margin: 2px 6px;
   background-color: var(--color-primary-bg-hover);
-  transition: background-color 0.15s;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
 
   &:hover {
     background-color: var(--color-primary-bg-hover);
@@ -23,7 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-in-out);
   transform: rotate(-90deg);
 
   .arrowIcon {

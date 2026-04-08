@@ -24,6 +24,9 @@ export default memo<IProps>((props) => {
       } as any)
       .then((res) => {
         setSql(res);
+      })
+      .catch(() => {
+        // 连接池超时等错误已在 service 层处理
       });
     }
   }, [data]);

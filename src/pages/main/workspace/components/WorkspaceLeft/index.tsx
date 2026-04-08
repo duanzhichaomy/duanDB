@@ -1,7 +1,8 @@
 import React, { memo, useState, useCallback, useRef } from 'react';
 import i18n from '@/i18n';
 import classnames from 'classnames';
-import { Dropdown, Modal, message } from 'antd';
+import { Dropdown, Modal } from 'antd';
+import { message } from '@/utils/globalMessage';
 import styles from './index.less';
 import TableList from '../TableList';
 import WorkspaceLeftHeader from '../WorkspaceLeftHeader';

@@ -1,7 +1,8 @@
 import React, { memo, useEffect, useMemo, useState, Fragment } from 'react';
 import styles from './index.less';
 import i18n from '@/i18n';
-import { Button, Modal, message } from 'antd';
+import { Button, Modal } from 'antd';
+import { message } from '@/utils/globalMessage';
 
 // ----- constants -----
 import { WorkspaceTabType, workspaceTabConfig, databaseTypeList } from '@/constants';

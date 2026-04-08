@@ -1,7 +1,8 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 import i18n from '@/i18n';
 import styles from './index.less';
-import { Dropdown, Modal, message } from 'antd';
+import { Dropdown, Modal } from 'antd';
+import { message } from '@/utils/globalMessage';
 
 // ----- constants -----
 import { databaseTypeList } from '@/constants';
@@ -123,6 +124,7 @@ const OperationLine = (props: IProps) => {
                 onChange={(e) => setSearchValue(e.target.value)}
                 onBlur={handleSearchBlur}
                 placeholder="搜索"
+                autoComplete="off"
               />
               {searchValue && (
                 <span className={styles.searchClear} onMouseDown={handleSearchClear}>

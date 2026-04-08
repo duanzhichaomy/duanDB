@@ -8,7 +8,8 @@ import * as monaco from 'monaco-editor';
 import i18n from '@/i18n';
 import { copy } from '@/utils';
 import { createConsole } from '@/pages/main/workspace/store/console';
-import { Popover, message } from 'antd';
+import { Popover } from 'antd';
+import { message } from '@/utils/globalMessage';
 
 interface IProps {
   className?: string;

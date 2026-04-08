@@ -115,27 +115,27 @@ const CreateDatabase = () => {
     setOpenCreateDatabaseModal(openCreateDatabaseModal);
   }, []);
 
-  return (!!relyOnParams && (
+  return (
     <Modal
       onCancel={() => {
         setOpen(false);
       }}
       title={`${i18n('common.title.create')} Database`}
-      destroyOnHidden
       confirmLoading={confirmLoading}
       open={open}
       onOk={onOk}
+      forceRender
     >
       <div className={styles.createDatabaseDom}>
         <Form labelAlign="left" form={form} labelCol={labelCol} onFieldsChange={handleFieldsChange} name="create">
           <Form.Item label={i18n('common.label.name')} name="databaseName">
             <Input autoComplete="off" />
           </Form.Item>
-          {noCommentDatabase.includes(relyOnParams.databaseType) ? null : (
+          {relyOnParams && !noCommentDatabase.includes(relyOnParams.databaseType) ? (
             <Form.Item label={i18n('common.label.comment')} name="comment">
               <Input autoComplete="off" />
             </Form.Item>
-          )}
+          ) : null}
         </Form>
         <div className={styles.previewBox}>
           <div className={styles.previewText}>{i18n('common.title.preview')}</div>
@@ -161,7 +161,7 @@ const CreateDatabase = () => {
         )}
       </div>
     </Modal>
-  ))
+  );
 };
 
 export default CreateDatabase;

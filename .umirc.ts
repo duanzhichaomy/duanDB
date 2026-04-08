@@ -59,6 +59,7 @@ export default defineConfig({
   },
   links: [{ rel: 'icon', type: 'image/ico', sizes: '32x32', href: '/static/front/logo.ico' }],
   headScripts: [
+    { src: '/monaco-nls-zh-hans.js', async: false },
     `if (localStorage.getItem('app-local-storage-versions') !== 'v4') {
       localStorage.clear();
       localStorage.setItem('app-local-storage-versions', 'v4');

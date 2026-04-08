@@ -73,13 +73,19 @@ const isMatch = (target: string, searchValue: string) => {
   return reg.test(target || '');
 };
 
+// 可搜索的叶子节点类型（表、视图、函数、存储过程、触发器）
+const searchableTypes = new Set([
+  TreeNodeType.TABLE, TreeNodeType.VIEW, TreeNodeType.FUNCTION,
+  TreeNodeType.PROCEDURE, TreeNodeType.TRIGGER, TreeNodeType.SEQUENCE,
+]);
+
 // 树结构搜索
 function searchTree(treeData: ITreeNode[], searchValue: string): ITreeNode[] {
   let result: ITreeNode[] = [];
 
-  // 深度优先遍历
+  // 深度优先遍历，只在叶子类型节点上匹配
   function dfs(node: ITreeNode, path: ITreeNode[] = []) {
-    if (isMatch(node.name, searchValue)) {
+    if (searchableTypes.has(node.treeNodeType) && isMatch(node.name, searchValue)) {
       result = [...result, ...path, node];
       return;
     }
@@ -96,11 +102,11 @@ function searchTree(treeData: ITreeNode[], searchValue: string): ITreeNode[] {
   const deWeightList: ITreeNode[] = [];
   result.forEach((item) => {
     if (deWeightList.findIndex((i) => i.uuid === item.uuid) !== -1) return;
-    // 如果不匹配，说明该节点为path，不需要保留该节点的子元素
-    if (!isMatch(item.name, searchValue)) {
-      deWeightList.push({ ...item, children: null });
-    } else {
+    // 只有可搜索的叶子节点且匹配时保留子元素，其余为路径节点
+    if (searchableTypes.has(item.treeNodeType) && isMatch(item.name, searchValue)) {
       deWeightList.push({ ...item });
+    } else {
+      deWeightList.push({ ...item, children: null });
     }
   });
 

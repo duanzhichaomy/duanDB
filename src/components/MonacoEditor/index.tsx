@@ -28,7 +28,6 @@ interface IProps {
   language?: string;
   className?: string;
   options?: IEditorOptions;
-  needDestroy?: boolean;
   addAction?: Array<{ id: string; label: string; action: (selectedText: string, ext?: string) => void }>;
   defaultValue?: string;
   appendValue?: IAppendValue;
@@ -103,9 +102,7 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
     createAction(editorIns);
 
     return () => {
-      if (props.needDestroy) {
-        editorRef.current && editorRef.current.dispose();
-      }
+      editorRef.current && editorRef.current.dispose();
     };
   }, []);
 
@@ -131,12 +128,11 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
 
   useEffect(() => {
     if (editorRef.current) {
-      // eg:
-      // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyL, () => {
-      // });
       shortcutKey?.(editorRef.current, monaco, isActive);
     }
-  }, [editorRef.current, isActive]);
+    // 只在编辑器创建后注册一次快捷键，避免 addCommand 无限累积
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorRef.current]);
 
   useEffect(() => {
     // 监听浏览器窗口大小变化，重新渲染编辑器
@@ -233,7 +229,13 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
     });
   };
 
-  return <div ref={ref as any} id={`monaco-editor-${id}`} className={cs(className, styles.editorContainer)} />;
+  // WKWebView 下 Monaco 的隐藏 textarea 可能丢失焦点导致键盘无响应，
+  // 点击容器时强制聚焦编辑器
+  const handleContainerClick = () => {
+    editorRef.current?.focus();
+  };
+
+  return <div ref={ref as any} id={`monaco-editor-${id}`} className={cs(className, styles.editorContainer)} onClick={handleContainerClick} />;
 }
 
 // text 需要添加的文本

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dropdown, Input, MenuProps, message, Modal, Space, Popover, Spin, Button } from 'antd';
+import { Dropdown, Input, MenuProps, Modal, Space, Popover, Spin, Button } from 'antd';
+import { message } from '@/utils/globalMessage';
 import { BaseTable, ArtColumn, useTablePipeline, features, SortItem } from 'ali-react-table';
 import styled from 'styled-components';
 import classnames from 'classnames';
@@ -1188,7 +1189,7 @@ export default function TableBox(props: ITableProps) {
               <Popover mouseEnterDelay={0.8} content={i18n('common.button.refresh')} trigger="hover">
                 <div
                   onClick={() => {
-                    getTableData();
+                    screeningResultRef.current ? screeningResultRef.current.search() : getTableData();
                   }}
                   className={classnames(styles.refreshIconBox)}
                 >

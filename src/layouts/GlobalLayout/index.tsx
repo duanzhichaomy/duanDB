@@ -1,9 +1,10 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import usePollRequestService, { ServiceStatus } from '@/hooks/usePollRequestService';
 import i18n, { isEn } from '@/i18n';
-import { Button, ConfigProvider, Spin } from 'antd';
+import { App, Button, ConfigProvider, Spin } from 'antd';
 import antdEnUS from 'antd/locale/en_US';
 import antdZhCN from 'antd/locale/zh_CN';
+import { initMessageInstance } from '@/utils/globalMessage';
 import service from '@/service/misc';
 import { useTheme } from '@/hooks/useTheme';
 import { getAntdThemeConfig } from '@/theme';
@@ -14,6 +15,14 @@ import { ThemeType } from '@/constants';
 import GlobalComponent from '../init/GlobalComponent';
 import styles from './index.less';
 import { queryCurUser } from '@/store/user';
+
+const AppMessageSetup: React.FC = () => {
+  const { message } = App.useApp();
+  useEffect(() => {
+    initMessageInstance(message);
+  }, [message]);
+  return null;
+};
 
 const GlobalLayout = () => {
   const [appTheme, setAppTheme] = useTheme();
@@ -77,12 +86,15 @@ const GlobalLayout = () => {
 
   return (
     <ConfigProvider locale={isEn ? antdEnUS : antdZhCN} theme={antdTheme}>
-      <div className={styles.app}>
-        <div className={styles.appBody}>
-          <Outlet />
+      <App>
+        <AppMessageSetup />
+        <div className={styles.app}>
+          <div className={styles.appBody}>
+            <Outlet />
+          </div>
         </div>
-      </div>
-      <GlobalComponent />
+        <GlobalComponent />
+      </App>
     </ConfigProvider>
   );
 };

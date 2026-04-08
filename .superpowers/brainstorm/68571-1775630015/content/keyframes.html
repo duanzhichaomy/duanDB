@@ -1,0 +1,108 @@
+<h2>全局 Keyframe 动画库</h2>
+<p class="subtitle">在 motion.less 中定义的可复用 @keyframes 动画</p>
+
+<div class="section">
+  <h3>1. Fade 淡入淡出</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">fadeIn / fadeOut</div>
+      <div class="mockup-body" style="text-align:center; padding: 30px;">
+        <div style="width:120px;height:60px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);margin:0 auto;animation:fadeInDemo 1.5s ease-in-out infinite alternate;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">fadeIn</div>
+        <p style="margin-top:12px;opacity:0.6;font-size:12px;">opacity: 0 → 1<br/>用途：Tooltip、通知、内容切换</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">fadeInUp / fadeOutDown</div>
+      <div class="mockup-body" style="text-align:center; padding: 30px;">
+        <div style="width:120px;height:60px;border-radius:8px;background:linear-gradient(135deg,#06b6d4,#0891b2);margin:0 auto;animation:fadeInUpDemo 1.5s ease-in-out infinite alternate;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">fadeInUp</div>
+        <p style="margin-top:12px;opacity:0.6;font-size:12px;">opacity + translateY(8px → 0)<br/>用途：页面进入、列表项出现</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. Slide 滑入滑出</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">slideInRight / slideOutRight</div>
+      <div class="mockup-body" style="text-align:center; padding: 30px;">
+        <div style="width:120px;height:60px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);margin:0 auto;animation:slideInRightDemo 1.5s ease-in-out infinite alternate;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">slideRight</div>
+        <p style="margin-top:12px;opacity:0.6;font-size:12px;">translateX(100% → 0)<br/>用途：Drawer、侧面板</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">slideInDown / slideOutUp</div>
+      <div class="mockup-body" style="text-align:center; padding: 30px;">
+        <div style="width:120px;height:60px;border-radius:8px;background:linear-gradient(135deg,#10b981,#059669);margin:0 auto;animation:slideInDownDemo 1.5s ease-in-out infinite alternate;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">slideDown</div>
+        <p style="margin-top:12px;opacity:0.6;font-size:12px;">translateY(-100% → 0)<br/>用途：下拉菜单、底部Drawer</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. Zoom 缩放</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">zoomIn / zoomOut</div>
+      <div class="mockup-body" style="text-align:center; padding: 30px;">
+        <div style="width:120px;height:60px;border-radius:8px;background:linear-gradient(135deg,#ec4899,#db2777);margin:0 auto;animation:zoomInDemo 1.5s ease-in-out infinite alternate;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">zoomIn</div>
+        <p style="margin-top:12px;opacity:0.6;font-size:12px;">scale(0.85) + opacity → 1<br/>用途：Modal、Popover、右键菜单</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">collapseExpand</div>
+      <div class="mockup-body" style="text-align:center; padding: 30px;">
+        <div style="width:120px;border-radius:8px;background:linear-gradient(135deg,#ef4444,#dc2626);margin:0 auto;animation:collapseDemo 2s ease-in-out infinite alternate;overflow:hidden;color:#fff;font-size:12px;padding:8px;">
+          <div>Item 1</div>
+          <div>Item 2</div>
+          <div>Item 3</div>
+        </div>
+        <p style="margin-top:12px;opacity:0.6;font-size:12px;">height: 0 → auto (via max-height)<br/>用途：Tree 节点、折叠面板</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>4. 工具类 (Utility Classes)</h3>
+  <div class="mockup">
+    <div class="mockup-header">在 motion.less 中定义的可直接使用的类名</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 2.2;">
+      <div><span style="color:#8b5cf6">.motion-fade-enter</span> / <span style="color:#8b5cf6">.motion-fade-leave</span></div>
+      <div><span style="color:#06b6d4">.motion-fade-up-enter</span> / <span style="color:#06b6d4">.motion-fade-up-leave</span></div>
+      <div><span style="color:#f59e0b">.motion-slide-right-enter</span> / <span style="color:#f59e0b">.motion-slide-right-leave</span></div>
+      <div><span style="color:#10b981">.motion-slide-down-enter</span> / <span style="color:#10b981">.motion-slide-down-leave</span></div>
+      <div><span style="color:#ec4899">.motion-zoom-enter</span> / <span style="color:#ec4899">.motion-zoom-leave</span></div>
+      <div><span style="color:#ef4444">.motion-collapse</span> <span style="opacity:0.5">— 配合 JS 切换 .expanded/.collapsed</span></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes fadeInDemo {
+    0% { opacity: 0.1; }
+    100% { opacity: 1; }
+  }
+  @keyframes fadeInUpDemo {
+    0% { opacity: 0.1; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideInRightDemo {
+    0% { transform: translateX(40px); opacity: 0.2; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideInDownDemo {
+    0% { transform: translateY(-20px); opacity: 0.2; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes zoomInDemo {
+    0% { transform: scale(0.7); opacity: 0.2; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes collapseDemo {
+    0% { max-height: 20px; opacity: 0.5; }
+    100% { max-height: 100px; opacity: 1; }
+  }
+</style>

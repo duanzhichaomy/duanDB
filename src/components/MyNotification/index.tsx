@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Button, message, Modal, notification, Space } from 'antd';
+import { Button, Modal, notification, Space } from 'antd';
+import { message } from '@/utils/globalMessage';
 import i18n from '@/i18n';
 import { IconType } from 'antd/es/notification/interface';
 import Iconfont from '../Iconfont';

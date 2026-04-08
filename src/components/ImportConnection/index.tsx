@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Upload, Button, message } from 'antd';
+import { Modal, Upload, Button } from 'antd';
+import { message } from '@/utils/globalMessage';
 import { UploadOutlined } from '@ant-design/icons';
 import i18n from '@/i18n';
 

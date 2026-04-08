@@ -9,7 +9,8 @@ import { IConnectionConfig, IFormItem, ISelect } from './config/types';
 import { InputType } from './config/enum';
 import { IConnectionDetails } from '@/typings';
 import { deepClone } from '@/utils';
-import { Select, Form, Input, message, Button } from 'antd';
+import { Select, Form, Input, Button } from 'antd';
+import { message } from '@/utils/globalMessage';
 import Iconfont from '@/components/Iconfont';
 // ----- store -----
 import { getConnectionList } from '@/pages/main/store/connection';

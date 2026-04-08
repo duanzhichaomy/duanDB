@@ -1,6 +1,7 @@
 import React from 'react';
 import i18n from '@/i18n';
-import { Tooltip, message } from 'antd';
+import { Tooltip } from 'antd';
+import { message } from '@/utils/globalMessage';
 import { IBoundInfo } from '@/typings/workspace';
 import styles from './index.less';
 import Iconfont from '@/components/Iconfont';

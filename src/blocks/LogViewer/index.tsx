@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Drawer, Tooltip, Select, Button, message } from 'antd';
+import { Badge, Drawer, Tooltip, Select, Button } from 'antd';
+import { message } from '@/utils/globalMessage';
 import classnames from 'classnames';
 import Iconfont from '@/components/Iconfont';
 import {

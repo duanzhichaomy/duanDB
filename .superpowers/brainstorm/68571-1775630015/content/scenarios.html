@@ -1,0 +1,137 @@
+<h2>全场景动效应用方案</h2>
+<p class="subtitle">每个 UI 交互场景的具体动效方案</p>
+
+<div class="section">
+  <h3>🔀 1. 页面切换（workspace / connection / dashboard）</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div><strong>动效：</strong>fadeInUp — opacity(0→1) + translateY(8px→0)</div>
+      <div><strong>时长：</strong>var(--motion-duration-slow) = 0.3s</div>
+      <div><strong>缓动：</strong>var(--motion-ease-out)</div>
+      <div><strong>实现：</strong>在页面根容器添加 .motion-fade-up-enter 动画类</div>
+      <div><strong>文件：</strong>src/pages/main/index.tsx (路由切换处)</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📑 2. Tab 标签页管理</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div style="margin-bottom:8px;"><strong>Tab 切换：</strong></div>
+      <div>&nbsp;&nbsp;内容区 fadeIn — opacity(0→1), duration: 0.2s, ease-out</div>
+      <div style="margin-top:8px;"><strong>新增 Tab：</strong></div>
+      <div>&nbsp;&nbsp;Tab 标签 fadeIn + 内容区 fadeInUp, duration: 0.2s</div>
+      <div style="margin-top:8px;"><strong>关闭 Tab：</strong></div>
+      <div>&nbsp;&nbsp;Tab 标签 fadeOut + width 收缩, duration: 0.15s</div>
+      <div style="margin-top:8px;"><strong>文件：</strong>src/pages/main/workspace/components/WorkspaceTabs/</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🌲 3. Tree 数据库导航</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div style="margin-bottom:8px;"><strong>节点展开/收起：</strong></div>
+      <div>&nbsp;&nbsp;collapse 动画 — max-height + opacity, duration: 0.2s, ease-in-out</div>
+      <div>&nbsp;&nbsp;箭头旋转 — transform: rotate(0→90deg), duration: 0.2s</div>
+      <div style="margin-top:8px;"><strong>搜索结果出现：</strong></div>
+      <div>&nbsp;&nbsp;stagger fadeIn — 每项延迟 30ms, duration: 0.15s</div>
+      <div style="margin-top:8px;"><strong>节点 hover：</strong></div>
+      <div>&nbsp;&nbsp;background-color transition, duration: 0.1s</div>
+      <div style="margin-top:8px;"><strong>文件：</strong>src/blocks/Tree/, src/pages/main/workspace/components/WorkspaceLeft/</div>
+      <div><strong>现状：</strong>已有基础 transition，需要统一到 motion token</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🪟 4. Modal 弹窗</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div style="margin-bottom:8px;"><strong>打开：</strong></div>
+      <div>&nbsp;&nbsp;遮罩层 fadeIn(0.2s) + 内容 zoomIn scale(0.85→1) + fadeIn(0.3s)</div>
+      <div style="margin-top:8px;"><strong>关闭：</strong></div>
+      <div>&nbsp;&nbsp;遮罩层 fadeOut(0.2s) + 内容 zoomOut scale(1→0.85) + fadeOut(0.2s)</div>
+      <div style="margin-top:8px;"><strong>实现：</strong>Ant Design Modal 已有内置动效，自定义 Modal (BaseModal/TriggeredModal) 需添加</div>
+      <div><strong>文件：</strong>src/components/BaseModal/, src/components/TriggeredModal/</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📥 5. Drawer 抽屉</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div><strong>日志面板（底部）：</strong>slideUp + fadeIn, duration: 0.3s, ease-out-circ</div>
+      <div><strong>侧边 Drawer：</strong>slideRight + fadeIn, duration: 0.3s, ease-out-circ</div>
+      <div><strong>实现：</strong>Ant Design Drawer 内置动效，确保参数与 token 一致</div>
+      <div><strong>文件：</strong>src/blocks/LogViewer/</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📊 6. 数据表 & 查询结果</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div><strong>查询执行 → 结果出现：</strong>fadeInUp, duration: 0.2s</div>
+      <div><strong>分页切换：</strong>fadeIn 内容过渡, duration: 0.15s</div>
+      <div><strong>行编辑保存：</strong>行背景 flash 高亮 (0.5s 绿色闪烁后恢复)</div>
+      <div><strong>行删除：</strong>fadeOut + height 收缩, duration: 0.2s</div>
+      <div><strong>Loading 状态：</strong>fadeIn/Out 切换（已有 Loading 组件，保持不变）</div>
+      <div><strong>文件：</strong>src/components/SearchResult/, src/components/Output/</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📐 7. 侧边栏 & 面板</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div><strong>左侧面板拖拽调整：</strong>实时跟随（已有 DraggableContainer）</div>
+      <div><strong>面板折叠/展开：</strong>width transition 0.3s ease-in-out + 内容 fadeIn</div>
+      <div><strong>Save List 面板切换：</strong>fadeIn 0.2s（在 WorkspaceLeft 中切换显示）</div>
+      <div><strong>文件：</strong>src/components/DraggableContainer/, src/pages/main/workspace/components/WorkspaceLeft/</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔔 8. 通知 & 消息</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div><strong>Message 消息：</strong>slideDown + fadeIn 从顶部进入, 0.3s</div>
+      <div><strong>Notification 通知：</strong>slideRight + fadeIn 从右侧进入, 0.3s</div>
+      <div><strong>自动消失：</strong>fadeOut + slideUp, 0.2s</div>
+      <div><strong>实现：</strong>Ant Design message/notification 已有内置动效，确认使用统一 token</div>
+      <div><strong>文件：</strong>src/components/MyNotification/</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔗 9. 连接管理</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div><strong>连接列表加载：</strong>stagger fadeInUp, 每项延迟 50ms</div>
+      <div><strong>连接状态变化：</strong>状态图标 fadeIn 切换, 0.2s</div>
+      <div><strong>新建/编辑连接弹窗：</strong>同 Modal 动效规范</div>
+      <div><strong>文件：</strong>src/pages/main/connection/, src/components/ConnectionEdit/</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>⌨️ 10. 通用交互</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:13px; line-height:1.8;">
+      <div><strong>按钮 hover/active：</strong>background-color + box-shadow transition 0.1s</div>
+      <div><strong>图标按钮 hover：</strong>background-color 0.15s（已有，统一 token）</div>
+      <div><strong>输入框 focus：</strong>border-color + box-shadow 0.2s（Ant Design 内置）</div>
+      <div><strong>右键菜单：</strong>zoomIn + fadeIn, origin: 点击位置, 0.15s</div>
+      <div><strong>Tooltip/Popover：</strong>fadeIn + 微位移, 0.1s（Ant Design 内置）</div>
+    </div>
+  </div>
+</div>

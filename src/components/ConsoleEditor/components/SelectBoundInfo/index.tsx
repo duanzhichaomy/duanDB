@@ -190,10 +190,12 @@ const SelectBoundInfo = memo((props: IProps) => {
 
   // 注册数据库名
   useEffect(() => {
-    const editorDatabaseTips = databaseNameList.map((item) => ({
-      name: item.value,
-      dataSourceName: boundInfo.dataSourceName,
-    }));
+    const editorDatabaseTips = databaseNameList
+      .filter((item) => item.value)
+      .map((item) => ({
+        name: item.value,
+        dataSourceName: boundInfo.dataSourceName,
+      }));
     registerIntelliSenseDatabase(editorDatabaseTips);
   }, [databaseNameList]);
 

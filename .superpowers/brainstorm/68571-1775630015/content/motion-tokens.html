@@ -1,0 +1,54 @@
+<h2>Motion Token 体系设计</h2>
+<p class="subtitle">统一的 CSS 变量系统，作为所有动效的基础</p>
+
+<div class="section">
+  <h3>时长 Token (Duration)</h3>
+  <div class="mockup">
+    <div class="mockup-header">motion-duration 变量定义</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 2;">
+      <div><span style="color: #8b5cf6;">--motion-duration-fast</span>: <strong>0.1s</strong> <span style="opacity:0.5">— hover、active、微交互</span></div>
+      <div><span style="color: #8b5cf6;">--motion-duration-mid</span>: <strong>0.2s</strong> <span style="opacity:0.5">— 展开收起、Tab 切换、下拉</span></div>
+      <div><span style="color: #8b5cf6;">--motion-duration-slow</span>: <strong>0.3s</strong> <span style="opacity:0.5">— Modal、Drawer、页面切换</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>缓动函数 Token (Easing)</h3>
+  <div class="mockup">
+    <div class="mockup-header">motion-ease 变量定义</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 2;">
+      <div><span style="color: #06b6d4;">--motion-ease-out</span>: cubic-bezier(0.215, 0.61, 0.355, 1) <span style="opacity:0.5">— 元素进入</span></div>
+      <div><span style="color: #06b6d4;">--motion-ease-in</span>: cubic-bezier(0.55, 0.055, 0.675, 0.19) <span style="opacity:0.5">— 元素退出</span></div>
+      <div><span style="color: #06b6d4;">--motion-ease-in-out</span>: cubic-bezier(0.645, 0.045, 0.355, 1) <span style="opacity:0.5">— 状态切换</span></div>
+      <div><span style="color: #06b6d4;">--motion-ease-out-circ</span>: cubic-bezier(0.08, 0.82, 0.17, 1) <span style="opacity:0.5">— 弹性进入</span></div>
+      <div><span style="color: #06b6d4;">--motion-ease-in-out-circ</span>: cubic-bezier(0.78, 0.14, 0.15, 0.86) <span style="opacity:0.5">— 强调过渡</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>复合 Token (Shorthand)</h3>
+  <div class="mockup">
+    <div class="mockup-header">常用 transition 组合变量</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 2;">
+      <div><span style="color: #f59e0b;">--transition-fast</span>: all 0.1s var(--motion-ease-in-out) <span style="opacity:0.5">— hover、focus</span></div>
+      <div><span style="color: #f59e0b;">--transition-mid</span>: all 0.2s var(--motion-ease-in-out) <span style="opacity:0.5">— 展开、切换</span></div>
+      <div><span style="color: #f59e0b;">--transition-slow</span>: all 0.3s var(--motion-ease-in-out) <span style="opacity:0.5">— 大面积过渡</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>实现方式</h3>
+  <div class="mockup">
+    <div class="mockup-header">文件结构</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 1.8;">
+      <div>src/styles/</div>
+      <div>&nbsp;&nbsp;├── <strong>motion.less</strong> &nbsp;← 新增：Motion Token 变量 + 动画 keyframes + 工具类</div>
+      <div>&nbsp;&nbsp;├── var.less &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← 现有：保留原有 mixin</div>
+      <div>&nbsp;&nbsp;├── global.less &nbsp;&nbsp;← 修改：import motion.less</div>
+      <div>&nbsp;&nbsp;└── antd.less &nbsp;&nbsp;&nbsp;&nbsp;← 现有：Ant Design 覆盖</div>
+    </div>
+  </div>
+</div>

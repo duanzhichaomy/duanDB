@@ -45,6 +45,13 @@ export const defaultBindings: Record<string, IShortcutBinding> = {
     code: 'KeyT',
     displayText: `${modKey}+T`,
   },
+  openInfoPanel: {
+    key: 'openInfoPanel',
+    label: '打开信息面板',
+    modifiers: [isMac ? 'metaKey' : 'ctrlKey'],
+    code: 'Digit2',
+    displayText: `${modKey}+2`,
+  },
 };
 
 const initState: IShortcutKeyState = {

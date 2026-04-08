@@ -135,6 +135,8 @@ export function initLogInterceptor() {
     const reason = event.reason;
     const msg = reason instanceof Error ? `${reason.message}\n${reason.stack || ''}` : String(reason);
     addLog('error', `Unhandled Promise Rejection: ${msg}`, 'unhandledrejection');
+    // 阻止开发模式下的 React 错误覆盖层弹出
+    event.preventDefault();
   });
 }
 

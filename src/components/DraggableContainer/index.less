@@ -1,4 +1,4 @@
-// @import '../../var.less';
+@import '../../styles/motion.less';
 
 .box {
   display: flex;
@@ -14,7 +14,7 @@
     bottom: 0px;
     z-index: 100;
     transform: translateX(-50%);
-    transition: background-color 0.15s;
+    transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
     &:hover {
       background-color: var(--color-primary);
       opacity: 0.3;
