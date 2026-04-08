@@ -1,0 +1,158 @@
+// ===== Motion Token 变量 =====
+:root {
+  // 时长
+  --motion-duration-fast: 0.1s;
+  --motion-duration-mid: 0.2s;
+  --motion-duration-slow: 0.3s;
+
+  // 缓动函数
+  --motion-ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --motion-ease-in: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  --motion-ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --motion-ease-out-circ: cubic-bezier(0.08, 0.82, 0.17, 1);
+  --motion-ease-in-out-circ: cubic-bezier(0.78, 0.14, 0.15, 0.86);
+}
+
+// ===== @keyframes 动画 =====
+
+// Fade
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+// Fade + Move Up
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+// Slide
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes slideInUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes slideOutDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes slideInDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+// Zoom
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+// Flash 高亮（行编辑反馈）
+@keyframes rowFlash {
+  0% { background-color: var(--color-success-bg); }
+  100% { background-color: transparent; }
+}
+
+// ===== 工具类 =====
+:global {
+  .motion-fade-enter {
+    animation: fadeIn var(--motion-duration-mid) var(--motion-ease-out) both;
+  }
+  .motion-fade-leave {
+    animation: fadeOut var(--motion-duration-mid) var(--motion-ease-in) both;
+  }
+  .motion-fade-up-enter {
+    animation: fadeInUp var(--motion-duration-slow) var(--motion-ease-out) both;
+  }
+  .motion-fade-up-leave {
+    animation: fadeOutDown var(--motion-duration-slow) var(--motion-ease-in) both;
+  }
+  .motion-zoom-enter {
+    animation: zoomIn var(--motion-duration-slow) var(--motion-ease-out-circ) both;
+  }
+  .motion-zoom-leave {
+    animation: zoomOut var(--motion-duration-slow) var(--motion-ease-in) both;
+  }
+  .motion-slide-right-enter {
+    animation: slideInRight var(--motion-duration-slow) var(--motion-ease-out-circ) both;
+  }
+  .motion-slide-up-enter {
+    animation: slideInUp var(--motion-duration-slow) var(--motion-ease-out-circ) both;
+  }
+}
+
+// ===== LESS Mixins =====
+.f-transition-fast() {
+  transition: all var(--motion-duration-fast) var(--motion-ease-in-out);
+}
+.f-transition-mid() {
+  transition: all var(--motion-duration-mid) var(--motion-ease-in-out);
+}
+.f-transition-slow() {
+  transition: all var(--motion-duration-slow) var(--motion-ease-in-out);
+}
+
+// ===== prefers-reduced-motion =====
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0s;
+    --motion-duration-mid: 0s;
+    --motion-duration-slow: 0s;
+  }
+  :global {
+    .motion-fade-enter,
+    .motion-fade-leave,
+    .motion-fade-up-enter,
+    .motion-fade-up-leave,
+    .motion-zoom-enter,
+    .motion-zoom-leave,
+    .motion-slide-right-enter,
+    .motion-slide-up-enter {
+      animation: none !important;
+    }
+  }
+}
