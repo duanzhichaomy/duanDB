@@ -1,4 +1,5 @@
 @import '../../../../styles/var.less';
+@import '../../../../styles/motion.less';
 
 .button-bar-item() {
   width: 30px;
@@ -8,6 +9,7 @@
   align-items: center;
   cursor: pointer;
   border-radius: 4px;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
   i {
     color: var(--color-primary);
   }
@@ -251,6 +253,7 @@
     border-radius: 3px;
     cursor: pointer;
     color: var(--color-text-secondary);
+    transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
 
     &:hover {
       background-color: var(--control-item-bg-hover);
@@ -278,6 +281,7 @@
     align-items: center;
     z-index: 10;
     background-color: color-mix(in srgb, var(--color-bg-base) 80%, transparent);
+    animation: fadeIn var(--motion-duration-mid) var(--motion-ease-out);
   }
 }
 
@@ -299,6 +303,7 @@
   user-select: none;
   background-color: var(--color-bg-base);
   cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
 
   .tableItemContent {
     max-height: 28px;
