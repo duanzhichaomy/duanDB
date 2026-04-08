@@ -1,4 +1,5 @@
 @import '../../../../../styles/var.less';
+@import '../../../../../styles/motion.less';
 
 .tabBox {
   height: 100%;
@@ -27,6 +28,7 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  animation: fadeInUp var(--motion-duration-slow) var(--motion-ease-out);
 
   .welcomeLetterpress {
     font-size: 80px;
@@ -48,6 +50,19 @@
     justify-content: center;
     gap: 20px;
     max-width: 600px;
+
+    .databaseTypeCard {
+      animation: fadeInUp var(--motion-duration-slow) var(--motion-ease-out) both;
+
+      &:nth-child(1) { animation-delay: 0s; }
+      &:nth-child(2) { animation-delay: 0.05s; }
+      &:nth-child(3) { animation-delay: 0.05s; }
+      &:nth-child(4) { animation-delay: 0.1s; }
+      &:nth-child(5) { animation-delay: 0.1s; }
+      &:nth-child(6) { animation-delay: 0.15s; }
+      &:nth-child(7) { animation-delay: 0.15s; }
+      &:nth-child(8) { animation-delay: 0.2s; }
+    }
   }
 
   .databaseTypeCard {
@@ -61,7 +76,9 @@
     border: 1px solid var(--color-border);
     background: var(--color-bg-layout);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color var(--motion-duration-mid) var(--motion-ease-in-out),
+                box-shadow var(--motion-duration-mid) var(--motion-ease-in-out),
+                transform var(--motion-duration-mid) var(--motion-ease-out);
 
     &:hover {
       border-color: var(--color-primary);
