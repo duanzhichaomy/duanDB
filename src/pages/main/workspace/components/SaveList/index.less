@@ -10,8 +10,8 @@
 .leftModuleTitle {
   flex-shrink: 0;
   margin-bottom: 4px;
-  padding: 0px 10px;
-  height: 32px;
+  padding: 0px 8px;
+  height: 36px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--color-border);
@@ -20,10 +20,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 26px;
+    height: 32px;
     .modelName {
-      font-weight: bold;
-      line-height: 100%;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 22px;
+      color: var(--color-text);
     }
     .iconBox {
       display: flex;
@@ -31,21 +33,29 @@
       height: 100%;
     }
     .refreshIcon {
-      margin-right: 10px;
+      margin-right: 8px;
     }
     .refreshIcon,
     .searchIcon {
       cursor: pointer;
-      height: 100%;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      transition: all var(--motion-duration-fast) var(--motion-ease-in-out);
       &:hover {
-        color: var(--color-primary);
+        background-color: var(--control-item-bg-hover);
+        color: var(--color-text);
       }
     }
   }
   .leftModuleTitleSearch {
-    height: 26px;
+    height: 28px;
+    width: 100%;
   }
 }
 
@@ -73,21 +83,26 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0px 6px;
-  height: 26px;
-  line-height: 26px;
-  border-radius: 4px;
+  padding: 0px 8px;
+  height: 32px;
+  line-height: 22px;
+  border-radius: 6px;
   user-select: none;
   cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
   .saveItemText {
     width: 0px;
     flex: 1;
     .f-single-line();
     display: flex;
     align-items: center;
+    gap: 8px;
     .iconBox {
-      width: 20px;
       flex-shrink: 0;
+      font-size: 14px;
+      color: var(--color-text-secondary);
     }
     .itemName {
       flex: 1;
@@ -97,6 +112,5 @@
 
   &:hover {
     background-color: var(--control-item-bg-hover);
-    color: var(--color-primary);
   }
 }

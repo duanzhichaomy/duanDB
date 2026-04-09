@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dropdown, Input, MenuProps, Modal, Space, Popover, Spin, Button } from 'antd';
 import { message } from '@/utils/globalMessage';
 import { BaseTable, ArtColumn, useTablePipeline, features, SortItem } from 'ali-react-table';
@@ -130,6 +130,7 @@ export default function TableBox(props: ITableProps) {
   const [editingData, setEditingData] = useState<string>('');
   // 当前选中的行号
   const [curOperationRowNo, setCurOperationRowNo] = useState<Array<string> | null>(null);
+  const [refreshSpinning, setRefreshSpinning] = useState(false);
   // 操作过的数据列表
   const [updateData, setUpdateData] = useState<IUpdateData[] | []>([]);
   // 更新数据的sql
@@ -214,25 +215,43 @@ export default function TableBox(props: ITableProps) {
 
     // 初次加载时，根据内容自动计算列宽
     if (queryResultData.headerList?.length && queryResultData.dataList?.length) {
-      const MIN_COL_WIDTH = 60;
-      const MAX_COL_WIDTH = 400;
-      const CHAR_WIDTH = 8; // 每个字符大约的像素宽度
-      const PADDING = 10; // 单元格左右 padding + 排序图标等额外空间
-      const sampleRows = queryResultData.dataList.slice(0, 50); // 取前50行采样
+      const MIN_COL_WIDTH = 80;
+      const MAX_COL_WIDTH = 500;
+      const HEADER_PADDING = 12 + 26; // 左右 padding(6+6) + 排序图标(22px) + 间距(4px)
+      const CELL_PADDING = 24; // 单元格内左右 padding + 余量
+      const sampleRows = queryResultData.dataList.slice(0, 50);
+
+      // 使用 canvas 精确测量文本宽度
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+
+      const measureText = (text: string, font: string) => {
+        ctx.font = font;
+        return ctx.measureText(text).width;
+      };
+
+      const headerFont = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      const cellFont = '400 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
       const newSizes = queryResultData.headerList.map((header, colIndex) => {
         if (colIndex === 0) return 50; // No. 列固定宽度
-        // 列名宽度
-        let maxLen = (header.name || '').length;
-        // 采样数据中最长内容的长度
+
+        // 测量列标题宽度
+        const headerWidth = measureText(header.name || '', headerFont) + HEADER_PADDING;
+
+        // 采样数据中最宽内容
+        let maxCellWidth = 0;
         for (const row of sampleRows) {
           const cellValue = row[colIndex];
           if (cellValue != null) {
-            maxLen = Math.max(maxLen, String(cellValue).length);
+            const cellWidth = measureText(String(cellValue), cellFont);
+            maxCellWidth = Math.max(maxCellWidth, cellWidth);
           }
         }
-        const width = Math.min(Math.max(maxLen * CHAR_WIDTH + PADDING, MIN_COL_WIDTH), MAX_COL_WIDTH);
-        return width;
+        maxCellWidth += CELL_PADDING;
+
+        const width = Math.min(Math.max(headerWidth, maxCellWidth, MIN_COL_WIDTH), MAX_COL_WIDTH);
+        return Math.ceil(width);
       });
       setColumnResize(newSizes);
     }
@@ -1189,11 +1208,13 @@ export default function TableBox(props: ITableProps) {
               <Popover mouseEnterDelay={0.8} content={i18n('common.button.refresh')} trigger="hover">
                 <div
                   onClick={() => {
+                    setRefreshSpinning(true);
                     screeningResultRef.current ? screeningResultRef.current.search() : getTableData();
+                    setTimeout(() => setRefreshSpinning(false), 600);
                   }}
                   className={classnames(styles.refreshIconBox)}
                 >
-                  <Iconfont code="&#xe62d;" />
+                  <Iconfont code="&#xe62d;" className={classnames({ [styles.spinning]: refreshSpinning })} />
                 </div>
               </Popover>
             </div>

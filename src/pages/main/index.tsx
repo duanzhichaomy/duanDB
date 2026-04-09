@@ -133,13 +133,6 @@ function MainPage() {
         return;
       }
 
-      if (matchBinding('switchToWorkspace')) {
-        e.preventDefault();
-        e.stopPropagation();
-        setMainPageActiveTab('workspace');
-        return;
-      }
-
       if (matchBinding('openInfoPanel')) {
         e.preventDefault();
         e.stopPropagation();

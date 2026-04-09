@@ -58,7 +58,7 @@ function eventToBinding(e: React.KeyboardEvent): Partial<IShortcutBinding> | nul
   };
 }
 
-const shortcutKeys = ['switchToWorkspace', 'closeCurrentTab', 'newConsole', 'openInfoPanel'];
+const shortcutKeys = ['closeCurrentTab', 'newConsole', 'openInfoPanel'];
 
 export default function ShortcutKeySetting() {
   const bindings = useShortcutKeyStore((state) => state.bindings);

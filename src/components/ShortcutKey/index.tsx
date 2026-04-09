@@ -24,14 +24,6 @@ const keyboardKey = (function () {
 
 const shortcutsList = [
   {
-    title: i18n('common.text.textToSQL'),
-    keys: ['Enter'],
-  },
-  {
-    title: i18n('common.text.optimizeSQL'),
-    keys: [i18n('common.text.editorRightClick')],
-  },
-  {
     title: i18n('common.text.executeSelectedSQL'),
     keys: [keyboardKey.command, 'R'],
   },

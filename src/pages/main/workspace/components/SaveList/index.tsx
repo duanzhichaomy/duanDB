@@ -101,6 +101,10 @@ const SaveList = () => {
                 onBlur={onBlur}
                 onChange={(e) => onChange(e.target.value)}
                 allowClear
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
               />
             </div>
           ) : (
@@ -158,7 +162,7 @@ const SaveList = () => {
                   >
                     <div className={styles.saveItemText}>
                       <div className={styles.iconBox}>
-                        <Iconfont code="&#xe8ad;" />
+                        <Iconfont code="&#xe654;" />
                       </div>
                       <div className={styles.itemName} dangerouslySetInnerHTML={{ __html: t.name }} />
                     </div>

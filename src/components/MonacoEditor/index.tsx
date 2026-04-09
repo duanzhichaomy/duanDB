@@ -72,6 +72,17 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
     editorRef.current = editorIns;
     didMount && didMount(editorIns);
 
+    // 在补全建议可见时，Enter 键选中当前建议（修复 Tauri WebView 中 Enter 不生效的问题）
+    editorIns.addAction({
+      id: 'acceptSuggestionOnEnterFix',
+      label: 'Accept Suggestion on Enter',
+      keybindings: [monaco.KeyCode.Enter],
+      precondition: 'suggestWidgetVisible',
+      run: (ed) => {
+        ed.trigger('keyboard', 'acceptSelectedSuggestion', {});
+      },
+    });
+
     // Add a new command, for getting an accessor.
     quickInputCommand.current = editorIns.addCommand(0, (accessor, func) => {
       // a hacker way to get the input service

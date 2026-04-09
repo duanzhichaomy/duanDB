@@ -24,13 +24,6 @@ const isMac = navigator.platform.toLowerCase().includes('mac');
 const modKey = isMac ? '⌘' : 'Ctrl';
 
 export const defaultBindings: Record<string, IShortcutBinding> = {
-  switchToWorkspace: {
-    key: 'switchToWorkspace',
-    label: '切换到工作区',
-    modifiers: [isMac ? 'metaKey' : 'ctrlKey'],
-    code: 'Digit1',
-    displayText: `${modKey}+1`,
-  },
   closeCurrentTab: {
     key: 'closeCurrentTab',
     label: '关闭当前会话',

@@ -18,6 +18,7 @@ export const editorDefaultOptions: IEditorOptions = {
   tabSize: 2, // tab大小
   lineHeight: 18, // 行高
   theme: 'vscode', // 主题
+  acceptSuggestionOnEnter: 'on', // 回车接受建议
   roundedSelection: false, // 圆角选择
   readOnly: false, // 只读
   folding: false, // 不显示折叠

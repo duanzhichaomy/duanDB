@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import i18n from '@/i18n';
 import styles from './index.less';
 import { Dropdown, Modal } from 'antd';
@@ -9,6 +9,7 @@ import { databaseTypeList } from '@/constants';
 
 // ----- components -----
 import Iconfont from '@/components/Iconfont';
+import classnames from 'classnames';
 import ConnectionEdit from '@/components/ConnectionEdit';
 
 // ----- services -----
@@ -27,7 +28,14 @@ const OperationLine = (props: IProps) => {
   const { searchValue, setSearchValue, getTreeData } = props;
   const [newConnType, setNewConnType] = useState<string | null>(null);
   const [searchActive, setSearchActive] = useState(false);
+  const [refreshSpinning, setRefreshSpinning] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshSpinning(true);
+    getTreeData(true);
+    setTimeout(() => setRefreshSpinning(false), 600);
+  }, [getTreeData]);
 
   const activateSearch = () => {
     setSearchActive(true);
@@ -108,8 +116,8 @@ const OperationLine = (props: IProps) => {
               <Iconfont code="&#xeb78;" size={15} />
             </div>
           </Dropdown>
-          <div className={styles.actionBtn} onClick={() => getTreeData(true)}>
-            <Iconfont code="&#xe668;" size={14} />
+          <div className={styles.actionBtn} onClick={handleRefresh}>
+            <Iconfont code="&#xe668;" size={14} className={classnames({ [styles.spinning]: refreshSpinning })} />
           </div>
         </div>
 
@@ -124,7 +132,12 @@ const OperationLine = (props: IProps) => {
                 onChange={(e) => setSearchValue(e.target.value)}
                 onBlur={handleSearchBlur}
                 placeholder="搜索"
-                autoComplete="off"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-form-type="other"
+                name="duandb-tree-search-nofill"
               />
               {searchValue && (
                 <span className={styles.searchClear} onMouseDown={handleSearchClear}>

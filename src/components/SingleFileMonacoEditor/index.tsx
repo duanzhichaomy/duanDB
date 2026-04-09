@@ -49,16 +49,28 @@ const SingleFileMonacoEditor = memo<IProps>(
     // 用 Monaco 自身的 addCommand 拦截 Enter，避免插入换行
     const registerShortcutKey = useCallback((_editor, _monaco) => {
       editorRef.current = _editor;
-      _editor.addCommand(_monaco.KeyCode.Enter, () => {
-        const controller = _editor.getContribution('editor.contrib.suggestController') as any;
-        const suggestWidget = controller?._widget;
-        if (suggestWidget?.suggestWidgetVisible?.get()) {
-          // 补全建议显示时，选中当前建议
-          _editor.trigger('keyboard', 'acceptSelectedSuggestion', {});
-          return;
-        }
-        const value = monacoEditorRef.current?.getAllContent().trim() || '';
-        handelEnter?.(value);
+
+      // 补全建议可见时，Enter 选中当前建议
+      _editor.addAction({
+        id: 'singleFileAcceptSuggestion',
+        label: 'Accept Suggestion',
+        keybindings: [_monaco.KeyCode.Enter],
+        precondition: 'suggestWidgetVisible',
+        run: (ed: any) => {
+          ed.trigger('keyboard', 'acceptSelectedSuggestion', {});
+        },
+      });
+
+      // 补全建议不可见时，Enter 触发原有逻辑
+      _editor.addAction({
+        id: 'singleFileEnter',
+        label: 'Confirm Enter',
+        keybindings: [_monaco.KeyCode.Enter],
+        precondition: '!suggestWidgetVisible',
+        run: () => {
+          const value = monacoEditorRef.current?.getAllContent().trim() || '';
+          handelEnter?.(value);
+        },
       });
     }, [handelEnter]);
 

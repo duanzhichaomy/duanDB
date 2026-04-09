@@ -3,7 +3,6 @@ import styles from './index.less';
 // import classnames from 'classnames';
 import { Popover } from 'antd';
 import Iconfont from '@/components/Iconfont';
-import Output from '@/components/Output';
 import SaveList from '../SaveList';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import i18n from '@/i18n';
@@ -20,18 +19,6 @@ export const useWorkspaceExtend = () => {
   const { panelRight } = useWorkspaceStore((state) => state.layout);
 
   const toolbarConfig: IToolbar[] = [
-    // {
-    //   code: 'ai',
-    //   title: 'AI',
-    //   icon: '\ue8ad',
-    //   components: <div>ai</div>,
-    // },
-    {
-      code: 'executiveLog',
-      title: i18n('common.title.executiveLogging'),
-      icon: '\ue8ad',
-      components: <Output />,
-    },
     {
       code: 'saveList',
       title: i18n('workspace.title.savedConsole'),
