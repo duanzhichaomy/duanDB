@@ -52,6 +52,9 @@ impl ExecuteResult {
 pub struct TableHeader {
     pub name: String,
     pub data_type: String,
+    /// 原始 SQL 数据类型（例如 varchar(255)、int(11)、datetime 等）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auto_increment: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]

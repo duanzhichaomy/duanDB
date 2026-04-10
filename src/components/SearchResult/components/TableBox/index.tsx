@@ -16,24 +16,26 @@ import styles from './index.less';
 
 // 工具函数
 import { compareStrings } from '@/utils/sort';
-import { downloadFile } from '@/utils/file';
 import { transformInputValue } from '../../utils';
 
 // 类型定义
 import { CRUD } from '@/constants';
 import { TableDataType } from '@/constants/table';
-import { IManageResultData, IResultConfig } from '@/typings/database';
-import { ExportSizeEnum, ExportTypeEnum } from '@/typings/resultTable';
+import { IManageResultData, IResultConfig, ITableHeaderItem } from '@/typings/database';
 
 // api
-import sqlService, { IExportParams, IExecuteSqlParams } from '@/service/sql';
+import sqlService, { IExecuteSqlParams } from '@/service/sql';
+import { isTauri } from '@/service/tauri-bridge';
+import { save as tauriSaveDialog } from '@tauri-apps/plugin-dialog';
+import { invoke as tauriInvokeCore } from '@tauri-apps/api/core';
+import * as XLSX from 'xlsx';
 
 // store
 import { setFocusedContent } from '@/store/common/copyFocusedContent';
 
 // 依赖组件
 import ExecuteSQL from '@/components/ExecuteSQL';
-import { DownOutlined } from '@ant-design/icons';
+import { CheckOutlined, DownOutlined } from '@ant-design/icons';
 import { copy, tableCopy } from '@/utils';
 import Iconfont from '../../../Iconfont';
 import StateIndicator from '../../../StateIndicator';
@@ -163,16 +165,171 @@ export default function TableBox(props: ITableProps) {
   const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(-1);
   // 表格的宽度
   // const [tableBoxWidth, setTableBoxWidth] = useState<number>(0);
+  // 缓存当前展示的（过滤后）表格数据，供表头右键菜单读取最新值
+  const filteredTableDataRef = useRef<{ [key: string]: string | null }[]>([]);
+  // 表头是否展示字段类型（受右键菜单中的"显示字段类型"开关控制，作用于所有列）
+  const [showColumnType, setShowColumnType] = useState<boolean>(false);
 
-  const handleExportSQLResult = async (exportType: ExportTypeEnum, exportSize: ExportSizeEnum) => {
-    const params: IExportParams = {
-      ...(props.executeSqlParams || {}),
-      sql: queryResultData.sql,
-      originalSql: queryResultData.originalSql,
-      exportType,
-      exportSize,
-    };
-    downloadFile(window._BaseURL + '/api/rdb/dml/export', params);
+  // 当前时间戳，用于默认文件名
+  const timestampSuffix = () => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  };
+
+  // 取当前页有效的列头与对应 colId（剔除序号列）
+  const getExportColumns = () => {
+    return (queryResultData.headerList || [])
+      .map((h, idx) => ({ header: h, colId: `${preCode}${idx}${h.name}` }))
+      .filter(({ header }) => header.dataType !== TableDataType.DUANDB_ROW_NUMBER);
+  };
+
+  // CSV 字段转义
+  const escapeCsvCell = (val: string | null | undefined) => {
+    if (val == null || val === USER_FILLED_VALUE.DEFAULT) return '';
+    const s = String(val);
+    if (/[",\r\n]/.test(s)) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  };
+
+  // SQL 字面量转义（INSERT 用）
+  const escapeSqlLiteral = (val: string | null | undefined) => {
+    if (val == null || val === USER_FILLED_VALUE.DEFAULT) return 'NULL';
+    const s = String(val).replace(/\\/g, '\\\\').replace(/'/g, "''");
+    return `'${s}'`;
+  };
+
+  // 通用：弹出系统保存对话框，让用户选择保存路径，然后写入 bytes
+  // 桌面（Tauri）模式：使用原生 dialog.save() + 自定义命令 save_file_bytes
+  // Web 模式（兜底）：回退到浏览器下载（写入下载目录）
+  const saveBytesWithDialog = async (
+    bytes: Uint8Array,
+    defaultFileName: string,
+    filters: { name: string; extensions: string[] }[],
+    mime: string,
+  ) => {
+    try {
+      if (isTauri()) {
+        const targetPath = await tauriSaveDialog({
+          defaultPath: defaultFileName,
+          filters,
+        });
+        if (!targetPath) return; // 用户取消
+        await tauriInvokeCore('save_file_bytes', {
+          path: targetPath,
+          bytes: Array.from(bytes),
+        });
+        message.success(i18n('common.text.successfulExecution'));
+      } else {
+        // Web 兜底：浏览器下载
+        const blob = new Blob([bytes.buffer as ArrayBuffer], { type: `${mime};charset=utf-8` });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = defaultFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (e: any) {
+      console.error('导出失败:', e);
+      message.error(`导出失败: ${e?.message || e}`);
+    }
+  };
+
+  // 字符串 → UTF-8 字节（CSV 自动加 BOM 让 Excel 正确识别）
+  const stringToBytes = (text: string, withBom: boolean) => {
+    const encoder = new TextEncoder();
+    const bom = withBom ? '\uFEFF' : '';
+    return encoder.encode(bom + text);
+  };
+
+  // 导出当前页为 CSV
+  const handleExportCurrentPageCsv = async () => {
+    const cols = getExportColumns();
+    if (!cols.length || !tableData.length) {
+      message.warning(i18n('common.text.noData'));
+      return;
+    }
+    const headerLine = cols.map(({ header }) => escapeCsvCell(header.name)).join(',');
+    const lines = tableData.map((row) =>
+      cols.map(({ colId }) => escapeCsvCell(row[colId])).join(','),
+    );
+    const csv = [headerLine, ...lines].join('\r\n');
+    const baseName = queryResultData.tableName || 'export';
+    await saveBytesWithDialog(
+      stringToBytes(csv, true),
+      `${baseName}_${timestampSuffix()}.csv`,
+      [{ name: 'CSV', extensions: ['csv'] }],
+      'text/csv',
+    );
+  };
+
+  // 导出当前页为 INSERT SQL
+  const handleExportCurrentPageInsert = async () => {
+    const cols = getExportColumns();
+    if (!cols.length || !tableData.length) {
+      message.warning(i18n('common.text.noData'));
+      return;
+    }
+    const tableName = queryResultData.tableName;
+    if (!tableName) {
+      message.warning('当前结果集无对应表名，无法生成 INSERT SQL');
+      return;
+    }
+    const escapedTable = `\`${tableName.replace(/`/g, '``')}\``;
+    const colNames = cols.map(({ header }) => `\`${header.name.replace(/`/g, '``')}\``).join(', ');
+    const lines = tableData.map((row) => {
+      const values = cols.map(({ colId }) => escapeSqlLiteral(row[colId])).join(', ');
+      return `INSERT INTO ${escapedTable} (${colNames}) VALUES (${values});`;
+    });
+    await saveBytesWithDialog(
+      stringToBytes(lines.join('\n'), false),
+      `${tableName}_${timestampSuffix()}.sql`,
+      [{ name: 'SQL', extensions: ['sql'] }],
+      'text/plain',
+    );
+  };
+
+  // 导出当前页为 Excel (.xlsx)
+  const handleExportCurrentPageExcel = async () => {
+    const cols = getExportColumns();
+    if (!cols.length || !tableData.length) {
+      message.warning(i18n('common.text.noData'));
+      return;
+    }
+    try {
+      // 第一行表头，后续为数据行
+      const aoa: (string | null)[][] = [
+        cols.map(({ header }) => header.name),
+        ...tableData.map((row) =>
+          cols.map(({ colId }) => {
+            const v = row[colId];
+            return v == null || v === USER_FILLED_VALUE.DEFAULT ? null : String(v);
+          }),
+        ),
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      const wb = XLSX.utils.book_new();
+      const sheetName = (queryResultData.tableName || 'Sheet1').slice(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      // SheetJS `type: 'array'` 返回 Uint8Array
+      const written = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as Uint8Array;
+      const bytes = written instanceof Uint8Array ? written : new Uint8Array(written);
+      const baseName = queryResultData.tableName || 'export';
+      await saveBytesWithDialog(
+        bytes,
+        `${baseName}_${timestampSuffix()}.xlsx`,
+        [{ name: 'Excel', extensions: ['xlsx'] }],
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+    } catch (e: any) {
+      console.error('Excel 导出失败:', e);
+      message.error(`Excel 导出失败: ${e?.message || e}`);
+    }
   };
 
   useEffect(() => {
@@ -257,43 +414,26 @@ export default function TableBox(props: ITableProps) {
     }
   }, [queryResultData.dataList]);
 
-  // 导出sql的菜单项
+  // 导出菜单项（仅支持当前页，前端直接生成，不依赖后端）
   const exportDropdownItems: MenuProps['items'] = useMemo(
     () => [
       {
-        label: i18n('workspace.table.export.all.csv'),
-        key: '1',
-        // icon: <UserOutlined />,
-        onClick: () => {
-          handleExportSQLResult(ExportTypeEnum.CSV, ExportSizeEnum.ALL);
-        },
-      },
-      {
-        label: i18n('workspace.table.export.all.insert'),
-        key: '2',
-        // icon: <UserOutlined />,
-        onClick: () => {
-          handleExportSQLResult(ExportTypeEnum.INSERT, ExportSizeEnum.ALL);
-        },
-      },
-      {
         label: i18n('workspace.table.export.cur.csv'),
-        key: '3',
-        // icon: <UserOutlined />,
-        onClick: () => {
-          handleExportSQLResult(ExportTypeEnum.CSV, ExportSizeEnum.CURRENT_PAGE);
-        },
+        key: 'cur-csv',
+        onClick: handleExportCurrentPageCsv,
+      },
+      {
+        label: i18n('workspace.table.export.cur.excel'),
+        key: 'cur-excel',
+        onClick: handleExportCurrentPageExcel,
       },
       {
         label: i18n('workspace.table.export.cur.insert'),
-        key: '4',
-        // icon: <UserOutlined />,
-        onClick: () => {
-          handleExportSQLResult(ExportTypeEnum.INSERT, ExportSizeEnum.CURRENT_PAGE);
-        },
+        key: 'cur-insert',
+        onClick: handleExportCurrentPageInsert,
       },
     ],
-    [queryResultData],
+    [queryResultData, tableData],
   );
 
   const defaultSorts: SortItem[] = useMemo(
@@ -722,6 +862,57 @@ export default function TableBox(props: ITableProps) {
     // newRowDataList.splice(0, 1);
   };
 
+  // 渲染表头标题（带右键菜单：复制 / 复制字段名称 / 显示字段类型）
+  const renderColumnHeaderTitle = (header: ITableHeaderItem, colId: string, showType: boolean) => {
+    const { name, columnType, dataType } = header;
+    const typeText = columnType || dataType || '';
+    const headerMenuItems: MenuProps['items'] = [
+      {
+        key: 'copy-column',
+        label: i18n('common.button.copy'),
+        onClick: async () => {
+          // 复制当前列在表格中所有展示的值（按行顺序，使用过滤后的数据反映搜索结果）
+          const values = filteredTableDataRef.current.map((row) => {
+            const val = row[colId];
+            return val === USER_FILLED_VALUE.DEFAULT || val == null ? '' : String(val);
+          });
+          await copy(values.join('\n'));
+          message.success(i18n('common.button.copySuccessfully'));
+        },
+      },
+      {
+        key: 'copy-column-name',
+        label: i18n('common.button.copyColumnName'),
+        onClick: async () => {
+          await copy(name);
+          message.success(i18n('common.button.copySuccessfully'));
+        },
+      },
+      {
+        key: 'show-column-type',
+        // 已开启时右侧展示勾选标记，再次点击则关闭
+        label: (
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 120 }}>
+            <span>{i18n('common.button.showColumnType')}</span>
+            <CheckOutlined style={{ marginLeft: 16, fontSize: 12, visibility: showType ? 'visible' : 'hidden' }} />
+          </span>
+        ),
+        onClick: () => {
+          setShowColumnType((prev) => !prev);
+        },
+      },
+    ];
+
+    return (
+      <Dropdown menu={{ items: headerMenuItems }} trigger={['contextMenu']}>
+        <span className={styles.columnHeaderTitle}>
+          <span className={styles.columnHeaderName}>{name}</span>
+          {showType && typeText && <span className={styles.columnHeaderType}>{typeText}</span>}
+        </span>
+      </Dropdown>
+    );
+  };
+
   // 表格 列配置
   const columns: ArtColumn[] = useMemo(() => {
     return (queryResultData.headerList || []).map((item, colIndex) => {
@@ -780,7 +971,7 @@ export default function TableBox(props: ITableProps) {
         code: colId,
         name: name,
         key: name,
-        // title: <div>{name}</div>,
+        title: renderColumnHeaderTitle(item, colId, showColumnType),
         render: (value: any, rowData) => {
           const rowId = rowData[colNoCode];
           const content = renderTableCellValue(value);
@@ -819,7 +1010,7 @@ export default function TableBox(props: ITableProps) {
         features: { sortable: isNumber ? compareStrings : true },
       };
     });
-  }, [queryResultData.headerList, editingCell, editingData, curOperationRowNo, oldDataList]);
+  }, [queryResultData.headerList, editingCell, editingData, curOperationRowNo, oldDataList, showColumnType]);
 
   const { updateTableData, handleCreateData, handleDeleteData } = useCurdTableData({
     tableData,
@@ -856,6 +1047,7 @@ export default function TableBox(props: ITableProps) {
     if (!searchKeyword.trim()) {
       setMatchedRowIndices([]);
       setCurrentMatchIndex(-1);
+      filteredTableDataRef.current = tableData;
       return tableData;
     }
     const keyword = searchKeyword.toLowerCase();
@@ -872,6 +1064,7 @@ export default function TableBox(props: ITableProps) {
     });
     setMatchedRowIndices(matched);
     setCurrentMatchIndex(matched.length > 0 ? 0 : -1);
+    filteredTableDataRef.current = filtered;
     return filtered;
   }, [tableData, searchKeyword]);
 

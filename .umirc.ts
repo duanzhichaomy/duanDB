@@ -45,6 +45,11 @@ export default defineConfig({
   ],
 
   npmClient: 'pnpm',
+  // 这些包要么是 Tauri 注入的运行时（不能被 MFSU 拦截），要么是大型纯前端库
+  // 直接走 webpack 打包，避免 Module Federation 找不到模块的报错
+  mfsu: {
+    exclude: ['@tauri-apps/plugin-dialog', '@tauri-apps/api', 'xlsx'],
+  },
   dva: {},
   plugins: ['@umijs/plugins/dist/dva'],
   chainWebpack,

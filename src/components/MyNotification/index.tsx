@@ -72,10 +72,10 @@ function MyNotification() {
 
     notificationApi.open({
       className: styles.notification,
-      message: renderMessage(),
+      title: renderMessage(),
       description: renderDescription(),
       placement: 'bottomRight',
-      btn,
+      actions: btn,
     });
   }, []);
 

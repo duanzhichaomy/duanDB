@@ -379,6 +379,7 @@ async fn execute_query(
     headers.push(TableHeader {
         name: "DUANDB_ROW_NUMBER".to_string(),
         data_type: "DUANDB_ROW_NUMBER".to_string(),
+        column_type: None,
         auto_increment: None,
         column_size: None,
         comment: None,
@@ -401,9 +402,11 @@ async fn execute_query(
             col_count = columns.len();
             headers.reserve(col_count);
             for col in columns {
+                let type_name = col.type_info().name().to_string();
                 headers.push(TableHeader {
                     name: col.name().to_string(),
-                    data_type: map_mysql_type(col.type_info().name()),
+                    data_type: map_mysql_type(&type_name),
+                    column_type: Some(type_name),
                     auto_increment: None,
                     column_size: None,
                     comment: None,
@@ -458,6 +461,7 @@ async fn execute_query(
                     headers.push(TableHeader {
                         name,
                         data_type: map_mysql_type(&base_type),
+                        column_type: Some(raw_type),
                         auto_increment: None,
                         column_size: None,
                         comment: None,
@@ -498,9 +502,9 @@ async fn execute_query(
             }
         }
 
-        // 查询各列的默认值和自增信息
+        // 查询各列的默认值、自增信息和原始 SQL 类型
         let def_sql = format!(
-            "SELECT COLUMN_NAME, COLUMN_DEFAULT, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
+            "SELECT COLUMN_NAME, COLUMN_DEFAULT, EXTRA, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
             tbl.replace('\'', "''")
         );
         if let Ok(def_rows) = sqlx::raw_sql(&def_sql).fetch_all(pool).await {
@@ -513,6 +517,12 @@ async fn execute_query(
                         header.default_value = col_default;
                         let extra: String = def_row.try_get::<String, _>("EXTRA").unwrap_or_default();
                         header.auto_increment = Some(extra.contains("auto_increment"));
+                        // 用原始 SQL 类型（如 varchar(255)）覆盖前面记录的 sqlx 类型名
+                        if let Ok(col_type) = def_row.try_get::<String, _>("COLUMN_TYPE") {
+                            if !col_type.is_empty() {
+                                header.column_type = Some(col_type);
+                            }
+                        }
                     }
                 }
             }

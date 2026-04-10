@@ -17,6 +17,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -140,6 +141,8 @@ pub fn run() {
             // 更新
             commands::updater::check_update,
             commands::updater::download_and_install_update,
+            // 文件导出
+            commands::export::save_file_bytes,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -131,4 +131,6 @@ export default {
   'common.button.executeSingle': 'Execute Current Statement',
   'common.button.explain': 'Explain Plan',
   'common.button.saveAsFile': 'Save As File',
+  'common.button.copyColumnName': 'Copy column name',
+  'common.button.showColumnType': 'Show column type',
 };

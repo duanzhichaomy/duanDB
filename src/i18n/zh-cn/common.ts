@@ -130,5 +130,7 @@ export default {
   'common.button.executeSingle': '执行当前语句',
   'common.button.explain': '执行计划',
   'common.button.saveAsFile': '另存为文件',
+  'common.button.copyColumnName': '复制字段名称',
+  'common.button.showColumnType': '显示字段类型',
 
 };

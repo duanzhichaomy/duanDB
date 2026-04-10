@@ -25,6 +25,7 @@ export default {
   'workspace.table.total.tip': 'Load total number of rows',
   'workspace.table.export.all.csv': 'Export results as a CSV',
   'workspace.table.export.cur.csv': 'Export results on the current page as a CSV',
+  'workspace.table.export.cur.excel': 'Export results on the current page as Excel',
   'workspace.table.export.all.insert': 'Export results as INSERT SQL',
   'workspace.table.export.cur.insert': 'Export results on the current page as INSERT SQL',
   'workspace.tree.view': 'View',

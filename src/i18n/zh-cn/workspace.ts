@@ -24,6 +24,7 @@ export default {
   'workspace.table.total.tip': '加载总行数',
   'workspace.table.export.all.csv': '导出结果集 csv',
   'workspace.table.export.cur.csv': '导出当前页结果集 csv',
+  'workspace.table.export.cur.excel': '导出当前页结果集 excel',
   'workspace.table.export.all.insert': '导出结果集 insert sql',
   'workspace.table.export.cur.insert': '导出当前页结果集 insert sql',
   'workspace.tree.view': '视图',

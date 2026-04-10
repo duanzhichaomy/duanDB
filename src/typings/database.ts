@@ -10,6 +10,7 @@ export interface IDatabase {
 export interface ITableHeaderItem {
   dataType: TableDataType;
   name: string;
+  columnType?: string | null; // 原始 SQL 数据类型（例如 varchar(255)、int(11)）
   autoIncrement: boolean | null; // 是否自增
   columnSize: number | null; // 字段长度
   comment: string | null; // 字段注释

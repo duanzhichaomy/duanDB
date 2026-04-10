@@ -172,7 +172,7 @@ const UpdateDetection = memo(
       notificationApi.open({
         className: styles.notification,
         duration: 0,
-        message: (
+        title: (
           <div className={styles.updateReminder}>
             <div className={styles.bell}>
               <Iconfont code="&#xe661;" />
@@ -185,7 +185,7 @@ const UpdateDetection = memo(
           width: 260,
           backgroundColor: 'var(--color-bg-layout)',
         },
-        btn,
+        actions: btn,
         key,
         onClose: close,
       });
@@ -219,7 +219,7 @@ const UpdateDetection = memo(
       notificationApi.open({
         duration: 0,
         className: styles.notification,
-        message: (
+        title: (
           <div className={styles.updateReminder}>
             <div className={styles.bell}>
               <Iconfont code="&#xe661;" />
@@ -235,7 +235,7 @@ const UpdateDetection = memo(
           width: 260,
           backgroundColor: 'var(--color-bg-layout)',
         },
-        btn,
+        actions: btn,
         key,
         onClose: close,
       });
@@ -247,7 +247,7 @@ const UpdateDetection = memo(
       notificationApi.open({
         className: styles.notification,
         duration: 6,
-        message: (
+        title: (
           <div className={styles.updateReminder}>
             <div className={styles.bell}>
               <Iconfont code="&#xe661;" />
@@ -260,7 +260,7 @@ const UpdateDetection = memo(
           width: 310,
           backgroundColor: 'var(--color-bg-layout)',
         },
-        btn: null,
+        actions: null,
         key,
         onClose: close,
       });
