@@ -73,14 +73,5 @@ pub async fn get_mysql_pool_with_db(
         _ => base_url.clone(),
     };
 
-    let p = pool::get_or_create_pool(&state.mysql_pools, &pool_key, &connect_url).await?;
-
-    // 验证连接可用，如果不可用则清理并重试一次
-    match sqlx::query("SELECT 1").execute(&p).await {
-        Ok(_) => Ok(p),
-        Err(_) => {
-            pool::close_pool(&state.mysql_pools, &pool_key).await;
-            pool::get_or_create_pool(&state.mysql_pools, &pool_key, &connect_url).await
-        }
-    }
+    pool::get_or_create_pool(&state.mysql_pools, &pool_key, &connect_url).await
 }

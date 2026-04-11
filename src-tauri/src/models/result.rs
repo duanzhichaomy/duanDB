@@ -74,6 +74,7 @@ pub struct TableHeader {
 /// SQL 执行请求
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ExecuteSqlParams {
     pub sql: Option<String>,
     pub console_id: Option<i64>,
@@ -88,6 +89,7 @@ pub struct ExecuteSqlParams {
 /// 获取更新 SQL 的请求参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct GetUpdateSqlParams {
     pub database_name: Option<String>,
     pub data_source_id: Option<i64>,
@@ -102,6 +104,7 @@ pub struct GetUpdateSqlParams {
 /// 单个更新操作
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct UpdateOperation {
     #[serde(rename = "type")]
     pub op_type: String,

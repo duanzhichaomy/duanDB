@@ -141,12 +141,12 @@ export default function Pagination(props: IProps) {
           value={paginationConfig?.pageSize ?? 200}
           onChange={onPageSizeChange}
           options={[
-            { label: '10 / page', value: 10 },
-            { label: '50 / page', value: 50 },
-            { label: '100 / page', value: 100 },
-            { label: '200 / page', value: 200 },
-            { label: '500 / page', value: 500 },
-            { label: '1000 / page', value: 1000 },
+            { label: '10', value: 10 },
+            { label: '50', value: 50 },
+            { label: '100', value: 100 },
+            { label: '200', value: 200 },
+            { label: '500', value: 500 },
+            { label: '1000', value: 1000 },
           ]}
         />
         {totalDisplay && <span className={styles.totalLabel}>{totalDisplay} rows</span>}

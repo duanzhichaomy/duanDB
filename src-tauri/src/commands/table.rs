@@ -5,7 +5,7 @@ use crate::mysql::{builder, metadata as mysql_meta, types};
 use crate::state::AppState;
 use tauri::State;
 
-/// 表列表（分页）
+/// 表列表（分页，SQL 层面限制数据量）
 #[tauri::command]
 pub async fn table_list(
     state: State<'_, AppState>,
@@ -13,17 +13,17 @@ pub async fn table_list(
 ) -> Result<ApiResponse<PageResponse<TableInfo>>, String> {
     let pool = get_mysql_pool(&state, params.data_source_id).await?;
     let db = params.database_name.as_deref().unwrap_or("");
-    let tables = mysql_meta::get_tables(&pool, db, params.search_key.as_deref()).await?;
-
-    let total = tables.len() as i64;
     let page_no = params.page_no.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(100);
-    let offset = ((page_no - 1) * page_size) as usize;
-    let paged: Vec<TableInfo> = tables.into_iter().skip(offset).take(page_size as usize).collect();
-    let has_next_page = (offset + page_size as usize) < total as usize;
+
+    let (tables, total) = mysql_meta::get_tables_paged(
+        &pool, db, params.search_key.as_deref(), Some(page_no), Some(page_size),
+    ).await?;
+
+    let has_next_page = ((page_no - 1) * page_size + tables.len() as i64) < total;
 
     Ok(ApiResponse::ok(PageResponse {
-        data: paged,
+        data: tables,
         page_no,
         page_size,
         total,
@@ -120,8 +120,14 @@ pub async fn table_meta(
     _database_name: Option<String>,
 ) -> Result<ApiResponse<DatabaseSupportField>, String> {
     let pool = get_mysql_pool(&state, data_source_id).await?;
-    let charsets = mysql_meta::get_charsets(&pool).await?;
-    let collations = mysql_meta::get_collations(&pool).await?;
+
+    // 并行查询字符集和排序规则，减少高延迟下的等待时间
+    let (charsets_result, collations_result) = tokio::join!(
+        mysql_meta::get_charsets(&pool),
+        mysql_meta::get_collations(&pool)
+    );
+    let charsets = charsets_result?;
+    let collations = collations_result?;
 
     Ok(ApiResponse::ok(DatabaseSupportField {
         column_types: types::get_mysql_column_types(),
@@ -229,6 +235,7 @@ pub async fn ddl_execute(
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct DdlExecuteParams {
     pub data_source_id: i64,
     pub database_name: Option<String>,

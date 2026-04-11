@@ -23,6 +23,7 @@ import { setCurrentWorkspaceExtend } from '@/pages/main/workspace/store/common';
 import { useTreeStore } from '@/blocks/Tree/treeStore';
 import historyService from '@/service/history';
 import indexedDB from '@/indexedDB';
+import { ConsoleOpenedStatus } from '@/constants';
 
 // ----- component -----
 import CustomLayout from '@/components/CustomLayout';
@@ -100,7 +101,7 @@ function MainPage() {
             setWorkspaceTabList(newList);
             // 只有数字ID的tab才需要更新后端状态
             if (typeof activeId === 'number') {
-              historyService.updateSavedConsole({ id: activeId, tabOpened: 'n' }).then(() => {
+              historyService.updateSavedConsole({ id: activeId, tabOpened: ConsoleOpenedStatus.NOT_OPEN }).then(() => {
                 indexedDB.deleteData('duandb', 'workspaceConsoleDDL', activeId);
               });
             }

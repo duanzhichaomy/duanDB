@@ -20,32 +20,58 @@ pub async fn get_databases(pool: &MySqlPool) -> Result<Vec<DatabaseInfo>, String
     Ok(databases)
 }
 
-/// 获取表列表（从 INFORMATION_SCHEMA）
-pub async fn get_tables(
+/// 获取表列表（分页，返回 (数据, 总数)，SQL 层面限制数据量）
+pub async fn get_tables_paged(
     pool: &MySqlPool,
     database: &str,
     search_key: Option<&str>,
-) -> Result<Vec<TableInfo>, String> {
-    let mut sql = format!(
-        r#"SELECT TABLE_NAME, TABLE_COMMENT
-           FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_SCHEMA = '{}' AND TABLE_TYPE = 'BASE TABLE'"#,
-        escape_sql_string(database)
+    page_no: Option<i64>,
+    page_size: Option<i64>,
+) -> Result<(Vec<TableInfo>, i64), String> {
+    let escaped_db = escape_sql_string(database);
+    let mut where_clause = format!(
+        "TABLE_SCHEMA = '{}' AND TABLE_TYPE = 'BASE TABLE'",
+        escaped_db
     );
     if let Some(key) = search_key {
         if !key.is_empty() {
-            sql.push_str(&format!(
+            where_clause.push_str(&format!(
                 " AND TABLE_NAME LIKE '%{}%'",
                 escape_sql_string(key)
             ));
         }
     }
-    sql.push_str(" ORDER BY TABLE_NAME");
 
-    let rows: Vec<MySqlRow> = sqlx::query(&sql)
-        .fetch_all(pool)
-        .await
-        .map_err(|e| e.to_string())?;
+    // 查总数
+    let count_sql = format!(
+        "SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE {}",
+        where_clause
+    );
+
+    let mut data_sql = format!(
+        r#"SELECT TABLE_NAME, TABLE_COMMENT
+           FROM INFORMATION_SCHEMA.TABLES
+           WHERE {}
+           ORDER BY TABLE_NAME"#,
+        where_clause
+    );
+
+    // 如果指定了分页，SQL 层面限制
+    let p_no = page_no.unwrap_or(1);
+    let p_size = page_size.unwrap_or(100);
+    let offset = (p_no - 1) * p_size;
+    data_sql.push_str(&format!(" LIMIT {} OFFSET {}", p_size, offset));
+
+    // 并行查询数据和总数
+    let (rows_result, count_result) = tokio::join!(
+        sqlx::query(&data_sql).fetch_all(pool),
+        sqlx::query(&count_sql).fetch_one(pool)
+    );
+
+    let rows = rows_result.map_err(|e| e.to_string())?;
+    let total: i64 = count_result
+        .map(|r| r.try_get::<i64, _>("cnt").unwrap_or(0))
+        .unwrap_or(0);
 
     let mut tables = Vec::new();
     for row in rows {
@@ -55,7 +81,7 @@ pub async fn get_tables(
             pinned: false,
         });
     }
-    Ok(tables)
+    Ok((tables, total))
 }
 
 /// 获取表名列表（简单）

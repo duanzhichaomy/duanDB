@@ -137,6 +137,7 @@ pub struct RoutineInfo {
 /// 通用查询参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct TableQueryParams {
     pub data_source_id: i64,
     pub database_name: Option<String>,
@@ -149,6 +150,7 @@ pub struct TableQueryParams {
 /// 表列表查询参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct TableListParams {
     pub data_source_id: i64,
     pub database_name: Option<String>,
@@ -224,6 +226,7 @@ pub struct DefaultValueInfo {
 /// 修改表 SQL 请求
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ModifyTableSqlRequest {
     pub data_source_id: i64,
     pub database_name: Option<String>,

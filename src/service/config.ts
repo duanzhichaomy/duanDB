@@ -22,6 +22,18 @@ const getLatestVersion = createRequest<{ currentVersion: string }, ILatestVersio
   method: 'get',
 });
 
+// 下载并安装更新
+const updateDesktopVersion = createRequest<any, boolean>('/api/system/update_desktop_version', {
+  method: 'post',
+});
+
+// 检查更新是否成功（Tauri 模式下更新为同步操作，直接返回 true）
+const isUpdateSuccess = (_params: { version: string }): Promise<boolean> => {
+  return Promise.resolve(true);
+};
+
 export default {
   getLatestVersion,
+  updateDesktopVersion,
+  isUpdateSuccess,
 };

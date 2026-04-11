@@ -41,6 +41,7 @@ pub struct ConnectionDetails {
 /// 创建/更新连接请求
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ConnectionCreateRequest {
     pub alias: String,
     #[serde(rename = "type")]
@@ -59,6 +60,7 @@ pub struct ConnectionCreateRequest {
 /// 更新连接请求
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ConnectionUpdateRequest {
     pub id: i64,
     pub alias: String,
@@ -107,6 +109,7 @@ pub struct ExtendInfoItem {
 /// 测试连接请求
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ConnectionTestRequest {
     #[serde(rename = "type")]
     pub db_type: Option<String>,

@@ -1,9 +1,9 @@
 import { useWorkspaceStore } from './index';
 import { DatabaseTypeCode } from '@/constants';
-import { CreateType } from '@/components/CreateDatabase';
+
 export interface IModalStore {
   openCreateDatabaseModal: ((params: {
-    type: CreateType;
+    type: 'database';
     relyOnParams: {
       databaseType: DatabaseTypeCode;
       dataSourceId: number;

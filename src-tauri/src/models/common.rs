@@ -47,6 +47,7 @@ pub struct PageResponse<T: Serialize> {
 /// 分页请求参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct PageParams {
     #[serde(default = "default_page_no")]
     pub page_no: i64,

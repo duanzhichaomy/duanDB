@@ -2,7 +2,7 @@ import { useWorkspaceStore } from './index';
 import { IConsole, ICreateConsoleParams } from '@/typings';
 import { IWorkspaceTab } from '@/typings/workspace';
 import historyService from '@/service/history';
-import { ConsoleStatus, WorkspaceTabType } from '@/constants';
+import { ConsoleStatus, ConsoleOpenedStatus, WorkspaceTabType } from '@/constants';
 import { message } from 'antd';
 import i18n from '@/i18n';
 
@@ -33,7 +33,7 @@ export const getOpenConsoleList = () => {
     .then((res) => {
       // 将之前打开的tab标记为关闭
       res?.data?.forEach((item: IConsole) => {
-        historyService.updateSavedConsole({ id: item.id, tabOpened: 'n' });
+        historyService.updateSavedConsole({ id: item.id, tabOpened: ConsoleOpenedStatus.NOT_OPEN });
       });
       useWorkspaceStore.setState({ consoleList: [] });
     });

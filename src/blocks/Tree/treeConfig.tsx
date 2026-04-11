@@ -189,51 +189,47 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
 
   [TreeNodeType.SCHEMAS]: {
     icon: '\ue696',
-    getChildren: (parentData: ITreeNode) => {
-      const { dataSourceId, databaseName, schemaName } = parentData.extraParams!;
-      const preCode = [dataSourceId, databaseName, schemaName].join('-');
-      return new Promise((r: (value: ITreeNode[]) => void) => {
-        const data = [
-          {
-            uuid: uuid(),
-            key: `${preCode}-tables`,
-            name: 'tables',
-            treeNodeType: TreeNodeType.TABLES,
-            extraParams: parentData.extraParams,
-          },
-          {
-            uuid: uuid(),
-            key: `${preCode}-views`,
-            name: 'view',
-            treeNodeType: TreeNodeType.VIEWS,
-            extraParams: parentData.extraParams,
-          },
-          {
-            uuid: uuid(),
-            key: `${preCode}-functions`,
-            name: 'functions',
-            treeNodeType: TreeNodeType.FUNCTIONS,
-            extraParams: parentData.extraParams,
-          },
-          {
-            uuid: uuid(),
-            key: `${preCode}-procedures`,
-            name: 'procedures',
-            treeNodeType: TreeNodeType.PROCEDURES,
-            extraParams: parentData.extraParams,
-          },
-          {
-            uuid: uuid(),
-            key: `${preCode}-triggers`,
-            name: 'triggers',
-            treeNodeType: TreeNodeType.TRIGGERS,
-            extraParams: parentData.extraParams,
-          },
-        ];
-        r(data);
+    getChildren: (params, options) => {
+      const _extraParams = params.extraParams;
+      delete params.extraParams;
+      params.pageSize = 1000;
+      return new Promise((r, j) => {
+        mysqlServer
+          .getTableList(params, options)
+          .then((res) => {
+            const tableList: ITreeNode[] = res.data?.map((t: any) => {
+              return {
+                uuid: uuid(),
+                name: t.name,
+                treeNodeType: TreeNodeType.TABLE,
+                key: t.name,
+                pinned: t.pinned,
+                comment: t.comment,
+                extraParams: {
+                  ..._extraParams,
+                  tableName: t.name,
+                },
+              };
+            });
+            r({
+              data: tableList,
+              pageNo: res.pageNo,
+              pageSize: res.pageSize,
+              total: res.total,
+              hasNextPage: res.hasNextPage,
+            } as any);
+          })
+          .catch((error) => {
+            j(error);
+          });
       });
     },
-    operationColumn: [OperationColumn.CreateConsole, OperationColumn.Refresh],
+    operationColumn: [
+      OperationColumn.CreateConsole,
+      OperationColumn.ViewAllTable,
+      OperationColumn.CreateTable,
+      OperationColumn.Refresh,
+    ],
   },
 
   [TreeNodeType.TABLES]: {

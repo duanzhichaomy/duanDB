@@ -14,7 +14,6 @@ import { useGetRightClickMenu } from './hooks/useGetRightClickMenu';
 import MenuLabel from '@/components/MenuLabel';
 import LoadingContent from '@/components/Loading/LoadingContent';
 import { cloneDeep } from 'lodash';
-// import { flushSync } from 'react-dom';
 
 interface IProps {
   className?: string;
@@ -76,7 +75,7 @@ const isMatch = (target: string, searchValue: string) => {
 // 可搜索的叶子节点类型（表、视图、函数、存储过程、触发器）
 const searchableTypes = new Set([
   TreeNodeType.TABLE, TreeNodeType.VIEW, TreeNodeType.FUNCTION,
-  TreeNodeType.PROCEDURE, TreeNodeType.TRIGGER, TreeNodeType.SEQUENCE,
+  TreeNodeType.PROCEDURE, TreeNodeType.TRIGGER,
 ]);
 
 // 树结构搜索
@@ -106,7 +105,7 @@ function searchTree(treeData: ITreeNode[], searchValue: string): ITreeNode[] {
     if (searchableTypes.has(item.treeNodeType) && isMatch(item.name, searchValue)) {
       deWeightList.push({ ...item });
     } else {
-      deWeightList.push({ ...item, children: null });
+      deWeightList.push({ ...item, children: null, expanded: true });
     }
   });
 
@@ -355,13 +354,13 @@ const TreeNode = memo((props: TreeNodeIProps) => {
 
   const folderTypes = new Set([
     TreeNodeType.TABLES, TreeNodeType.VIEWS, TreeNodeType.FUNCTIONS,
-    TreeNodeType.PROCEDURES, TreeNodeType.TRIGGERS, TreeNodeType.SEQUENCES,
+    TreeNodeType.PROCEDURES, TreeNodeType.TRIGGERS,
     TreeNodeType.COLUMNS, TreeNodeType.KEYS, TreeNodeType.INDEXES, TreeNodeType.VIEWCOLUMNS,
   ]);
 
   const itemTypes = new Set([
     TreeNodeType.TABLE, TreeNodeType.VIEW, TreeNodeType.FUNCTION,
-    TreeNodeType.PROCEDURE, TreeNodeType.TRIGGER, TreeNodeType.SEQUENCE,
+    TreeNodeType.PROCEDURE, TreeNodeType.TRIGGER,
     TreeNodeType.COLUMN, TreeNodeType.KEY, TreeNodeType.INDEX, TreeNodeType.VIEWCOLUMN,
   ]);
 
@@ -407,7 +406,6 @@ const TreeNode = memo((props: TreeNodeIProps) => {
       treeNodeData.treeNodeType === TreeNodeType.VIEW ||
       treeNodeData.treeNodeType === TreeNodeType.PROCEDURE ||
       treeNodeData.treeNodeType === TreeNodeType.FUNCTION ||
-      treeNodeData.treeNodeType === TreeNodeType.SEQUENCE ||
       treeNodeData.treeNodeType === TreeNodeType.TRIGGER
     ) {
       rightClickMenu.find((item) => item.doubleClickTrigger)?.onClick(treeNodeData);

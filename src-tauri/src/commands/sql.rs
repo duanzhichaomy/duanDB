@@ -486,13 +486,24 @@ async fn execute_query(
         data_list.pop();
     }
 
-    // 并行查询主键列
+    // 并行查询主键列和列详情（减少高延迟下的等待时间）
     if let Some(ref tbl) = table_name {
+        let escaped_tbl = tbl.replace('\'', "''");
         let pk_sql = format!(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}' AND COLUMN_KEY = 'PRI'",
-            tbl.replace('\'', "''")
+            escaped_tbl
         );
-        if let Ok(pk_rows) = sqlx::raw_sql(&pk_sql).fetch_all(pool).await {
+        let def_sql = format!(
+            "SELECT COLUMN_NAME, COLUMN_DEFAULT, EXTRA, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
+            escaped_tbl
+        );
+
+        let (pk_result, def_result) = tokio::join!(
+            sqlx::raw_sql(&pk_sql).fetch_all(pool),
+            sqlx::raw_sql(&def_sql).fetch_all(pool)
+        );
+
+        if let Ok(pk_rows) = pk_result {
             let pk_cols: Vec<String> = pk_rows
                 .iter()
                 .filter_map(|r| r.try_get::<String, _>(0).ok())
@@ -502,12 +513,7 @@ async fn execute_query(
             }
         }
 
-        // 查询各列的默认值、自增信息和原始 SQL 类型
-        let def_sql = format!(
-            "SELECT COLUMN_NAME, COLUMN_DEFAULT, EXTRA, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
-            tbl.replace('\'', "''")
-        );
-        if let Ok(def_rows) = sqlx::raw_sql(&def_sql).fetch_all(pool).await {
+        if let Ok(def_rows) = def_result {
             for def_row in &def_rows {
                 if let (Ok(col_name), Ok(col_default)) = (
                     def_row.try_get::<String, _>("COLUMN_NAME"),
