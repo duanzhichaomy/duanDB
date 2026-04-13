@@ -25,6 +25,7 @@ import { IManageResultData, IResultConfig, ITableHeaderItem } from '@/typings/da
 
 // api
 import sqlService, { IExecuteSqlParams } from '@/service/sql';
+import historyService from '@/service/history';
 import { isTauri } from '@/service/tauri-bridge';
 import { save as tauriSaveDialog } from '@tauri-apps/plugin-dialog';
 import { invoke as tauriInvokeCore } from '@tauri-apps/api/core';
@@ -789,6 +790,16 @@ export default function TableBox(props: ITableProps) {
       .executeUpdateDataSql(executeSQLParams)
       .then((res) => {
         if (res?.success) {
+          // 记录 DML 执行历史（表内编辑/新增/删除提交）
+          historyService
+            .createHistory({
+              name: sql.substring(0, 100),
+              ddl: sql,
+              dataSourceId: props.executeSqlParams?.dataSourceId,
+              databaseName: props.executeSqlParams?.databaseName,
+              type: props.executeSqlParams?.databaseType,
+            })
+            .catch(() => {});
           // 更新成功后，需要重新获取表格数据
           getTableData().then(() => {
             message.success(i18n('common.text.successfulExecution'));
@@ -1543,6 +1554,7 @@ export default function TableBox(props: ITableProps) {
             description={queryResultData.description}
             duration={queryResultData.duration}
             dataLength={filteredTableData.length}
+            sql={queryResultData.originalSql}
           />
         </>
       );

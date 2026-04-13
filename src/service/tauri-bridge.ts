@@ -62,6 +62,7 @@ const API_COMMAND_MAP: Record<string, string> = {
   'DELETE:/api/operation/saved/:id': 'console_delete',
   'POST:/api/operation/log/create': 'history_create',
   'GET:/api/operation/log/list': 'history_list',
+  'POST:/api/operation/log/clear': 'history_clear',
 
   // Console connect（简单返回成功）
   'GET:/api/connection/console/connect': '_noop',
@@ -335,6 +336,9 @@ export async function tauriInvoke<R>(
       break;
     case 'history_list':
       invokeArgs = { params: cleanParams };
+      break;
+    case 'history_clear':
+      invokeArgs = {};
       break;
     case 'check_update':
     case 'download_and_install_update':

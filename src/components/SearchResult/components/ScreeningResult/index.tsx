@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useContext, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useContext, useRef, forwardRef, useImperativeHandle } from 'react';
 import classnames from 'classnames';
 import styles from './index.less';
 import Iconfont from '@/components/Iconfont';
@@ -41,54 +41,55 @@ export default forwardRef<IScreeningResultRefFunction, IProps>((props, ref) => {
   const { promptWord, getTableData } = props;
   const { notChangedSql } = useContext(Context);
   const [isActive, setIsActive] = React.useState(false);
-  const keywordHintRef = React.useRef<any>(null);
-  const fieldHintRef = React.useRef<any>(null);
   const whereSingleFileMonacoEditorRef = React.useRef<any>(null);
   const orderBySingleFileMonacoEditorRef = React.useRef<any>(null);
 
+  // 用 ref 持有最新的 promptWord，让补全 provider 每次被调用时都能拿到最新字段列表，
+  // 避免因为搜索刷新 headerList 后需要 dispose / 重新注册带来的时序问题
+  const promptWordRef = useRef(promptWord);
   useEffect(() => {
-    keywordHintRef.current && keywordHintRef.current.dispose();
-    fieldHintRef.current && fieldHintRef.current.dispose();
-    if (isActive) {
-      registerPromptWord();
+    promptWordRef.current = promptWord;
+  }, [promptWord]);
+
+  // 只在 WHERE / ORDER BY 编辑器聚焦期间，向 Monaco 的 sql 语言注册本地补全 provider；
+  // 失焦时通过 cleanup 一次性 dispose，避免污染全局 sql 语言的补全
+  useEffect(() => {
+    if (!isActive) {
+      return;
     }
-  }, [promptWord, isActive]);
 
-  const registerPromptWord = () => {
-    const suggestions = promptWord.slice(1).map((item) => {
-      return {
-        insertText: item.name,
-        kind: monaco.languages.CompletionItemKind.Field,
-        label: item.name,
-      };
-    });
-
-    const provideCompletionItems: any = () => {
-      return {
-        suggestions,
-      };
-    };
-
-    fieldHintRef.current = monaco.languages.registerCompletionItemProvider('sql', {
-      provideCompletionItems,
-      triggerCharacters: [],
-    });
-
-    keywordHintRef.current = monaco.languages.registerCompletionItemProvider('sql', {
+    const fieldProvider = monaco.languages.registerCompletionItemProvider('sql', {
+      // 除字母外，在空格/逗号/括号/点后也自动弹出建议，
+      // 让用户在 `id=2285 and ` 的空格后直接看到全部字段
+      triggerCharacters: [' ', ',', '(', '.'],
       provideCompletionItems: () => {
+        const current = promptWordRef.current || [];
         return {
-          suggestions: keywordHintList.map((item) => {
-            return {
-              insertText: item,
-              kind: monaco.languages.CompletionItemKind.Keyword,
-              label: item,
-            };
-          }),
+          suggestions: current.slice(1).map((item: any) => ({
+            insertText: item.name,
+            kind: monaco.languages.CompletionItemKind.Field,
+            label: item.name,
+          })),
         };
       },
-      triggerCharacters: [],
     });
-  };
+
+    const keywordProvider = monaco.languages.registerCompletionItemProvider('sql', {
+      triggerCharacters: [' ', '('],
+      provideCompletionItems: () => ({
+        suggestions: keywordHintList.map((item) => ({
+          insertText: item,
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          label: item,
+        })),
+      }),
+    });
+
+    return () => {
+      fieldProvider.dispose();
+      keywordProvider.dispose();
+    };
+  }, [isActive]);
 
   const search = (extraParams?: Partial<IExecuteSqlParams>) => {
     const whereValue = whereSingleFileMonacoEditorRef.current?.getAllContent().trim() || '';

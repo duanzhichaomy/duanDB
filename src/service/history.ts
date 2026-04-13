@@ -97,6 +97,8 @@ const createHistory = createRequest<ISaveBasicInfo, void>('/api/operation/log/cr
 
 const getHistoryList = createRequest<IGetHistoryListParams, IPageResponse<IHistoryRecord>>('/api/operation/log/list', {});
 
+const clearHistory = createRequest<void, void>('/api/operation/log/clear', { method: 'post' });
+
 export default {
   getConsoleList,
   updateSavedConsole,
@@ -104,5 +106,6 @@ export default {
   createConsole,
   deleteSavedConsole,
   createHistory,
-  getWindowTab
+  clearHistory,
+  getWindowTab,
 }

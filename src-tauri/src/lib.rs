@@ -138,6 +138,7 @@ pub fn run() {
             commands::console::console_delete,
             commands::console::history_create,
             commands::console::history_list,
+            commands::console::history_clear,
             // 更新
             commands::updater::check_update,
             commands::updater::download_and_install_update,

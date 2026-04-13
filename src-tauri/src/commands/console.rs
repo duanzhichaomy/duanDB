@@ -369,3 +369,16 @@ pub async fn history_list(
         has_next_page: offset + page_size < total,
     }))
 }
+
+/// 清空历史记录
+#[tauri::command]
+pub async fn history_clear(
+    state: State<'_, AppState>,
+) -> Result<ApiResponse<()>, String> {
+    sqlx::query("DELETE FROM operation_log")
+        .execute(&state.local_db)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(ApiResponse::ok(()))
+}

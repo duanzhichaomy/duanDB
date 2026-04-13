@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Drawer, Tooltip, Select, Button, Popover } from 'antd';
+import { Badge, Drawer, Tooltip, Select, Button, Popover, Modal } from 'antd';
 import { message } from '@/utils/globalMessage';
 import classnames from 'classnames';
 import Iconfont from '@/components/Iconfont';
@@ -144,9 +144,25 @@ function LogViewer(props: IProps) {
   };
 
   const handleClearHistory = () => {
-    setHistoryData([]);
-    curPageRef.current = 1;
-    finishedRef.current = false;
+    Modal.confirm({
+      title: '确认清空执行记录？',
+      content: '此操作会从本地删除所有执行记录，无法恢复。',
+      okText: '清空',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () =>
+        historyService
+          .clearHistory()
+          .then(() => {
+            setHistoryData([]);
+            curPageRef.current = 1;
+            finishedRef.current = true;
+            message.success('已清空');
+          })
+          .catch((err) => {
+            message.error(`清空失败: ${err?.message || err}`);
+          }),
+    });
   };
 
   const tabs: { key: TabKey; label: string }[] = [

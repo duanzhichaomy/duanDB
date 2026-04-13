@@ -124,15 +124,17 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
           setNotChangedSql(_sql);
         }
 
-        // 记录执行历史
-        const currentParams = executeSqlParamsRef.current;
-        historyServer.createHistory({
-          name: _sql.substring(0, 100),
-          ddl: _sql,
-          dataSourceId: currentParams?.dataSourceId,
-          databaseName: currentParams?.databaseName,
-          type: currentParams?.databaseType,
-        }).catch(() => {});
+        // 记录执行历史：只记录用户在编辑器手写的查询，viewTable（点开表）自动发起的查询跳过
+        if (!viewTable) {
+          const currentParams = executeSqlParamsRef.current;
+          historyServer.createHistory({
+            name: _sql.substring(0, 100),
+            ddl: _sql,
+            dataSourceId: currentParams?.dataSourceId,
+            databaseName: currentParams?.databaseName,
+            type: currentParams?.databaseType,
+          }).catch(() => {});
+        }
       })
       .finally(() => {
         unlistenRef.current?.();
@@ -171,6 +173,7 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
                   dataLength={queryResultData?.dataList?.length}
                   duration={queryResultData.duration}
                   description={queryResultData.description}
+                  sql={queryResultData.originalSql}
                 />
               </div>
             )}
