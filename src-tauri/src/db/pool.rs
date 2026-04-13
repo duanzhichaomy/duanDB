@@ -1,6 +1,7 @@
 use crate::state::MysqlPools;
 use sqlx::mysql::MySqlPoolOptions;
-use sqlx::MySqlPool;
+use sqlx::{Connection, MySqlPool};
+use std::time::Duration;
 
 /// 构建 MySQL 连接 URL
 pub fn build_mysql_url(
@@ -39,13 +40,32 @@ pub async fn get_or_create_pool(
     }
 
     // 创建新连接池
+    // sqlx 0.8 不暴露 TCP keepalive，跨国链路下长时间空闲会被 NAT/防火墙静默丢弃。
+    // 策略：保持连接池常热，仅对"空闲超过阈值"的连接在 acquire 时做一次带超时的 ping。
+    // - 活跃使用期间（间隔 < 120s）：before_acquire 直接放行，零额外 RTT
+    // - 空闲唤醒后：付一次 ~1 RTT 的 ping（远低于完整重连），顺便刷新 NAT 会话
+    // - ping 超时/失败：sqlx 丢弃并自动建新连接，调用方无感
     let pool = MySqlPoolOptions::new()
         .max_connections(10)
-        .min_connections(3)
-        .acquire_timeout(std::time::Duration::from_secs(60))
-        .idle_timeout(std::time::Duration::from_secs(600))
-        .max_lifetime(std::time::Duration::from_secs(3600))
+        .min_connections(1)
+        .acquire_timeout(Duration::from_secs(60))
+        .idle_timeout(Duration::from_secs(600))
+        .max_lifetime(Duration::from_secs(1800))
         .test_before_acquire(false)
+        .before_acquire(|conn, meta| {
+            Box::pin(async move {
+                // 活跃期不做 ping，避免热路径多一次 RTT
+                if meta.idle_for < Duration::from_secs(120) {
+                    return Ok(true);
+                }
+                // 僵尸连接上的 ping 会触发 TCP 层 ~75s 超时，必须显式限时
+                match tokio::time::timeout(Duration::from_secs(3), conn.ping()).await {
+                    Ok(Ok(())) => Ok(true),
+                    // 超时或 ping 失败 → 返回 Ok(false)，sqlx 丢弃该连接并透明重试
+                    _ => Ok(false),
+                }
+            })
+        })
         .connect(url)
         .await
         .map_err(|e| format!("连接 MySQL 失败: {}", e))?;
