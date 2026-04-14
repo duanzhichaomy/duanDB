@@ -108,15 +108,20 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
     if (record.key) {
       form.setFieldsValue({ ...record });
       setEditingData(record);
-      // 根据当前字段类型，设置编辑配置
-      databaseSupportField.columnTypes.forEach((i) => {
-        if (i.typeName === record.columnType) {
-          setEditingConfig({
-            ...i,
-            editKey: record.key!,
-          });
-        }
-      });
+      // 用裸类型名匹配（typeName 优先；老数据可能只有 columnType 带括号）
+      const bareType = (record.typeName || record.columnType || '')
+        .toString()
+        .replace(/\s*\(.*$/, '')
+        .toUpperCase();
+      const matched = databaseSupportField.columnTypes.find((i) => i.typeName === bareType);
+      if (matched) {
+        setEditingConfig({
+          ...matched,
+          editKey: record.key!,
+        });
+      } else {
+        setEditingConfig(null);
+      }
     }
   };
 
@@ -125,9 +130,15 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
     if (tableDetails) {
       const list =
         tableDetails?.columnList?.map((t) => {
+          // typeName 是裸类型（如 "VARCHAR"），同步到 columnType 让 Select 能匹配到选项；
+          // ENUM/SET 这类类型保留原始 columnType（含取值列表），以避免丢值
+          const bareType = (t.typeName || '').toString().toUpperCase();
+          const isEnumLike = bareType === 'ENUM' || bareType === 'SET';
           return {
             ...t,
             oldName: t.name,
+            typeName: bareType || t.typeName,
+            columnType: isEnumLike ? t.columnType : bareType || t.columnType,
             key: uuidv4(),
           };
         }) || [];
@@ -386,11 +397,15 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
         if (editStatus !== EditColumnOperationType.Add) {
           editStatus = EditColumnOperationType.Modify;
         }
-        const editingDataItem = {
+        const editingDataItem: IColumnItemNew = {
           ...item,
           [name]: value,
           editStatus,
         };
+        // 类型变化时同步 typeName，避免后端用旧 typeName 拼出错误的 SQL
+        if (name === 'columnType') {
+          editingDataItem.typeName = value;
+        }
 
         if (name === 'columnType') {
           // 根据当前字段类型，设置编辑配置

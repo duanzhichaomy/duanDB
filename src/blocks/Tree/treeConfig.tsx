@@ -317,7 +317,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
       OperationColumn.ViewDDL,
       OperationColumn.EditTable,
       OperationColumn.CopyName,
-      OperationColumn.Refresh,
       OperationColumn.DeleteTable,
     ],
   },

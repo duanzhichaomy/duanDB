@@ -99,6 +99,7 @@ pub struct IndexInfo {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IndexColumnInfo {
+    #[serde(rename = "columnName")]
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub collation: Option<String>,
@@ -231,6 +232,6 @@ pub struct ModifyTableSqlRequest {
     pub data_source_id: i64,
     pub database_name: Option<String>,
     pub schema_name: Option<String>,
-    pub old_table: EditTableInfo,
+    pub old_table: Option<EditTableInfo>,
     pub new_table: EditTableInfo,
 }

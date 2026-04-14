@@ -145,7 +145,7 @@ pub async fn table_modify_sql(
     params: ModifyTableSqlRequest,
 ) -> Result<ApiResponse<Vec<SqlItem>>, String> {
     let database = params.database_name.as_deref().unwrap_or("");
-    let sqls = builder::build_modify_table_sql(database, &params.old_table, &params.new_table);
+    let sqls = builder::build_modify_table_sql(database, params.old_table.as_ref(), &params.new_table);
     let items: Vec<SqlItem> = sqls.into_iter().map(|sql| SqlItem { sql }).collect();
     Ok(ApiResponse::ok(items))
 }

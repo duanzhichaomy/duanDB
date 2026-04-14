@@ -149,7 +149,8 @@ pub async fn get_columns(
             database_name: row.try_get("TABLE_SCHEMA").ok(),
             schema_name: None,
             table_name: row.try_get("TABLE_NAME").ok(),
-            column_type: Some(column_type.to_uppercase()),
+            // 保留原始大小写，避免 ENUM/SET 等类型的取值被改写
+            column_type: Some(column_type.clone()),
             data_type: None,
             default_value: row.try_get("COLUMN_DEFAULT").ok(),
             auto_increment: if extra.contains("auto_increment") {

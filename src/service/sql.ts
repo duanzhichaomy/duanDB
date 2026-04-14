@@ -53,7 +53,7 @@ const connectConsole = createRequest<IConnectConsoleParams, void>('/api/connecti
 
 //表操作
 export interface ITableParams {
-  Name: string;
+  tableName: string;
   dataSourceId: number;
   databaseName: string;
   schemaName?: string;
