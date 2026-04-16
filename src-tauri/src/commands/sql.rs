@@ -775,9 +775,16 @@ fn cell_to_string(row: &MySqlRow, col_idx: usize) -> Option<String> {
     }
 
     // 日期时间类型
+    // 注意：sqlx 0.8.6 的 NaiveDateTime 未重写 Type::compatible，默认实现让它只兼容 DATETIME，
+    // 对 TIMESTAMP 列 try_get 会在兼容性检查阶段返回 Err（"mismatched types"），
+    // 此时走 try_get_unchecked::<String> 兜底，直接取 text 协议下的原始字符串。
+    // 同样的兜底也能覆盖 chrono 无法解析的边界值（如 0000-00-00 00:00:00）。
     if eq_ci(name_bytes, b"DATETIME") || eq_ci(name_bytes, b"TIMESTAMP") {
         if let Ok(v) = row.try_get::<chrono::NaiveDateTime, _>(col_idx) {
             return Some(v.to_string());
+        }
+        if let Ok(v) = row.try_get_unchecked::<String, _>(col_idx) {
+            return Some(v);
         }
     }
 
@@ -785,11 +792,17 @@ fn cell_to_string(row: &MySqlRow, col_idx: usize) -> Option<String> {
         if let Ok(v) = row.try_get::<chrono::NaiveDate, _>(col_idx) {
             return Some(v.to_string());
         }
+        if let Ok(v) = row.try_get_unchecked::<String, _>(col_idx) {
+            return Some(v);
+        }
     }
 
     if eq_ci(name_bytes, b"TIME") {
         if let Ok(v) = row.try_get::<chrono::NaiveTime, _>(col_idx) {
             return Some(v.to_string());
+        }
+        if let Ok(v) = row.try_get_unchecked::<String, _>(col_idx) {
+            return Some(v);
         }
     }
 
