@@ -13,6 +13,7 @@ import init from '../init/init';
 import { SyncOutlined } from '@ant-design/icons';
 import { ThemeType } from '@/constants';
 import GlobalComponent from '../init/GlobalComponent';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import styles from './index.less';
 import { queryCurUser } from '@/store/user';
 
@@ -90,7 +91,9 @@ const GlobalLayout = () => {
         <AppMessageSetup />
         <div className={styles.app}>
           <div className={styles.appBody}>
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </div>
         <GlobalComponent />

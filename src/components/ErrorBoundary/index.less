@@ -1,0 +1,102 @@
+@import '../../styles/var.less';
+@import '../../styles/motion.less';
+
+.fallback {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg-base);
+  color: var(--color-text);
+  z-index: 9999;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-layout);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-error);
+  margin-bottom: 8px;
+}
+
+.errorMsg {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  background-color: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.logList {
+  flex: 1;
+  overflow-y: auto;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 4px 0;
+}
+
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-quaternary);
+}
+
+.logEntry {
+  display: flex;
+  align-items: flex-start;
+  padding: 2px 16px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.level-warn {
+  background-color: rgba(250, 173, 20, 0.06);
+}
+
+.level-error {
+  background-color: rgba(255, 77, 79, 0.06);
+}
+
+.time {
+  flex-shrink: 0;
+  color: var(--color-text-quaternary);
+  margin-right: 8px;
+}
+
+.level {
+  flex-shrink: 0;
+  width: 42px;
+  font-weight: 600;
+  margin-right: 8px;
+  color: var(--color-text-secondary);
+}
+
+.source {
+  flex-shrink: 0;
+  color: var(--color-text-quaternary);
+  margin-right: 8px;
+}
+
+.message {
+  flex: 1;
+  color: var(--color-text);
+}
