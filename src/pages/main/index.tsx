@@ -36,6 +36,7 @@ import LogViewer from '@/blocks/LogViewer';
 
 import styles from './index.less';
 import { useUpdateEffect } from '@/hooks';
+import useCopyFocusData from '@/hooks/useFocusData';
 
 const initNavConfig: INavItem[] = [
   {
@@ -59,6 +60,9 @@ function MainPage() {
   const isMac = useMemo(() => {
     return navigator.platform.toLowerCase().includes('mac');
   }, []);
+
+  // 注册全局 cmd+c / ctrl+c 复制当前聚焦的单元格或选中的行
+  useCopyFocusData();
 
   // 当页面在workspace时，显示自定义布局
   useEffect(() => {
