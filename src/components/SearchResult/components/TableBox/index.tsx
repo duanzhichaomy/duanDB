@@ -48,6 +48,7 @@ import RightClickMenu, { AllSupportedMenusType } from '../RightClickMenu';
 // 自定义hooks
 import useCurdTableData from '../../hooks/useCurdTableData';
 import useMultipleSelect from '../../hooks/useMultipleSelect';
+import useMultipleSelectColumn from '../../hooks/useMultipleSelectColumn';
 import usePasteData from '../../hooks/usePasteData';
 
 interface ITableProps {
@@ -133,6 +134,8 @@ export default function TableBox(props: ITableProps) {
   const [editingData, setEditingData] = useState<string>('');
   // 当前选中的行号
   const [curOperationRowNo, setCurOperationRowNo] = useState<Array<string> | null>(null);
+  // 当前选中的列 id（点击列标题时填充，与行选择互斥）
+  const [curOperationColIds, setCurOperationColIds] = useState<Array<string> | null>(null);
   const [refreshSpinning, setRefreshSpinning] = useState(false);
   // 操作过的数据列表
   const [updateData, setUpdateData] = useState<IUpdateData[] | []>([]);
@@ -537,8 +540,9 @@ export default function TableBox(props: ITableProps) {
       return;
     }
     setFocusedContent(value);
-    // 聚焦当前单元格，取消对于行的聚焦
+    // 聚焦当前单元格，取消对于行/列的聚焦
     setCurOperationRowNo(null);
+    setCurOperationColIds(null);
     // 当前聚焦或者编辑的单元格的数据
     setEditingData(value);
     // 如果数据不支持修改，则该单元格不支持编辑
@@ -592,6 +596,11 @@ export default function TableBox(props: ITableProps) {
       } else {
         styleList.push(styles.tableItemFocus);
       }
+      return classnames(...styleList);
+    }
+    // 当前单元格所在的列被选中了(列聚焦)
+    if (curOperationColIds?.includes(colId)) {
+      styleList.push(styles.tableItemFocus);
       return classnames(...styleList);
     }
     // 新添加的行
@@ -865,7 +874,48 @@ export default function TableBox(props: ITableProps) {
     setFocusedContent,
   });
 
+  // 可被选中的数据列顺序（排除 No. 序号列）
+  const selectableColumnOrder = useMemo<string[]>(() => {
+    return (queryResultData.headerList || [])
+      .map((item, colIndex) => {
+        const { dataType, name } = item;
+        if (dataType === TableDataType.DUANDB_ROW_NUMBER) return null;
+        return `${preCode}${colIndex}${name}`;
+      })
+      .filter((id): id is string => id !== null);
+  }, [queryResultData.headerList]);
+
+  // 将若干列的数据抽出为二维数组，供 setFocusedContent / cmd+c 使用
+  const getColumnData = useCallback(
+    (colIds: string[]): Array<Array<string | null>> => {
+      const source = filteredTableDataRef.current;
+      return source.map((row) =>
+        colIds.map((colId) => {
+          const val = row[colId];
+          if (val === USER_FILLED_VALUE.DEFAULT || val == null) return '';
+          return String(val);
+        }),
+      );
+    },
+    [],
+  );
+
+  const { multipleSelectColumn } = useMultipleSelectColumn({
+    curOperationColIds,
+    setCurOperationColIds,
+    columnOrder: selectableColumnOrder,
+    getColumnData,
+    setFocusedContent,
+  });
+
+  const handleColHeaderClick = (colId: string) => {
+    setEditingCell(null);
+    setCurOperationRowNo(null);
+    multipleSelectColumn(colId);
+  };
+
   const handelRowNoClick = (rowId: string) => {
+    setCurOperationColIds(null);
     multipleSelect(rowId);
     setEditingCell(null);
     // const newRowData = tableData.find((item) => item[colNoCode] === rowId)!;
@@ -916,7 +966,13 @@ export default function TableBox(props: ITableProps) {
 
     return (
       <Dropdown menu={{ items: headerMenuItems }} trigger={['contextMenu']}>
-        <span className={styles.columnHeaderTitle}>
+        <span
+          className={styles.columnHeaderTitle}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleColHeaderClick(colId);
+          }}
+        >
           <span className={styles.columnHeaderName}>{name}</span>
           {showType && typeText && <span className={styles.columnHeaderType}>{typeText}</span>}
         </span>
@@ -941,6 +997,7 @@ export default function TableBox(props: ITableProps) {
               className={styles.allSelectBox}
               onClick={() => {
                 setEditingCell(null);
+                setCurOperationColIds(null);
                 if (curOperationRowNo) {
                   setCurOperationRowNo(null);
                   return;
@@ -1021,7 +1078,7 @@ export default function TableBox(props: ITableProps) {
         features: { sortable: isNumber ? compareStrings : true },
       };
     });
-  }, [queryResultData.headerList, editingCell, editingData, curOperationRowNo, oldDataList, showColumnType]);
+  }, [queryResultData.headerList, editingCell, editingData, curOperationRowNo, curOperationColIds, oldDataList, showColumnType]);
 
   const { updateTableData, handleCreateData, handleDeleteData } = useCurdTableData({
     tableData,
