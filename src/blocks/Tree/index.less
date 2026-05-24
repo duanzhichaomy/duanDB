@@ -3,7 +3,7 @@
 
 .scrollBox {
   overflow-y: auto;
-  padding: 2px 6px 10px;
+  padding: 6px 10px 14px 0;
   box-sizing: border-box;
   height: 100%;
 }
@@ -31,25 +31,26 @@
   display: flex;
   align-items: center;
   overflow: hidden;
-  height: 26px;
-  border-radius: 4px;
+  height: 30px;
+  border-radius: 8px;
   opacity: 1;
   cursor: pointer;
   transition: opacity var(--motion-duration-fast) var(--motion-ease-in-out),
               height var(--motion-duration-fast) var(--motion-ease-in-out),
               background-color var(--motion-duration-fast) var(--motion-ease-in-out);
   user-select: none;
-  padding-right: 6px;
+  padding-right: 8px;
 
   &:hover {
-    background-color: var(--control-item-bg-hover);
+    background-color: rgba(99, 91, 255, 0.06);
   }
 }
 
 .treeNodeFocus {
-  background-color: var(--color-primary-bg-hover);
+  background: linear-gradient(90deg, rgba(99, 91, 255, 0.14), rgba(99, 91, 255, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(99, 91, 255, 0.08);
   .right {
-    color: var(--color-text);
+    color: #4f46e5;
   }
   .indent {
     &::before {
@@ -57,7 +58,7 @@
     }
   }
   .type {
-    color: var(--color-text-secondary);
+    color: #7c83a0;
   }
 }
 
@@ -117,11 +118,11 @@
 .dblclickArea {
   display: flex;
   flex: 1;
-  height: 26px;
+  height: 30px;
 }
 
 .typeIcon {
-  height: 26px;
+  height: 30px;
   display: flex;
   align-items: center;
   width: 20px;
@@ -131,7 +132,7 @@
   }
 
   &.itemIcon {
-    color: #4caf7d;
+    color: #35a96d;
   }
 }
 
@@ -152,6 +153,7 @@
 .name {
   .f-lines(1);
   line-height: 20px;
+  font-size: 13px;
 }
 
 .type {
@@ -179,7 +181,7 @@
     top: 0;
     right: 9px;
     bottom: -4px;
-    border-right: 1px solid var(--color-border);
+    border-right: 1px solid rgba(214, 220, 235, 0.9);
     content: '';
   }
 }

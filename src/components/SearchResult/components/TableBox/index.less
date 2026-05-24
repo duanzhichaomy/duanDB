@@ -2,20 +2,20 @@
 @import '../../../../styles/motion.less';
 
 .button-bar-item() {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
   i {
     font-size: 14px;
-    color: var(--color-primary);
+    color: #635bff;
   }
   &:hover{
-    background-color: var(--control-item-bg-hover);
+    background-color: rgba(99, 91, 255, 0.08);
   }
 }
 
@@ -55,7 +55,7 @@
         overflow: hidden;
       }
       th {
-        font-weight: bold;
+        font-weight: 600;
       }
       th.first {
         border-left: 0;
@@ -75,20 +75,24 @@
     // }
 
     .art-table-row {
-      height: 28px;
+      height: 42px;
     }
     .art-table-row:nth-child(even) {
       td {
-        background-color: var(--color-bg-layout) !important;
+        background-color: #ffffff !important;
       }
     }
+    .art-table-row:hover td {
+      background-color: #fafbff !important;
+    }
     .art-table-header {
-      background: var(--color-bg-layout) !important;
+      background: #fbfcff !important;
       overflow: hidden !important;
       top: 0px !important;
+      box-shadow: 0 1px 0 rgba(225, 229, 241, 0.95);
     }
     .art-table-header-row {
-      background: var(--color-bg-layout) !important;
+      background: #fbfcff !important;
     }
     .art-table-body::-webkit-scrollbar {
       display: none;
@@ -97,11 +101,12 @@
       padding-right: 0px;
     }
     .art-table-header-cell {
-      padding: 0px 6px;
-      border-right: 1px solid var(--color-border-secondary);
+      padding: 0px 12px;
+      border-right: 1px solid rgba(225, 229, 241, 0.95);
       font-weight: 600;
       font-size: 12px;
-      color: var(--color-text-secondary);
+      color: #445066;
+      letter-spacing: 0;
     }
     .art-table-header-row .art-table-header-cell:nth-of-type(1){
       .resize-handle{
@@ -133,11 +138,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-bg-base);
-  padding: 0px 6px 0px 0px;
-  height: 40px;
+  border-bottom: 1px solid rgba(225, 229, 241, 0.95);
+  background-color: #ffffff;
+  padding: 10px 16px;
+  height: 58px;
   flex-shrink: 0;
+  gap: 10px;
 }
 
 .toolBarItem {
@@ -146,7 +152,7 @@
   justify-content: start;
   align-items: center;
   &:not(:last-child) {
-    border-right: 1px solid var(--color-border);
+    border-right: 0;
   }
 }
 
@@ -155,13 +161,21 @@
   display: flex;
   justify-content: end;
   .exportBar {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(225, 229, 241, 0.95);
+    background: #ffffff;
     cursor: pointer;
+    color: var(--color-text);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
   }
 }
 
 .editTableDataBar {
-  padding: 0px 6px;
-  height: 38px;
+  padding: 0px 8px;
+  height: 34px;
+  gap: 2px;
   i {
     color: var(--color-text-disabled);
   }
@@ -185,7 +199,7 @@
 }
 
 .refreshBar{
-  padding: 0px 4px;
+  padding: 0px;
   .refreshIconBox{
     .button-bar-item();
   }
@@ -199,10 +213,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 32px;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-bg-base);
+  height: 46px;
+  margin: 12px 16px;
+  padding: 0 12px;
+  border: 1px solid rgba(225, 229, 241, 0.95);
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.035);
   flex-shrink: 0;
 
   .searchBarLeft {
@@ -225,9 +242,9 @@
     outline: none;
     background: transparent;
     color: var(--color-text);
-    font-size: 12px;
-    height: 28px;
-    line-height: 28px;
+    font-size: 13px;
+    height: 36px;
+    line-height: 36px;
 
     &::placeholder {
       color: var(--color-text-quaternary);
@@ -275,6 +292,11 @@
   overflow-y: auto;
   height: 0px;
   position: relative;
+  margin: 0 16px;
+  border: 1px solid rgba(225, 229, 241, 0.95);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.035);
   .supportBaseTableSpin {
     position: absolute;
     top: 0px;
@@ -299,20 +321,20 @@
 }
 
 .tableItem {
-  height: 28px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
-  padding-left: 4px;
+  padding: 0 12px;
   user-select: none;
-  background-color: var(--color-bg-base);
+  background-color: #ffffff;
   cursor: pointer;
   transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
 
   .tableItemContent {
-    max-height: 28px;
-    line-height: 28px;
+    max-height: 42px;
+    line-height: 42px;
     flex: 1;
     width: 100%;
     overflow: hidden;
@@ -328,10 +350,10 @@
     bottom: 0px;
     width: fit-content;
     min-width: 100%;
-    padding: 0px 4px;
-    max-height: 28px;
-    line-height: 28px;
-    background-color: var(--color-bg-layout);
+    padding: 0px 12px;
+    max-height: 42px;
+    line-height: 42px;
+    background-color: #fbfcff;
     z-index: 2;
     color: var(--color-text);
     white-space: nowrap;
@@ -363,19 +385,19 @@
   
 }
 .tableItemHighlight {
-  background-color: var(--color-bg-layout);
+  background-color: #f7f8ff;
   .previewTableItemContent {
-    background-color: var(--color-bg-layout);
+    background-color: #f7f8ff;
   }
 }
 .tableItemFocus {
-  background-color: var(--color-primary-hover);
+  background-color: #635bff;
   color: var(--color-bg-base);
   .previewTableItemContent {
-    background-color: var(--color-primary-hover);
+    background-color: #635bff;
   }
   .previewTableItemContent{
-    background-color: var(--color-primary-hover);
+    background-color: #635bff;
   }
   .cellValueNull {
     color: var(--color-bg-base);

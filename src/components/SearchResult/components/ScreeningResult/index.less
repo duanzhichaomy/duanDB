@@ -1,19 +1,25 @@
 .screeningResult{
   display: flex;
   align-items: center;
-  height: 18px;
-  padding: 4px 0px;
-  border-bottom: 1px solid var(--color-border);
+  height: 42px;
+  margin: 0 16px;
+  padding: 0;
+  border: 1px solid rgba(225, 229, 241, 0.95);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.03);
   .whereBox,.orderByBox{
     width: 50%;
     display: flex;
     align-items: center;
     height: 100%;
-    margin: 0px 4px;
+    margin: 0px;
+    padding: 0 12px;
+    box-sizing: border-box;
     .titleBox{
       display: flex;
       align-items: center;
-      margin-right: 10px;
+      margin-right: 12px;
       width: fit-content;
       flex-shrink: 0;
     }
@@ -21,12 +27,12 @@
       margin-right: 4px;
     }
     .title{
-      color: var(--color-text-secondary);
+      color: #635bff;
       flex-shrink: 0;
-      font-weight: 500;
+      font-weight: 600;
     }
     .activeTitle{
-      color: var(--color-primary-text);
+      color: #4f46e5;
     }
     .monacoEditor{
       flex: 1;

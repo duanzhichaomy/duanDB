@@ -7,6 +7,7 @@
   right: 0;
   left: 0;
   bottom: 0;
+  background: #f7f9fe;
 }
 
 .layoutLeft {
@@ -16,10 +17,11 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  width: 48px;
-  padding-top: 10px;
-  background-color: var(--color-bg-base);
-  border-right: 1px solid var(--color-border);
+  width: 58px;
+  padding-top: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fd 100%);
+  border-right: 1px solid rgba(225, 229, 241, 0.9);
+  box-shadow: 1px 0 18px rgba(15, 23, 42, 0.035);
   user-select: none;
   overflow: hidden;
 }
@@ -54,10 +56,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 8px;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    margin-bottom: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     font-size: 12px;
     color: var(--color-text);
     cursor: pointer;
@@ -74,17 +76,18 @@
 
     &:hover {
       .icon {
-        color: var(--color-primary);
+        color: #635bff;
       }
-      background-color: var(--control-item-bg-hover);
+      background-color: rgba(99, 91, 255, 0.08);
     }
   }
 
   .activeNav {
     .icon {
-      color: var(--color-primary);
+      color: #ffffff;
     }
-    background-color: var(--color-primary-bg-hover);
+    background: linear-gradient(180deg, #6d5cff 0%, #563ce8 100%);
+    box-shadow: 0 10px 20px rgba(86, 60, 232, 0.22);
   }
 }
 
@@ -137,6 +140,7 @@
 .layoutRight {
   flex: 1;
   overflow: hidden;
+  background: #f7f9fe;
 }
 
 .main {

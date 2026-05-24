@@ -53,6 +53,13 @@ export default memo<IProps>((props) => {
     <div className={classnames(styles.appTitleBar, className)} onDoubleClick={handleDoubleClick}>
       <div className={styles.appTitleBarGlobal}>
         <div className={classnames(styles.leftSlot)}>
+          {isMac && (
+            <div className={styles.macTrafficLights}>
+              <button type="button" className={styles.closeLight} aria-label="Close window" onClick={handelCloseWindow} />
+              <button type="button" className={styles.minimizeLight} aria-label="Minimize window" onClick={handelMinimizeWindow} />
+              <button type="button" className={styles.maximizeLight} aria-label="Toggle maximize window" onClick={handelMaximize} />
+            </div>
+          )}
           <BrandLogo size={20} className={styles.brandLogo} />
         </div>
         <div className={styles.appName}>DuanDB</div>
