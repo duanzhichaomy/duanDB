@@ -17,8 +17,13 @@ pub async fn table_list(
     let page_size = params.page_size.unwrap_or(100);
 
     let (tables, total) = mysql_meta::get_tables_paged(
-        &pool, db, params.search_key.as_deref(), Some(page_no), Some(page_size),
-    ).await?;
+        &pool,
+        db,
+        params.search_key.as_deref(),
+        Some(page_no),
+        Some(page_size),
+    )
+    .await?;
 
     let has_next_page = ((page_no - 1) * page_size + tables.len() as i64) < total;
 
@@ -68,9 +73,9 @@ pub async fn table_detail(
     let (engine, collation, auto_inc, comment) = detail_result?;
 
     // 从 collation 提取 charset
-    let charset = collation.as_ref().and_then(|c| {
-        c.split('_').next().map(|s| s.to_string())
-    });
+    let charset = collation
+        .as_ref()
+        .and_then(|c| c.split('_').next().map(|s| s.to_string()));
 
     Ok(ApiResponse::ok(EditTableInfo {
         name: table_name,
@@ -145,7 +150,8 @@ pub async fn table_modify_sql(
     params: ModifyTableSqlRequest,
 ) -> Result<ApiResponse<Vec<SqlItem>>, String> {
     let database = params.database_name.as_deref().unwrap_or("");
-    let sqls = builder::build_modify_table_sql(database, params.old_table.as_ref(), &params.new_table);
+    let sqls =
+        builder::build_modify_table_sql(database, params.old_table.as_ref(), &params.new_table);
     let items: Vec<SqlItem> = sqls.into_iter().map(|sql| SqlItem { sql }).collect();
     Ok(ApiResponse::ok(items))
 }
@@ -196,17 +202,13 @@ pub async fn ddl_export(
 
 /// CREATE TABLE 示例
 #[tauri::command]
-pub async fn ddl_create_example(
-    _db_type: Option<String>,
-) -> Result<ApiResponse<String>, String> {
+pub async fn ddl_create_example(_db_type: Option<String>) -> Result<ApiResponse<String>, String> {
     Ok(ApiResponse::ok(builder::build_create_table_example()))
 }
 
 /// ALTER TABLE 示例
 #[tauri::command]
-pub async fn ddl_update_example(
-    _db_type: Option<String>,
-) -> Result<ApiResponse<String>, String> {
+pub async fn ddl_update_example(_db_type: Option<String>) -> Result<ApiResponse<String>, String> {
     Ok(ApiResponse::ok(builder::build_update_table_example()))
 }
 

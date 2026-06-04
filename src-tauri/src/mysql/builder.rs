@@ -452,10 +452,140 @@ fn build_index_definition(idx: &IndexInfo) -> String {
             idx.name.replace('`', "``"),
             col_str
         ),
-        _ => format!(
-            "INDEX `{}` ({})",
-            idx.name.replace('`', "``"),
-            col_str
-        ),
+        _ => format!("INDEX `{}` ({})", idx.name.replace('`', "``"), col_str),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn column(name: &str, type_name: &str) -> ColumnInfo {
+        ColumnInfo {
+            edit_status: None,
+            old_name: None,
+            name: Some(name.to_string()),
+            database_name: None,
+            schema_name: None,
+            table_name: None,
+            column_type: None,
+            data_type: None,
+            default_value: None,
+            auto_increment: None,
+            comment: None,
+            primary_key: None,
+            primary_key_order: None,
+            type_name: Some(type_name.to_string()),
+            column_size: None,
+            buffer_length: None,
+            decimal_digits: None,
+            num_prec_radix: None,
+            sql_data_type: None,
+            sql_datetime_sub: None,
+            char_octet_length: None,
+            ordinal_position: None,
+            nullable: None,
+            generated_column: None,
+            char_set_name: None,
+            collation_name: None,
+            value: None,
+        }
+    }
+
+    fn table(name: &str) -> EditTableInfo {
+        EditTableInfo {
+            name: name.to_string(),
+            comment: None,
+            charset: None,
+            engine: None,
+            increment_value: None,
+            column_list: vec![],
+            index_list: vec![],
+        }
+    }
+
+    #[test]
+    fn create_database_escapes_identifier() {
+        assert_eq!(
+            build_create_database_sql("prod`db"),
+            "CREATE DATABASE `prod``db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"
+        );
+    }
+
+    #[test]
+    fn create_table_includes_columns_primary_key_indexes_and_options() {
+        let mut id = column("id", "BIGINT");
+        id.nullable = Some("NO".into());
+        id.auto_increment = Some("YES".into());
+        id.primary_key = Some(true);
+        id.primary_key_order = Some(1);
+
+        let mut name = column("user`name", "VARCHAR");
+        name.column_size = Some(64);
+        name.default_value = Some("O'Reilly".into());
+        name.comment = Some("display's name".into());
+
+        let mut info = table("account`profile");
+        info.comment = Some("tenant's table".into());
+        info.charset = Some("utf8mb4".into());
+        info.engine = Some("InnoDB".into());
+        info.column_list = vec![id, name];
+        info.index_list = vec![IndexInfo {
+            edit_status: None,
+            name: "idx_name".into(),
+            index_type: "UNIQUE".into(),
+            comment: None,
+            column_list: vec![IndexColumnInfo {
+                name: "user`name".into(),
+                collation: Some("DESC".into()),
+                cardinality: None,
+                sub_part: None,
+                ordinal_position: None,
+            }],
+        }];
+
+        let sql = build_modify_table_sql("prod`db", None, &info).join("\n");
+
+        assert!(sql.contains("CREATE TABLE `prod``db`.`account``profile`"));
+        assert!(sql.contains("`id` BIGINT NOT NULL AUTO_INCREMENT"));
+        assert!(
+            sql.contains("`user``name` VARCHAR(64) DEFAULT 'O''Reilly' COMMENT 'display''s name'")
+        );
+        assert!(sql.contains("PRIMARY KEY (`id`)"));
+        assert!(sql.contains("UNIQUE INDEX `idx_name` (`user``name` DESC)"));
+        assert!(sql.ends_with("ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='tenant''s table'"));
+    }
+
+    #[test]
+    fn modify_table_generates_rename_column_and_primary_key_drop() {
+        let mut old_table = table("users");
+        old_table.comment = Some("old".into());
+
+        let mut renamed_column = column("display_name", "VARCHAR");
+        renamed_column.edit_status = Some("MODIFY".into());
+        renamed_column.old_name = Some("name".into());
+        renamed_column.column_size = Some(128);
+        renamed_column.nullable = Some("YES".into());
+
+        let mut new_table = table("members");
+        new_table.comment = Some("new".into());
+        new_table.column_list = vec![renamed_column];
+        new_table.index_list = vec![IndexInfo {
+            edit_status: Some("DELETE".into()),
+            name: "PRIMARY".into(),
+            index_type: "PRIMARY_KEY".into(),
+            comment: None,
+            column_list: vec![],
+        }];
+
+        let sqls = build_modify_table_sql("app", Some(&old_table), &new_table);
+
+        assert_eq!(sqls[0], "ALTER TABLE `app`.`users` RENAME TO `members`");
+        assert_eq!(sqls[1], "ALTER TABLE `app`.`members` COMMENT='new'");
+        assert_eq!(
+            sqls[2],
+            "ALTER TABLE `app`.`members` CHANGE COLUMN `name` `display_name` VARCHAR(128) NULL"
+        );
+        assert_eq!(sqls[3], "ALTER TABLE `app`.`members` DROP PRIMARY KEY");
     }
 }

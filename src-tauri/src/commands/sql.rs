@@ -16,12 +16,8 @@ pub async fn sql_execute(
     params: ExecuteSqlParams,
 ) -> Result<ApiResponse<Vec<ExecuteResult>>, String> {
     let data_source_id = params.data_source_id.unwrap_or(0);
-    let pool = get_mysql_pool_with_db(
-        &state,
-        data_source_id,
-        params.database_name.as_deref(),
-    )
-    .await?;
+    let pool =
+        get_mysql_pool_with_db(&state, data_source_id, params.database_name.as_deref()).await?;
 
     let sql_text = params.sql.as_deref().unwrap_or("");
     if sql_text.trim().is_empty() {
@@ -115,12 +111,8 @@ pub async fn sql_execute_ddl(
     params: ExecuteSqlParams,
 ) -> Result<ApiResponse<DdlExecuteResult>, String> {
     let data_source_id = params.data_source_id.unwrap_or(0);
-    let pool = get_mysql_pool_with_db(
-        &state,
-        data_source_id,
-        params.database_name.as_deref(),
-    )
-    .await?;
+    let pool =
+        get_mysql_pool_with_db(&state, data_source_id, params.database_name.as_deref()).await?;
 
     let sql_text = params.sql.as_deref().unwrap_or("");
 
@@ -151,15 +143,14 @@ pub async fn sql_execute_update(
 
 /// 获取更新数据的 SQL（预览待提交的更改）
 #[tauri::command]
-pub async fn sql_get_update_sql(
-    params: GetUpdateSqlParams,
-) -> Result<ApiResponse<String>, String> {
+pub async fn sql_get_update_sql(params: GetUpdateSqlParams) -> Result<ApiResponse<String>, String> {
     let table_name = params.table_name.as_deref().unwrap_or("");
     let database = params.database_name.as_deref().unwrap_or("");
     let headers = &params.header_list;
 
     // 跳过第一列（DUANDB_ROW_NUMBER 序号列）
-    let col_headers: Vec<&TableHeader> = headers.iter()
+    let col_headers: Vec<&TableHeader> = headers
+        .iter()
         .filter(|h| h.data_type != "DUANDB_ROW_NUMBER")
         .collect();
 
@@ -195,7 +186,8 @@ pub async fn sql_get_update_sql(
                     if !set_parts.is_empty() {
                         sql_parts.push(format!(
                             "UPDATE `{}`.`{}` SET {} WHERE {} LIMIT 1;",
-                            escaped_db, escaped_table,
+                            escaped_db,
+                            escaped_table,
                             set_parts.join(", "),
                             where_parts.join(" AND "),
                         ));
@@ -213,11 +205,14 @@ pub async fn sql_get_update_sql(
                         }
                         let data_idx = i + 1;
                         cols.push(escape_identifier(&header.name));
-                        vals.push(escape_value(data_list.get(data_idx).and_then(|v| v.as_ref())));
+                        vals.push(escape_value(
+                            data_list.get(data_idx).and_then(|v| v.as_ref()),
+                        ));
                     }
                     sql_parts.push(format!(
                         "INSERT INTO `{}`.`{}` ({}) VALUES ({});",
-                        escaped_db, escaped_table,
+                        escaped_db,
+                        escaped_table,
                         cols.join(", "),
                         vals.join(", "),
                     ));
@@ -242,7 +237,8 @@ pub async fn sql_get_update_sql(
 
                     sql_parts.push(format!(
                         "UPDATE `{}`.`{}` SET {} WHERE {};",
-                        escaped_db, escaped_table,
+                        escaped_db,
+                        escaped_table,
                         set_parts.join(", "),
                         where_parts.join(" AND "),
                     ));
@@ -251,17 +247,21 @@ pub async fn sql_get_update_sql(
             "DELETE" => {
                 if let Some(old_data_list) = &op.old_data_list {
                     let has_primary_key = col_headers.iter().any(|h| h.primary_key == Some(true));
-                    let where_parts: Vec<String> = col_headers.iter().enumerate()
+                    let where_parts: Vec<String> = col_headers
+                        .iter()
+                        .enumerate()
                         .filter(|(_, header)| !has_primary_key || header.primary_key == Some(true))
                         .map(|(i, header)| {
                             let data_idx = i + 1;
                             let val = old_data_list.get(data_idx).and_then(|v| v.as_ref());
                             let col = escape_identifier(&header.name);
                             escape_where_condition(&col, val)
-                        }).collect();
+                        })
+                        .collect();
                     sql_parts.push(format!(
                         "DELETE FROM `{}`.`{}` WHERE {} LIMIT 1;",
-                        escaped_db, escaped_table,
+                        escaped_db,
+                        escaped_table,
                         where_parts.join(" AND "),
                     ));
                 }
@@ -302,12 +302,8 @@ pub async fn sql_count(
     params: ExecuteSqlParams,
 ) -> Result<ApiResponse<i64>, String> {
     let data_source_id = params.data_source_id.unwrap_or(0);
-    let pool = get_mysql_pool_with_db(
-        &state,
-        data_source_id,
-        params.database_name.as_deref(),
-    )
-    .await?;
+    let pool =
+        get_mysql_pool_with_db(&state, data_source_id, params.database_name.as_deref()).await?;
 
     let sql_text = params.sql.as_deref().unwrap_or("");
     let count_sql = format!("SELECT COUNT(*) AS cnt FROM ({}) AS t", sql_text);
@@ -345,8 +341,15 @@ pub async fn sql_format(
 fn is_select_statement(sql: &str) -> bool {
     let bytes = sql.as_bytes();
     // 快速跳过前导空白
-    let start = bytes.iter().position(|&b| !b.is_ascii_whitespace()).unwrap_or(0);
-    let upper_start: String = sql[start..].chars().take(8).collect::<String>().to_uppercase();
+    let start = bytes
+        .iter()
+        .position(|&b| !b.is_ascii_whitespace())
+        .unwrap_or(0);
+    let upper_start: String = sql[start..]
+        .chars()
+        .take(8)
+        .collect::<String>()
+        .to_uppercase();
     upper_start.starts_with("SELECT")
         || upper_start.starts_with("SHOW")
         || upper_start.starts_with("DESCRIBE")
@@ -367,7 +370,12 @@ async fn execute_query(
     // 检查是否已有 LIMIT
     let has_user_limit = has_limit_clause(sql);
     let final_sql = if !has_user_limit {
-        format!("{} LIMIT {}, {}", sql, (page_no - 1) * page_size, page_size + 1)
+        format!(
+            "{} LIMIT {}, {}",
+            sql,
+            (page_no - 1) * page_size,
+            page_size + 1
+        )
     } else {
         sql.to_string()
     };
@@ -442,10 +450,7 @@ async fn execute_query(
     // 0 行结果时通过 SHOW COLUMNS 补充完整列头
     if !headers_built {
         if let Some(ref tbl) = table_name {
-            let cols_sql = format!(
-                "SHOW COLUMNS FROM `{}`",
-                tbl.replace('`', "``")
-            );
+            let cols_sql = format!("SHOW COLUMNS FROM `{}`", tbl.replace('`', "``"));
             if let Ok(col_rows) = sqlx::raw_sql(&cols_sql).fetch_all(pool).await {
                 for row in &col_rows {
                     let name: String = row.try_get(0).unwrap_or_default();
@@ -521,7 +526,8 @@ async fn execute_query(
                 ) {
                     if let Some(header) = headers.iter_mut().find(|h| h.name == col_name) {
                         header.default_value = col_default;
-                        let extra: String = def_row.try_get::<String, _>("EXTRA").unwrap_or_default();
+                        let extra: String =
+                            def_row.try_get::<String, _>("EXTRA").unwrap_or_default();
                         header.auto_increment = Some(extra.contains("auto_increment"));
                         // 用原始 SQL 类型（如 varchar(255)）覆盖前面记录的 sqlx 类型名
                         if let Ok(col_type) = def_row.try_get::<String, _>("COLUMN_TYPE") {
@@ -571,8 +577,10 @@ fn has_limit_clause(sql: &str) -> bool {
             b'L' | b'l' if !in_single_quote && !in_double_quote && i + 5 <= len => {
                 if sql[i..i + 5].eq_ignore_ascii_case("LIMIT") {
                     // 确认前后不是标识符字符
-                    let before_ok = i == 0 || !bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_';
-                    let after_ok = i + 5 >= len || !bytes[i + 5].is_ascii_alphanumeric() && bytes[i + 5] != b'_';
+                    let before_ok =
+                        i == 0 || !bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_';
+                    let after_ok = i + 5 >= len
+                        || !bytes[i + 5].is_ascii_alphanumeric() && bytes[i + 5] != b'_';
                     if before_ok && after_ok {
                         return true;
                     }
@@ -596,7 +604,8 @@ fn map_mysql_type(type_name: &str) -> String {
         || contains_ci(name, b"NUMERIC")
     {
         "NUMERIC".into()
-    } else if contains_ci(name, b"DATE") || contains_ci(name, b"TIME") || contains_ci(name, b"YEAR") {
+    } else if contains_ci(name, b"DATE") || contains_ci(name, b"TIME") || contains_ci(name, b"YEAR")
+    {
         "DATETIME".into()
     } else if contains_ci(name, b"BLOB") || contains_ci(name, b"BINARY") {
         "BINARY".into()
@@ -612,7 +621,9 @@ fn map_mysql_type(type_name: &str) -> String {
 /// Case-insensitive bytes contains
 #[inline]
 fn contains_ci(haystack: &[u8], needle: &[u8]) -> bool {
-    haystack.windows(needle.len()).any(|w| w.eq_ignore_ascii_case(needle))
+    haystack
+        .windows(needle.len())
+        .any(|w| w.eq_ignore_ascii_case(needle))
 }
 
 /// 简单提取 SELECT 语句中的表名
@@ -850,4 +861,105 @@ fn starts_with_ci(haystack: &[u8], prefix: &[u8]) -> bool {
 #[inline]
 fn eq_ci(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && a.eq_ignore_ascii_case(b)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn header(name: &str, primary_key: bool, auto_increment: bool) -> TableHeader {
+        TableHeader {
+            name: name.to_string(),
+            data_type: "VARCHAR".to_string(),
+            column_type: None,
+            auto_increment: Some(auto_increment),
+            column_size: None,
+            comment: None,
+            decimal_digits: None,
+            default_value: None,
+            nullable: None,
+            primary_key: Some(primary_key),
+        }
+    }
+
+    #[tokio::test]
+    async fn update_sql_uses_primary_key_and_escapes_values() {
+        let response = sql_get_update_sql(GetUpdateSqlParams {
+            database_name: Some("dev`saleshub".into()),
+            data_source_id: Some(1),
+            schema_name: None,
+            db_type: Some("MYSQL".into()),
+            table_name: Some("items`table".into()),
+            header_list: vec![
+                TableHeader {
+                    name: "row".into(),
+                    data_type: "DUANDB_ROW_NUMBER".into(),
+                    column_type: None,
+                    auto_increment: None,
+                    column_size: None,
+                    comment: None,
+                    decimal_digits: None,
+                    default_value: None,
+                    nullable: None,
+                    primary_key: None,
+                },
+                header("id", true, false),
+                header("name`field", false, false),
+                header("note", false, false),
+            ],
+            operations: vec![
+                UpdateOperation {
+                    op_type: "UPDATE".into(),
+                    row_id: "1".into(),
+                    data_list: Some(vec![
+                        Some("1".into()),
+                        Some("7".into()),
+                        Some("beta'quote".into()),
+                        None,
+                    ]),
+                    old_data_list: Some(vec![
+                        Some("1".into()),
+                        Some("7".into()),
+                        Some("alpha".into()),
+                        Some("old".into()),
+                    ]),
+                },
+                UpdateOperation {
+                    op_type: "CREATE".into(),
+                    row_id: "2".into(),
+                    data_list: Some(vec![
+                        Some("2".into()),
+                        Some("8".into()),
+                        Some("new".into()),
+                        Some("DUANDB_UPDATE_TABLE_DATA_USER_FILLED_DEFAULT".into()),
+                    ]),
+                    old_data_list: None,
+                },
+                UpdateOperation {
+                    op_type: "DELETE".into(),
+                    row_id: "3".into(),
+                    data_list: None,
+                    old_data_list: Some(vec![
+                        Some("3".into()),
+                        Some("9".into()),
+                        Some("deleted".into()),
+                        Some("gone".into()),
+                    ]),
+                },
+            ],
+        })
+        .await
+        .expect("update sql should be generated");
+
+        let sql = response.data.expect("SQL data should be present");
+        assert!(sql.contains(
+            "UPDATE `dev``saleshub`.`items``table` SET `name``field` = 'beta''quote', `note` = NULL WHERE `id` = '7' LIMIT 1;"
+        ));
+        assert!(sql.contains(
+            "INSERT INTO `dev``saleshub`.`items``table` (`id`, `name``field`, `note`) VALUES ('8', 'new', DEFAULT);"
+        ));
+        assert!(
+            sql.contains("DELETE FROM `dev``saleshub`.`items``table` WHERE `id` = '9' LIMIT 1;")
+        );
+    }
 }

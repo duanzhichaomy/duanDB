@@ -159,14 +159,6 @@ export default function TableBox(props: ITableProps) {
   const [tableLoading, setTableLoading] = useState<boolean>(false);
   // 列宽数组
   const [columnResize, setColumnResize] = useState<number[]>([50]);
-  // 搜索关键词
-  const [searchKeyword, setSearchKeyword] = useState<string>('');
-  // 搜索是否展开
-  const [searchVisible, setSearchVisible] = useState<boolean>(false);
-  // 搜索匹配的行索引
-  const [matchedRowIndices, setMatchedRowIndices] = useState<number[]>([]);
-  // 当前高亮的匹配项索引
-  const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(-1);
   // 表格的宽度
   // const [tableBoxWidth, setTableBoxWidth] = useState<number>(0);
   // 缓存当前展示的（过滤后）表格数据，供表头右键菜单读取最新值
@@ -1110,46 +1102,11 @@ export default function TableBox(props: ITableProps) {
     return totalWidth;
   }, [columns, columnResize]);
 
-  // 搜索过滤后的数据
+  // 当前展示的数据，供状态栏和右键菜单读取最新值
   const filteredTableData = useMemo(() => {
-    if (!searchKeyword.trim()) {
-      setMatchedRowIndices([]);
-      setCurrentMatchIndex(-1);
-      filteredTableDataRef.current = tableData;
-      return tableData;
-    }
-    const keyword = searchKeyword.toLowerCase();
-    const matched: number[] = [];
-    const filtered = tableData.filter((row, index) => {
-      const values = Object.entries(row)
-        .filter(([key]) => key !== colNoCode)
-        .map(([, val]) => val);
-      const isMatch = values.some((val) => val != null && String(val).toLowerCase().includes(keyword));
-      if (isMatch) {
-        matched.push(index);
-      }
-      return isMatch;
-    });
-    setMatchedRowIndices(matched);
-    setCurrentMatchIndex(matched.length > 0 ? 0 : -1);
-    filteredTableDataRef.current = filtered;
-    return filtered;
-  }, [tableData, searchKeyword]);
-
-  const handleSearchPrev = () => {
-    if (matchedRowIndices.length === 0) return;
-    setCurrentMatchIndex((prev) => (prev <= 0 ? matchedRowIndices.length - 1 : prev - 1));
-  };
-
-  const handleSearchNext = () => {
-    if (matchedRowIndices.length === 0) return;
-    setCurrentMatchIndex((prev) => (prev >= matchedRowIndices.length - 1 ? 0 : prev + 1));
-  };
-
-  const handleCloseSearch = () => {
-    setSearchVisible(false);
-    setSearchKeyword('');
-  };
+    filteredTableDataRef.current = tableData;
+    return tableData;
+  }, [tableData]);
 
   // 自定义排序表头，支持独立点击上/下箭头
   const CustomSortHeaderCell = useMemo(() => {
@@ -1554,35 +1511,6 @@ export default function TableBox(props: ITableProps) {
             </div>
           </div>
           {concealTabHeader && <ScreeningResult ref={screeningResultRef} getTableData={getTableData} promptWord={queryResultData.headerList} />}
-          <div className={styles.searchBar}>
-            <div className={styles.searchBarLeft}>
-              <Iconfont code="&#xe600;" className={styles.searchBarIcon} />
-              <input
-                className={styles.searchBarInput}
-                placeholder={i18n('common.text.searchResultData')}
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-              />
-            </div>
-            <div className={styles.searchBarRight}>
-              {searchKeyword && (
-                <span className={styles.searchBarCount}>
-                  {matchedRowIndices.length > 0 ? `${currentMatchIndex + 1}/${matchedRowIndices.length}` : `0/0`}
-                </span>
-              )}
-              <div className={styles.searchBarBtn} onClick={handleSearchPrev}>
-                <Iconfont code="&#xe674;" />
-              </div>
-              <div className={styles.searchBarBtn} onClick={handleSearchNext}>
-                <Iconfont code="&#xe672;" />
-              </div>
-              {searchKeyword && (
-                <div className={styles.searchBarBtn} onClick={handleCloseSearch}>
-                  <Iconfont code="&#xe66f;" />
-                </div>
-              )}
-            </div>
-          </div>
           {isActive ? (
             <RightClickMenu menuList={rowRightClickMenu}>
               <div

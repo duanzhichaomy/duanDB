@@ -7,8 +7,8 @@ mod state;
 use state::AppState;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tauri::Manager;
 use tauri::menu::{MenuBuilder, SubmenuBuilder};
+use tauri::Manager;
 use tokio::sync::RwLock;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -50,9 +50,7 @@ pub fn run() {
                     .select_all()
                     .build()?;
 
-                let window_submenu = SubmenuBuilder::new(app, "Window")
-                    .minimize()
-                    .build()?;
+                let window_submenu = SubmenuBuilder::new(app, "Window").minimize().build()?;
 
                 let menu = MenuBuilder::new(app)
                     .item(&app_submenu)

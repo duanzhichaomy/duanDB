@@ -202,8 +202,7 @@ pub async fn get_indexes(
         .map_err(|e| e.to_string())?;
 
     // 按 Key_name 分组（保持插入顺序）
-    let mut index_map: indexmap::IndexMap<String, Vec<MySqlRow>> =
-        indexmap::IndexMap::new();
+    let mut index_map: indexmap::IndexMap<String, Vec<MySqlRow>> = indexmap::IndexMap::new();
     for row in rows {
         let key_name: String = row.try_get("Key_name").unwrap_or_default();
         index_map.entry(key_name).or_default().push(row);
@@ -238,7 +237,13 @@ pub async fn get_indexes(
 
             column_list.push(IndexColumnInfo {
                 name: col_name,
-                collation: collation.map(|c| if c == "A" { "ASC".into() } else { "DESC".into() }),
+                collation: collation.map(|c| {
+                    if c == "A" {
+                        "ASC".into()
+                    } else {
+                        "DESC".into()
+                    }
+                }),
                 cardinality,
                 sub_part,
                 ordinal_position: seq,
@@ -285,7 +290,7 @@ pub async fn get_views(
     search_key: Option<&str>,
 ) -> Result<Vec<RoutineInfo>, String> {
     let mut sql = format!(
-        r#"SELECT TABLE_NAME, TABLE_COMMENT
+        r#"SELECT TABLE_NAME
            FROM INFORMATION_SCHEMA.VIEWS
            WHERE TABLE_SCHEMA = '{}'"#,
         escape_sql_string(database)
@@ -558,7 +563,15 @@ pub async fn get_table_detail_info(
     pool: &MySqlPool,
     database: &str,
     table: &str,
-) -> Result<(Option<String>, Option<String>, Option<String>, Option<String>), String> {
+) -> Result<
+    (
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+    ),
+    String,
+> {
     let sql = format!(
         r#"SELECT ENGINE, TABLE_COLLATION, AUTO_INCREMENT, TABLE_COMMENT
            FROM INFORMATION_SCHEMA.TABLES

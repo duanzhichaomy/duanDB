@@ -68,6 +68,48 @@ if (appGatewayParams) {
 
 const outsideUrlPrefix = window._appGatewayParams.baseUrl || 'http://test.sqlgpt.cn/gateway';
 
+function getLocalDevMock<R>(method: string, url: string, params?: any): R | undefined {
+  if (__ENV__ !== 'local') return undefined;
+
+  const key = `${method.toUpperCase()}:${url}`;
+  switch (key) {
+    case 'GET:/api/system':
+      return true as R;
+    case 'GET:/api/oauth/user_a':
+      return {
+        id: 1,
+        admin: true,
+        nickName: 'Local User',
+        roleCode: 'ADMIN',
+        token: '',
+      } as R;
+    case 'GET:/api/common/environment/list_all':
+      return [{ id: 1, name: 'Local', shortName: 'Local', color: '#1890ff' }] as R;
+    case 'GET:/api/system/get_latest_version':
+      return {
+        desktop: true,
+        version: params?.currentVersion || __APP_VERSION__,
+        hotUpgradeUrl: null,
+        type: 'manual',
+        needUpdate: false,
+        downloadLink: null,
+        updateLog: null,
+      } as R;
+    case 'GET:/api/connection/datasource/list':
+    case 'GET:/api/operation/saved/list':
+    case 'GET:/api/operation/log/list':
+      return {
+        data: [],
+        pageNo: params?.pageNo || 1,
+        pageSize: params?.pageSize || 1000,
+        total: 0,
+        hasNextPage: false,
+      } as R;
+    default:
+      return undefined;
+  }
+}
+
 const errorHandler = (error: ResponseError, errorLevel: IErrorLevel) => {
   const { response } = error;
   if (!response) return;
@@ -139,8 +181,14 @@ export default function createRequest<P = void, R = void>(url: string, options?:
   } = options || {};
 
   return function (params: P, restParams?: RequestOptionsInit) {
+    const runningInTauri = isTauri();
+    const localDevMock = getLocalDevMock<R>(method, url, params);
+    if (localDevMock !== undefined && !runningInTauri && !outside && !isFullPath && !dynamicUrl && !mock) {
+      return Promise.resolve(localDevMock);
+    }
+
     // Tauri 桌面端：走 invoke
-    if (isTauri() && !outside && !isFullPath && !dynamicUrl && !mock) {
+    if (runningInTauri && !outside && !isFullPath && !dynamicUrl && !mock) {
       return new Promise<R>((resolve, reject) => {
         tauriInvoke<R>(method, url, params)
           .then((data) => {

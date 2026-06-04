@@ -67,7 +67,11 @@ pub async fn get_mysql_pool_with_db(
                     format!("{}/{}", base_url, urlencoding::encode(db))
                 }
             } else {
-                format!("{}/{}", base_url.trim_end_matches('/'), urlencoding::encode(db))
+                format!(
+                    "{}/{}",
+                    base_url.trim_end_matches('/'),
+                    urlencoding::encode(db)
+                )
             }
         }
         _ => base_url.clone(),

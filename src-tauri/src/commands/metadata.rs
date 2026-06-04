@@ -86,8 +86,7 @@ pub async fn function_detail(
     function_name: String,
 ) -> Result<ApiResponse<FunctionDetail>, String> {
     let pool = get_mysql_pool(&state, data_source_id).await?;
-    let body =
-        mysql_meta::get_function_detail(&pool, &database_name, &function_name).await?;
+    let body = mysql_meta::get_function_detail(&pool, &database_name, &function_name).await?;
     Ok(ApiResponse::ok(FunctionDetail {
         function_body: body,
     }))
@@ -128,8 +127,7 @@ pub async fn procedure_detail(
     procedure_name: String,
 ) -> Result<ApiResponse<ProcedureDetail>, String> {
     let pool = get_mysql_pool(&state, data_source_id).await?;
-    let body =
-        mysql_meta::get_procedure_detail(&pool, &database_name, &procedure_name).await?;
+    let body = mysql_meta::get_procedure_detail(&pool, &database_name, &procedure_name).await?;
     Ok(ApiResponse::ok(ProcedureDetail {
         procedure_body: body,
     }))
@@ -170,11 +168,8 @@ pub async fn trigger_detail(
     trigger_name: String,
 ) -> Result<ApiResponse<TriggerDetail>, String> {
     let pool = get_mysql_pool(&state, data_source_id).await?;
-    let body =
-        mysql_meta::get_trigger_detail(&pool, &database_name, &trigger_name).await?;
-    Ok(ApiResponse::ok(TriggerDetail {
-        trigger_body: body,
-    }))
+    let body = mysql_meta::get_trigger_detail(&pool, &database_name, &trigger_name).await?;
+    Ok(ApiResponse::ok(TriggerDetail { trigger_body: body }))
 }
 
 #[derive(serde::Serialize)]

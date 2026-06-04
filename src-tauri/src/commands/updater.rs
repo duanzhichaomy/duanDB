@@ -38,11 +38,7 @@ pub async fn download_and_install_update(app: AppHandle) -> Result<bool, String>
         .download_and_install(
             |chunk_length, content_length| {
                 downloaded += chunk_length;
-                log::info!(
-                    "下载进度: {} / {}",
-                    downloaded,
-                    content_length.unwrap_or(0)
-                );
+                log::info!("下载进度: {} / {}", downloaded, content_length.unwrap_or(0));
             },
             || {
                 log::info!("下载完成，准备安装");

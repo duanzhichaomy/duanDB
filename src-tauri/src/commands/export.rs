@@ -7,10 +7,7 @@ use std::path::Path;
 /// 前端通过 `@tauri-apps/plugin-dialog` 的 `save()` 让用户选择保存路径，
 /// 再调用本命令把文件内容写到该路径。
 #[tauri::command]
-pub async fn save_file_bytes(
-    path: String,
-    bytes: Vec<u8>,
-) -> Result<ApiResponse<String>, String> {
+pub async fn save_file_bytes(path: String, bytes: Vec<u8>) -> Result<ApiResponse<String>, String> {
     let p = Path::new(&path);
     if let Some(parent) = p.parent() {
         if !parent.as_os_str().is_empty() && !parent.exists() {

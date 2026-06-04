@@ -26,7 +26,7 @@ export function tailCallOptimize<T>(f: T): T {
     if (!active) {
       active = true;
       while (accumulated.length) {
-        // eslint-disable-next-line babel/no-invalid-this
+        // eslint-disable-next-line no-invalid-this
         value = (f as any).apply(this, accumulated.shift());
       }
       active = false;

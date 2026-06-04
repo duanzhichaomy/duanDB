@@ -176,11 +176,7 @@ pub async fn console_list(
         format!("WHERE {}", where_parts.join(" AND "))
     };
 
-    let order = if params.order_by_desc {
-        "DESC"
-    } else {
-        "ASC"
-    };
+    let order = if params.order_by_desc { "DESC" } else { "ASC" };
 
     let count_sql = format!("SELECT COUNT(*) FROM console c {}", where_clause);
     let total: i64 = sqlx::query_scalar(&count_sql)
@@ -372,9 +368,7 @@ pub async fn history_list(
 
 /// 清空历史记录
 #[tauri::command]
-pub async fn history_clear(
-    state: State<'_, AppState>,
-) -> Result<ApiResponse<()>, String> {
+pub async fn history_clear(state: State<'_, AppState>) -> Result<ApiResponse<()>, String> {
     sqlx::query("DELETE FROM operation_log")
         .execute(&state.local_db)
         .await

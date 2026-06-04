@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import styles from './index.less';
 import classnames from 'classnames';
-import './index.less'
 
 interface IProps {
   className?: any;

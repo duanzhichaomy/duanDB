@@ -186,9 +186,7 @@ pub async fn connection_delete(
 
 /// 测试连接
 #[tauri::command]
-pub async fn connection_test(
-    params: ConnectionTestRequest,
-) -> Result<ApiResponse<bool>, String> {
+pub async fn connection_test(params: ConnectionTestRequest) -> Result<ApiResponse<bool>, String> {
     let url = build_url_from_params(
         params.host.as_deref(),
         params.port,
