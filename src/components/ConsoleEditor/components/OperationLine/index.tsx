@@ -7,6 +7,7 @@ import styles from './index.less';
 import Iconfont from '@/components/Iconfont';
 import { formatSql } from '@/utils/sql';
 import { osNow } from '@/utils';
+import { saveTextWithDialog } from '@/utils/file';
 
 interface IProps {
   saveConsole: (sql: string) => void;
@@ -45,45 +46,38 @@ const OperationLine = (props: IProps) => {
   };
 
   const handleExecuteSingle = () => {
-    const sql = editorRef?.current?.getCurrentSelectContent();
+    const sql = editorRef?.current?.getCurrentStatementContent();
     if (sql) {
       executeSQL(sql);
-    } else {
-      const allSql = editorRef?.current?.getAllContent() || '';
-      if (allSql) {
-        // 取第一条语句
-        const firstStatement = allSql.split(';').filter((s: string) => s.trim())[0];
-        if (firstStatement) {
-          executeSQL(firstStatement.trim());
-        }
-      }
     }
   };
 
   const handleExplain = () => {
-    let sql = editorRef?.current?.getCurrentSelectContent();
-    if (!sql) {
-      const allSql = editorRef?.current?.getAllContent() || '';
-      const firstStatement = allSql.split(';').filter((s: string) => s.trim())[0];
-      sql = firstStatement?.trim();
-    }
+    const sql = editorRef?.current?.getCurrentStatementContent();
     if (sql) {
       executeSQL(`EXPLAIN ${sql}`);
     }
   };
 
-  const handleSaveAsFile = () => {
+  const handleSaveAsFile = async () => {
     const sql = editorRef?.current?.getAllContent() || '';
     if (!sql) {
       return;
     }
-    const blob = new Blob([sql], { type: 'text/sql' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `query_${Date.now()}.sql`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const saved = await saveTextWithDialog(
+        sql,
+        `query_${Date.now()}.sql`,
+        [{ name: 'SQL', extensions: ['sql'] }],
+        'text/sql',
+      );
+      if (saved) {
+        message.success(i18n('common.text.successfulExecution'));
+      }
+    } catch (e: any) {
+      console.error('保存 SQL 文件失败:', e);
+      message.error(`保存失败: ${e?.message || e}`);
+    }
   };
 
   return (

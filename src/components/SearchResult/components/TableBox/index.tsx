@@ -26,10 +26,8 @@ import { IManageResultData, IResultConfig, ITableHeaderItem } from '@/typings/da
 // api
 import sqlService, { IExecuteSqlParams } from '@/service/sql';
 import historyService from '@/service/history';
-import { isTauri } from '@/service/tauri-bridge';
-import { save as tauriSaveDialog } from '@tauri-apps/plugin-dialog';
-import { invoke as tauriInvokeCore } from '@tauri-apps/api/core';
 import * as XLSX from 'xlsx';
+import { saveBytesWithDialog, stringToBytes, timestampSuffix } from '@/utils/file';
 
 // store
 import { setFocusedContent } from '@/store/common/copyFocusedContent';
@@ -166,13 +164,6 @@ export default function TableBox(props: ITableProps) {
   // 表头是否展示字段类型（受右键菜单中的"显示字段类型"开关控制，作用于所有列）
   const [showColumnType, setShowColumnType] = useState<boolean>(false);
 
-  // 当前时间戳，用于默认文件名
-  const timestampSuffix = () => {
-    const d = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-  };
-
   // 取当前页有效的列头与对应 colId（剔除序号列）
   const getExportColumns = () => {
     return (queryResultData.headerList || [])
@@ -197,50 +188,21 @@ export default function TableBox(props: ITableProps) {
     return `'${s}'`;
   };
 
-  // 通用：弹出系统保存对话框，让用户选择保存路径，然后写入 bytes
-  // 桌面（Tauri）模式：使用原生 dialog.save() + 自定义命令 save_file_bytes
-  // Web 模式（兜底）：回退到浏览器下载（写入下载目录）
-  const saveBytesWithDialog = async (
+  const exportWithDialog = async (
     bytes: Uint8Array,
     defaultFileName: string,
     filters: { name: string; extensions: string[] }[],
     mime: string,
   ) => {
     try {
-      if (isTauri()) {
-        const targetPath = await tauriSaveDialog({
-          defaultPath: defaultFileName,
-          filters,
-        });
-        if (!targetPath) return; // 用户取消
-        await tauriInvokeCore('save_file_bytes', {
-          path: targetPath,
-          bytes: Array.from(bytes),
-        });
+      const saved = await saveBytesWithDialog(bytes, defaultFileName, filters, mime);
+      if (saved) {
         message.success(i18n('common.text.successfulExecution'));
-      } else {
-        // Web 兜底：浏览器下载
-        const blob = new Blob([bytes.buffer as ArrayBuffer], { type: `${mime};charset=utf-8` });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = defaultFileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
       }
     } catch (e: any) {
       console.error('导出失败:', e);
       message.error(`导出失败: ${e?.message || e}`);
     }
-  };
-
-  // 字符串 → UTF-8 字节（CSV 自动加 BOM 让 Excel 正确识别）
-  const stringToBytes = (text: string, withBom: boolean) => {
-    const encoder = new TextEncoder();
-    const bom = withBom ? '\uFEFF' : '';
-    return encoder.encode(bom + text);
   };
 
   // 导出当前页为 CSV
@@ -256,7 +218,7 @@ export default function TableBox(props: ITableProps) {
     );
     const csv = [headerLine, ...lines].join('\r\n');
     const baseName = queryResultData.tableName || 'export';
-    await saveBytesWithDialog(
+    await exportWithDialog(
       stringToBytes(csv, true),
       `${baseName}_${timestampSuffix()}.csv`,
       [{ name: 'CSV', extensions: ['csv'] }],
@@ -282,7 +244,7 @@ export default function TableBox(props: ITableProps) {
       const values = cols.map(({ colId }) => escapeSqlLiteral(row[colId])).join(', ');
       return `INSERT INTO ${escapedTable} (${colNames}) VALUES (${values});`;
     });
-    await saveBytesWithDialog(
+    await exportWithDialog(
       stringToBytes(lines.join('\n'), false),
       `${tableName}_${timestampSuffix()}.sql`,
       [{ name: 'SQL', extensions: ['sql'] }],
@@ -316,7 +278,7 @@ export default function TableBox(props: ITableProps) {
       const written = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as Uint8Array;
       const bytes = written instanceof Uint8Array ? written : new Uint8Array(written);
       const baseName = queryResultData.tableName || 'export';
-      await saveBytesWithDialog(
+      await exportWithDialog(
         bytes,
         `${baseName}_${timestampSuffix()}.xlsx`,
         [{ name: 'Excel', extensions: ['xlsx'] }],
@@ -642,13 +604,21 @@ export default function TableBox(props: ITableProps) {
   const onPageNoChange = (pageNo: number) => {
     const config = { ...paginationConfig, pageNo };
     setPaginationConfig(config);
-    getTableData({ pageNo });
+    if (concealTabHeader && screeningResultRef.current) {
+      screeningResultRef.current.search({ pageNo });
+    } else {
+      getTableData({ pageNo });
+    }
   };
 
   const onPageSizeChange = (pageSize: number) => {
     const config = { ...paginationConfig, pageSize, pageNo: 1 };
     setPaginationConfig(config);
-    getTableData({ pageSize, pageNo: 1 });
+    if (concealTabHeader && screeningResultRef.current) {
+      screeningResultRef.current.search({ pageSize, pageNo: 1 });
+    } else {
+      getTableData({ pageSize, pageNo: 1 });
+    }
   };
 
   const onClickTotalBtn = async () => {
@@ -756,12 +726,15 @@ export default function TableBox(props: ITableProps) {
   // 获取更新数据的sql
   const getExecuteUpdateSql = (_updateData?: any) => {
     return new Promise<string>((resolve) => {
+      const databaseName = props.executeSqlParams?.databaseName || queryResultData.databaseName;
+      const schemaName = props.executeSqlParams?.schemaName || queryResultData.schemaName;
+      const tableName = queryResultData.tableName || props.executeSqlParams?.tableName;
       const params = {
-        databaseName: props.executeSqlParams?.databaseName,
+        databaseName,
         dataSourceId: props.executeSqlParams?.dataSourceId,
-        schemaName: props.executeSqlParams?.schemaName,
+        schemaName,
         type: props.executeSqlParams?.databaseType,
-        tableName: queryResultData.tableName,
+        tableName,
         headerList: queryResultData.headerList,
         operations: _updateData || updateData,
       };
@@ -780,12 +753,15 @@ export default function TableBox(props: ITableProps) {
 
   // 执行sql
   const executeUpdateDataSql = (sql: string) => {
+    const databaseName = props.executeSqlParams?.databaseName || queryResultData.databaseName;
+    const schemaName = props.executeSqlParams?.schemaName || queryResultData.schemaName;
+    const tableName = queryResultData.tableName || props.executeSqlParams?.tableName;
     const executeSQLParams: IExecuteSqlParams = {
       sql,
       dataSourceId: props.executeSqlParams?.dataSourceId,
-      databaseName: props.executeSqlParams?.databaseName,
-      schemaName: props.executeSqlParams?.schemaName,
-      tableName: queryResultData.tableName,
+      databaseName,
+      schemaName,
+      tableName,
     };
     sqlService
       .executeUpdateDataSql(executeSQLParams)
@@ -797,7 +773,7 @@ export default function TableBox(props: ITableProps) {
               name: sql.substring(0, 100),
               ddl: sql,
               dataSourceId: props.executeSqlParams?.dataSourceId,
-              databaseName: props.executeSqlParams?.databaseName,
+              databaseName,
               type: props.executeSqlParams?.databaseType,
             })
             .catch(() => {});
@@ -826,9 +802,9 @@ export default function TableBox(props: ITableProps) {
     const executeSQLParams: IExecuteSqlParams = {
       sql: queryResultData.originalSql,
       dataSourceId: props.executeSqlParams?.dataSourceId,
-      databaseName: props.executeSqlParams?.databaseName,
-      schemaName: props.executeSqlParams?.schemaName,
-      tableName: props.executeSqlParams?.tableName,
+      databaseName: props.executeSqlParams?.databaseName || queryResultData.databaseName,
+      schemaName: props.executeSqlParams?.schemaName || queryResultData.schemaName,
+      tableName: props.executeSqlParams?.tableName || queryResultData.tableName,
       pageNo: paginationConfig.pageNo,
       pageSize: paginationConfig.pageSize,
       ...(params || {}),
@@ -1048,6 +1024,12 @@ export default function TableBox(props: ITableProps) {
               {editingCell?.[0] === colId && editingCell?.[1] === rowId && editingCell?.[2] ? (
                 <Input
                   ref={editDataInputRef}
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-form-type="other"
+                  name="duandb-table-cell-editor-nofill"
                   value={transformInputValue(editingData) as any}
                   onChange={(e) => {
                     setEditingData(e.target.value);
@@ -1602,10 +1584,10 @@ export default function TableBox(props: ITableProps) {
         <ExecuteSQL
           initError={initError}
           initSql={updateDataSql}
-          databaseName={props.executeSqlParams?.databaseName}
+          databaseName={props.executeSqlParams?.databaseName || queryResultData.databaseName}
           dataSourceId={props.executeSqlParams?.dataSourceId}
-          tableName={queryResultData.tableName}
-          schemaName={props.executeSqlParams?.schemaName}
+          tableName={queryResultData.tableName || props.executeSqlParams?.tableName}
+          schemaName={props.executeSqlParams?.schemaName || queryResultData.schemaName}
           databaseType={props.executeSqlParams?.databaseType}
           executeSuccessCallBack={executeSuccessCallBack}
           executeSqlApi="executeUpdateDataSql"

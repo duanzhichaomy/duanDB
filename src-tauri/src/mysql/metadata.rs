@@ -78,7 +78,6 @@ pub async fn get_tables_paged(
         tables.push(TableInfo {
             name: row.try_get("TABLE_NAME").ok(),
             comment: row.try_get("TABLE_COMMENT").ok(),
-            pinned: false,
         });
     }
     Ok((tables, total))
@@ -314,7 +313,6 @@ pub async fn get_views(
         views.push(RoutineInfo {
             name: row.try_get("TABLE_NAME").unwrap_or_default(),
             comment: None,
-            pinned: false,
         });
     }
     Ok(views)
@@ -372,7 +370,6 @@ pub async fn get_functions(
         funcs.push(RoutineInfo {
             name: row.try_get("ROUTINE_NAME").unwrap_or_default(),
             comment: row.try_get("ROUTINE_COMMENT").ok(),
-            pinned: false,
         });
     }
     Ok(funcs)
@@ -430,7 +427,6 @@ pub async fn get_procedures(
         procs.push(RoutineInfo {
             name: row.try_get("ROUTINE_NAME").unwrap_or_default(),
             comment: row.try_get("ROUTINE_COMMENT").ok(),
-            pinned: false,
         });
     }
     Ok(procs)
@@ -488,7 +484,6 @@ pub async fn get_triggers(
         triggers.push(RoutineInfo {
             name: row.try_get("TRIGGER_NAME").unwrap_or_default(),
             comment: None,
-            pinned: false,
         });
     }
     Ok(triggers)

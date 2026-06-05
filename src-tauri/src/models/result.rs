@@ -23,6 +23,10 @@ pub struct ExecuteResult {
     pub can_edit: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub table_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema_name: Option<String>,
 }
 
 impl ExecuteResult {
@@ -42,6 +46,8 @@ impl ExecuteResult {
             update_count: None,
             can_edit: None,
             table_name: None,
+            database_name: None,
+            schema_name: None,
         }
     }
 }

@@ -35,8 +35,6 @@ pub struct SchemaInfo {
 pub struct TableInfo {
     pub name: Option<String>,
     pub comment: Option<String>,
-    #[serde(default)]
-    pub pinned: bool,
 }
 
 /// 表名+注释（简单列表用）
@@ -131,8 +129,6 @@ pub struct RoutineInfo {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    #[serde(default)]
-    pub pinned: bool,
 }
 
 /// 通用查询参数

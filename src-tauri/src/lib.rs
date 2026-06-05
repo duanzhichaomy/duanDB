@@ -11,9 +11,36 @@ use tauri::menu::{MenuBuilder, SubmenuBuilder};
 use tauri::Manager;
 use tokio::sync::RwLock;
 
+#[cfg(target_os = "macos")]
+fn show_or_create_main_window(app_handle: &tauri::AppHandle) {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        return;
+    }
+
+    if let Some(window) = app_handle.webview_windows().into_values().next() {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        return;
+    }
+
+    if let Some(window_config) = app_handle.config().app.windows.first() {
+        if let Ok(window) = tauri::WebviewWindowBuilder::from_config(app_handle, window_config)
+            .and_then(|builder| builder.build())
+        {
+            let _ = window.show();
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -113,6 +140,7 @@ pub fn run() {
             commands::table::table_meta,
             commands::table::table_modify_sql,
             commands::table::ddl_column_list,
+            commands::table::ddl_key_list,
             commands::table::ddl_index_list,
             commands::table::ddl_export,
             commands::table::ddl_create_example,
@@ -143,6 +171,24 @@ pub fn run() {
             // 文件导出
             commands::export::save_file_bytes,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        #[cfg(target_os = "macos")]
+        match event {
+            tauri::RunEvent::Ready => {
+                show_or_create_main_window(app_handle);
+            }
+            tauri::RunEvent::Reopen {
+                has_visible_windows,
+                ..
+            } => {
+                if !has_visible_windows {
+                    show_or_create_main_window(app_handle);
+                }
+            }
+            _ => {}
+        }
+    });
 }

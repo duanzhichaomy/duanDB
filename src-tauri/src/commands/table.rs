@@ -187,6 +187,23 @@ pub async fn ddl_index_list(
     Ok(ApiResponse::ok(indexes))
 }
 
+/// DDL 键列表（主键和唯一键）
+#[tauri::command]
+pub async fn ddl_key_list(
+    state: State<'_, AppState>,
+    params: TableQueryParams,
+) -> Result<ApiResponse<Vec<IndexInfo>>, String> {
+    let pool = get_mysql_pool(&state, params.data_source_id).await?;
+    let db = params.database_name.as_deref().unwrap_or("");
+    let table = params.table_name.as_deref().unwrap_or("");
+    let keys = mysql_meta::get_indexes(&pool, db, table)
+        .await?
+        .into_iter()
+        .filter(|idx| idx.index_type == "PRIMARY_KEY" || idx.index_type == "UNIQUE")
+        .collect();
+    Ok(ApiResponse::ok(keys))
+}
+
 /// 导出表 DDL
 #[tauri::command]
 pub async fn ddl_export(

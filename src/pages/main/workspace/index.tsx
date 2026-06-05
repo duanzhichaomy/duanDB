@@ -3,7 +3,6 @@ import classnames from 'classnames';
 
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import { setPanelLeftWidth } from '@/pages/main/workspace/store/config';
-import { useConnectionStore } from '@/pages/main/store/connection';
 
 import DraggableContainer from '@/components/DraggableContainer';
 import WorkspaceLeft from './components/WorkspaceLeft';
@@ -22,8 +21,6 @@ const workspacePage = memo(() => {
       panelLeftWidth: state.layout.panelLeftWidth,
     };
   });
-  const connectionList = useConnectionStore((state) => state.connectionList);
-  const hasNoConnection = connectionList !== null && connectionList.length === 0;
 
   // 编辑器的主题
   useMonacoTheme();
@@ -40,15 +37,13 @@ const workspacePage = memo(() => {
   return (
     <div className={styles.workspace}>
       <DraggableContainer className={styles.workspaceMain} onResize={draggableContainerResize}>
-        {!hasNoConnection && (
-          <div
-            ref={draggableRef}
-            style={{ '--panel-left-width': `${panelLeftWidth}px` } as any}
-            className={classnames({ [styles.hiddenPanelLeft]: !panelLeft }, styles.boxLeft)}
-          >
-            <WorkspaceLeft />
-          </div>
-        )}
+        <div
+          ref={draggableRef}
+          style={{ '--panel-left-width': `${panelLeftWidth}px` } as any}
+          className={classnames({ [styles.hiddenPanelLeft]: !panelLeft }, styles.boxLeft)}
+        >
+          <WorkspaceLeft />
+        </div>
         <WorkspaceRight />
       </DraggableContainer>
     </div>

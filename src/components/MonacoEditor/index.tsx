@@ -39,6 +39,7 @@ interface IProps {
 
 export interface IExportRefFunction {
   getCurrentSelectContent: () => string;
+  getCurrentStatementContent: () => string;
   getAllContent: () => string;
   setValue: (text: any, range?: IRangeType) => void;
   // toFocus: () => void;
@@ -165,6 +166,7 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
 
   useImperativeHandle(ref, () => ({
     getCurrentSelectContent,
+    getCurrentStatementContent,
     getAllContent,
     setValue,
     // toFocus,
@@ -196,6 +198,21 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
       const selectedText = editorRef.current?.getModel()?.getValueInRange(selection);
       return selectedText || '';
     }
+  };
+
+  const getCurrentStatementContent = () => {
+    const selectedText = getCurrentSelectContent();
+    if (selectedText) {
+      return selectedText;
+    }
+
+    const model = editorRef.current?.getModel();
+    const position = editorRef.current?.getPosition();
+    if (!model || !position) {
+      return '';
+    }
+
+    return getSqlStatementAtOffset(model.getValue(), model.getOffsetAt(position));
   };
 
   /** 获取文本所有内容 */
@@ -246,7 +263,14 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
     editorRef.current?.focus();
   };
 
-  return <div ref={ref as any} id={`monaco-editor-${id}`} className={cs(className, styles.editorContainer)} onClick={handleContainerClick} />;
+  return (
+    <div
+      ref={ref as any}
+      id={`monaco-editor-${id}`}
+      className={cs(className, styles.editorContainer)}
+      onClick={handleContainerClick}
+    />
+  );
 }
 
 // text 需要添加的文本
@@ -256,6 +280,101 @@ function MonacoEditor(props: IProps, ref: ForwardedRef<IExportRefFunction>) {
 // 'cover' 覆盖掉原有的文字
 // 自定义位置数组 new monaco.Range []
 export type IRangeType = 'end' | 'front' | 'cover' | 'reset' | any;
+
+type StatementRange = {
+  start: number;
+  end: number;
+};
+
+function pushStatementRange(ranges: StatementRange[], sql: string, start: number, end: number) {
+  let s = start;
+  let e = end;
+  while (s < e && /\s/.test(sql[s])) s += 1;
+  while (e > s && /\s/.test(sql[e - 1])) e -= 1;
+  if (s < e) {
+    ranges.push({ start: s, end: e });
+  }
+}
+
+function splitSqlStatementRanges(sql: string) {
+  const ranges: StatementRange[] = [];
+  let statementStart = 0;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inBacktick = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < sql.length; i += 1) {
+    const ch = sql[i];
+    const next = sql[i + 1];
+    const prev = sql[i - 1];
+
+    if (inLineComment) {
+      if (ch === '\n') inLineComment = false;
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        inBlockComment = false;
+        i += 1;
+      }
+      continue;
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
+      if (ch === '-' && next === '-') {
+        inLineComment = true;
+        i += 1;
+        continue;
+      }
+      if (ch === '#') {
+        inLineComment = true;
+        continue;
+      }
+      if (ch === '/' && next === '*') {
+        inBlockComment = true;
+        i += 1;
+        continue;
+      }
+    }
+
+    if (ch === '\'' && !inDoubleQuote && !inBacktick && prev !== '\\') {
+      inSingleQuote = !inSingleQuote;
+      continue;
+    }
+    if (ch === '"' && !inSingleQuote && !inBacktick && prev !== '\\') {
+      inDoubleQuote = !inDoubleQuote;
+      continue;
+    }
+    if (ch === '`' && !inSingleQuote && !inDoubleQuote) {
+      inBacktick = !inBacktick;
+      continue;
+    }
+
+    if (ch === ';' && !inSingleQuote && !inDoubleQuote && !inBacktick) {
+      pushStatementRange(ranges, sql, statementStart, i);
+      statementStart = i + 1;
+    }
+  }
+
+  pushStatementRange(ranges, sql, statementStart, sql.length);
+  return ranges;
+}
+
+export function getSqlStatementAtOffset(sql: string, offset: number) {
+  const ranges = splitSqlStatementRanges(sql);
+  if (!ranges.length) {
+    return '';
+  }
+
+  const cursor = Math.max(0, Math.min(offset, sql.length));
+  const range = ranges.find((item) => cursor >= item.start && cursor <= item.end)
+    || ranges.find((item) => cursor < item.start)
+    || ranges[ranges.length - 1];
+  return sql.slice(range.start, range.end).trim();
+}
 
 export const appendMonacoValue = (editor: any, text: any, range: IRangeType = 'end') => {
   if (!editor) {

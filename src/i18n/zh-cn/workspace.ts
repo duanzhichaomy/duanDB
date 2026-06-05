@@ -8,8 +8,6 @@ export default {
   'workspace.menu.openTable': '打开表',
   'workspace.menu.editTable': '修改表',
   'workspace.menu.view': '查看',
-  'workspace.menu.pin': '置顶',
-  'workspace.menu.unPin': '取消置顶',
   'workspace.menu.editTableData': '编辑表数据',
   'workspace.menu.queryConsole': '新建查询',
   'workspace.menu.viewAllTable': '查看所有表',

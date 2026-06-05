@@ -8,8 +8,6 @@ export default {
   'workspace.menu.openTable': 'Open Table',
   'workspace.menu.editTable': 'Edit Table',
   'workspace.menu.view': 'View',
-  'workspace.menu.pin': 'Pin',
-  'workspace.menu.unPin': 'Unpin',
   'workspace.menu.editTableData': 'Edit Table Data',
   'workspace.menu.queryConsole': 'Query console',
   'workspace.menu.viewAllTable': 'View all table',

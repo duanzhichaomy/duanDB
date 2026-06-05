@@ -24,7 +24,6 @@ export interface ITreeNode {
   children?: ITreeNode[] | null;
   columnType?: string; // 列的类型
   extraParams?: IExtraParams;
-  pinned?: boolean; // 是否置顶
   comment?: string; // 表列的注释
   loadData?: (params:{refresh: boolean}) => void; // 加载数据的方法
   // 父元素
@@ -43,7 +42,6 @@ export interface ITreeNode {
 export interface IRoutines {
   name: string; // 名称
   comment: string; // 描述
-  pinned: boolean; // 是否置顶
 }
 
 export interface ITable {
@@ -55,9 +53,4 @@ export interface ITable {
     * 表名称
     */
    name: string | null;
-   /**
-    * 是否已经被固定
-    */
-   pinned?: boolean;
-
 }

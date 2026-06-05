@@ -203,7 +203,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
                 name: t.name,
                 treeNodeType: TreeNodeType.TABLE,
                 key: t.name,
-                pinned: t.pinned,
                 comment: t.comment,
                 extraParams: {
                   ..._extraParams,
@@ -248,7 +247,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
                 name: t.name,
                 treeNodeType: TreeNodeType.TABLE,
                 key: t.name,
-                pinned: t.pinned,
                 comment: t.comment,
                 extraParams: {
                   ..._extraParams,
@@ -313,7 +311,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
     operationColumn: [
       OperationColumn.OpenTable,
       OperationColumn.CreateConsole,
-      OperationColumn.Pin,
       OperationColumn.ViewDDL,
       OperationColumn.EditTable,
       OperationColumn.CopyName,
@@ -336,7 +333,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
                 name: t.name,
                 treeNodeType: TreeNodeType.VIEW,
                 key: t.name,
-                pinned: t.pinned,
                 comment: t.comment,
                 extraParams: {
                   ..._extraParams,
@@ -369,7 +365,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
                 name: t.functionName,
                 treeNodeType: TreeNodeType.FUNCTION,
                 key: t.name,
-                pinned: t.pinned,
                 comment: t.comment,
                 isLeaf: true,
                 extraParams: {
@@ -408,7 +403,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
                 name: t.procedureName,
                 treeNodeType: TreeNodeType.PROCEDURE,
                 key: t.name,
-                pinned: t.pinned,
                 comment: t.comment,
                 isLeaf: true,
                 extraParams: {
@@ -447,7 +441,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
                 name: t.triggerName,
                 treeNodeType: TreeNodeType.TRIGGER,
                 key: t.name,
-                pinned: t.pinned,
                 comment: t.comment,
                 isLeaf: true,
                 extraParams: {
@@ -505,7 +498,6 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
                 name: t.name,
                 treeNodeType: TreeNodeType.VIEWCOLUMN,
                 key: t.name,
-                pinned: t.pinned,
                 comment: t.comment,
                 isLeaf: true,
                 extraParams: _extraParams,

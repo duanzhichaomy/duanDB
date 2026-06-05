@@ -37,6 +37,7 @@ const API_COMMAND_MAP: Record<string, string> = {
   'GET:/api/rdb/table/table_meta': 'table_meta',
   'POST:/api/rdb/table/modify/sql': 'table_modify_sql',
   'GET:/api/rdb/ddl/column_list': 'ddl_column_list',
+  'GET:/api/rdb/ddl/key_list': 'ddl_key_list',
   'GET:/api/rdb/ddl/index_list': 'ddl_index_list',
   'GET:/api/rdb/ddl/export': 'ddl_export',
   'GET:/api/rdb/ddl/create/example': 'ddl_create_example',
@@ -85,7 +86,7 @@ const API_COMMAND_MAP: Record<string, string> = {
  * 检测是否在 Tauri 环境
  */
 export function isTauri(): boolean {
-  return !!(window as any).__TAURI_INTERNALS__;
+  return !!(window as any).__TAURI_INTERNALS__ || window.location.protocol === 'tauri:';
 }
 
 /**
@@ -275,6 +276,7 @@ export async function tauriInvoke<R>(
       invokeArgs = { params: cleanParams };
       break;
     case 'ddl_column_list':
+    case 'ddl_key_list':
     case 'ddl_index_list':
     case 'ddl_export':
     case 'ddl_delete':

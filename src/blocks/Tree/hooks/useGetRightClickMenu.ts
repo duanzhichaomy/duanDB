@@ -17,7 +17,6 @@ import { useWorkspaceStore } from '@/pages/main/workspace/store';
 
 // ---- functions -----
 import { openView, openFunction, openProcedure, openTrigger } from '../functions/openAsyncSql';
-import { handelPinTable } from '../functions/pinTable';
 import { viewDDL } from '../functions/viewDDL';
 import { deleteTable } from '../functions/deleteTable';
 
@@ -201,20 +200,6 @@ export const useGetRightClickMenu = (props: IProps) => {
         icon: '\ue665',
         handle: () => {
           viewDDL(treeNodeData)
-        },
-      },
-
-      // 置顶
-      [OperationColumn.Pin]: {
-        text: treeNodeData.pinned ? i18n('workspace.menu.unPin') : i18n('workspace.menu.pin'),
-        icon: treeNodeData.pinned ? '\ue61d' : '\ue627',
-        handle: () => {
-          handelPinTable({
-            treeNodeData,
-            loadData: () => {
-              loadData({treeNodeData:treeNodeData.parentNode})
-            }
-          });
         },
       },
 
@@ -509,15 +494,6 @@ export const getRightClickMenu = (props: IProps) => {
       icon: '\ue665',
       handle: () => {
         viewDDL(treeNodeData)
-      },
-    },
-
-    // 置顶
-    [OperationColumn.Pin]: {
-      text: treeNodeData.pinned ? i18n('workspace.menu.unPin') : i18n('workspace.menu.pin'),
-      icon: treeNodeData.pinned ? '\ue61d' : '\ue627',
-      handle: () => {
-        handelPinTable({treeNodeData, loadData: treeNodeData.parentNode!.loadData!});
       },
     },
 

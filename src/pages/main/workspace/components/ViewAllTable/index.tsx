@@ -75,7 +75,6 @@ export default memo<IProps>((props) => {
             name: t.name,
             treeNodeType: TreeNodeType.TABLE,
             key: t.name,
-            pinned: t.pinned,
             comment: t.comment,
             extraParams: {
               ...uniqueData,
@@ -128,7 +127,6 @@ export default memo<IProps>((props) => {
     const excludeList = [
       OperationColumn.OpenTable,
       OperationColumn.CreateConsole,
-      // OperationColumn.Pin,
       OperationColumn.ViewDDL,
       OperationColumn.EditTable,
       OperationColumn.CopyName,

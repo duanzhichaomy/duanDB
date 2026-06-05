@@ -67,6 +67,14 @@ pub async fn sql_execute(
                         update_count: Some(result.rows_affected() as i64),
                         can_edit: None,
                         table_name: None,
+                        database_name: params
+                            .database_name
+                            .clone()
+                            .filter(|db| !db.trim().is_empty()),
+                        schema_name: params
+                            .schema_name
+                            .clone()
+                            .filter(|schema| !schema.trim().is_empty()),
                     });
                 }
                 Err(e) => {
@@ -154,8 +162,7 @@ pub async fn sql_get_update_sql(params: GetUpdateSqlParams) -> Result<ApiRespons
         .filter(|h| h.data_type != "DUANDB_ROW_NUMBER")
         .collect();
 
-    let escaped_db = database.replace('`', "``");
-    let escaped_table = table_name.replace('`', "``");
+    let table_ref = escape_table_ref(database, table_name);
     let mut sql_parts: Vec<String> = Vec::new();
 
     for op in &params.operations {
@@ -185,9 +192,8 @@ pub async fn sql_get_update_sql(params: GetUpdateSqlParams) -> Result<ApiRespons
 
                     if !set_parts.is_empty() {
                         sql_parts.push(format!(
-                            "UPDATE `{}`.`{}` SET {} WHERE {} LIMIT 1;",
-                            escaped_db,
-                            escaped_table,
+                            "UPDATE {} SET {} WHERE {} LIMIT 1;",
+                            table_ref,
                             set_parts.join(", "),
                             where_parts.join(" AND "),
                         ));
@@ -210,9 +216,8 @@ pub async fn sql_get_update_sql(params: GetUpdateSqlParams) -> Result<ApiRespons
                         ));
                     }
                     sql_parts.push(format!(
-                        "INSERT INTO `{}`.`{}` ({}) VALUES ({});",
-                        escaped_db,
-                        escaped_table,
+                        "INSERT INTO {} ({}) VALUES ({});",
+                        table_ref,
                         cols.join(", "),
                         vals.join(", "),
                     ));
@@ -236,9 +241,8 @@ pub async fn sql_get_update_sql(params: GetUpdateSqlParams) -> Result<ApiRespons
                     }
 
                     sql_parts.push(format!(
-                        "UPDATE `{}`.`{}` SET {} WHERE {};",
-                        escaped_db,
-                        escaped_table,
+                        "UPDATE {} SET {} WHERE {};",
+                        table_ref,
                         set_parts.join(", "),
                         where_parts.join(" AND "),
                     ));
@@ -259,9 +263,8 @@ pub async fn sql_get_update_sql(params: GetUpdateSqlParams) -> Result<ApiRespons
                         })
                         .collect();
                     sql_parts.push(format!(
-                        "DELETE FROM `{}`.`{}` WHERE {} LIMIT 1;",
-                        escaped_db,
-                        escaped_table,
+                        "DELETE FROM {} WHERE {} LIMIT 1;",
+                        table_ref,
                         where_parts.join(" AND "),
                     ));
                 }
@@ -276,6 +279,14 @@ pub async fn sql_get_update_sql(params: GetUpdateSqlParams) -> Result<ApiRespons
 /// 转义标识符
 fn escape_identifier(name: &str) -> String {
     format!("`{}`", name.replace('`', "``"))
+}
+
+fn escape_table_ref(database: &str, table: &str) -> String {
+    if database.trim().is_empty() {
+        escape_identifier(table)
+    } else {
+        format!("{}.{}", escape_identifier(database), escape_identifier(table))
+    }
 }
 
 /// 转义值（使用 MySQL 标准的双单引号转义）
@@ -445,12 +456,22 @@ async fn execute_query(
     let _ = app.emit("sql_progress", row_idx);
 
     // 尝试获取表名（用于 canEdit 和 0 行时补充列信息）
-    let table_name = extract_table_name(sql);
+    let table_ref = extract_table_ref(sql);
+    let table_name = table_ref.as_ref().map(|t| t.table.clone());
+    let database_name = table_ref
+        .as_ref()
+        .and_then(|t| t.database.clone())
+        .or_else(|| params.database_name.clone())
+        .filter(|db| !db.trim().is_empty());
 
     // 0 行结果时通过 SHOW COLUMNS 补充完整列头
     if !headers_built {
         if let Some(ref tbl) = table_name {
-            let cols_sql = format!("SHOW COLUMNS FROM `{}`", tbl.replace('`', "``"));
+            let cols_sql = if let Some(ref db) = database_name {
+                format!("SHOW COLUMNS FROM {}", escape_table_ref(db, tbl))
+            } else {
+                format!("SHOW COLUMNS FROM {}", escape_identifier(tbl))
+            };
             if let Ok(col_rows) = sqlx::raw_sql(&cols_sql).fetch_all(pool).await {
                 for row in &col_rows {
                     let name: String = row.try_get(0).unwrap_or_default();
@@ -494,13 +515,17 @@ async fn execute_query(
     // 并行查询主键列和列详情（减少高延迟下的等待时间）
     if let Some(ref tbl) = table_name {
         let escaped_tbl = tbl.replace('\'', "''");
+        let schema_predicate = database_name
+            .as_ref()
+            .map(|db| format!("'{}'", db.replace('\'', "''")))
+            .unwrap_or_else(|| "DATABASE()".to_string());
         let pk_sql = format!(
-            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}' AND COLUMN_KEY = 'PRI'",
-            escaped_tbl
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = {} AND TABLE_NAME = '{}' AND COLUMN_KEY = 'PRI'",
+            schema_predicate, escaped_tbl
         );
         let def_sql = format!(
-            "SELECT COLUMN_NAME, COLUMN_DEFAULT, EXTRA, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{}'",
-            escaped_tbl
+            "SELECT COLUMN_NAME, COLUMN_DEFAULT, EXTRA, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = {} AND TABLE_NAME = '{}'",
+            schema_predicate, escaped_tbl
         );
 
         let (pk_result, def_result) = tokio::join!(
@@ -558,6 +583,8 @@ async fn execute_query(
         update_count: None,
         can_edit: table_name.as_ref().map(|_| true),
         table_name,
+        database_name,
+        schema_name: params.schema_name.clone().filter(|schema| !schema.trim().is_empty()),
     })
 }
 
@@ -626,8 +653,21 @@ fn contains_ci(haystack: &[u8], needle: &[u8]) -> bool {
         .any(|w| w.eq_ignore_ascii_case(needle))
 }
 
-/// 简单提取 SELECT 语句中的表名
-fn extract_table_name(sql: &str) -> Option<String> {
+struct ExtractedTableRef {
+    database: Option<String>,
+    table: String,
+}
+
+fn unquote_identifier_part(part: &str) -> String {
+    part.trim()
+        .trim_matches('`')
+        .trim_matches('"')
+        .trim_matches('\'')
+        .to_string()
+}
+
+/// 简单提取 SELECT 语句中的表引用
+fn extract_table_ref(sql: &str) -> Option<ExtractedTableRef> {
     let upper = sql.to_uppercase();
     let from_pos = upper.find("FROM")?;
     let after_from = sql[from_pos + 4..].trim_start();
@@ -635,17 +675,24 @@ fn extract_table_name(sql: &str) -> Option<String> {
         .split_whitespace()
         .next()
         .unwrap_or("")
-        .trim_matches('`')
-        .trim_matches('"');
+        .trim_end_matches(',');
     // 处理 database.table 格式
     if let Some(dot_pos) = table_part.find('.') {
-        let t = &table_part[dot_pos + 1..];
-        if !t.is_empty() {
-            return Some(t.trim_matches('`').to_string());
+        let db = unquote_identifier_part(&table_part[..dot_pos]);
+        let table = unquote_identifier_part(&table_part[dot_pos + 1..]);
+        if !table.is_empty() {
+            return Some(ExtractedTableRef {
+                database: if db.is_empty() { None } else { Some(db) },
+                table,
+            });
         }
     }
-    if !table_part.is_empty() && !table_part.contains('(') {
-        Some(table_part.to_string())
+    let table = unquote_identifier_part(table_part);
+    if !table.is_empty() && !table.contains('(') {
+        Some(ExtractedTableRef {
+            database: None,
+            table,
+        })
     } else {
         None
     }
@@ -961,5 +1008,44 @@ mod tests {
         assert!(
             sql.contains("DELETE FROM `dev``saleshub`.`items``table` WHERE `id` = '9' LIMIT 1;")
         );
+    }
+
+    #[tokio::test]
+    async fn update_sql_without_database_uses_unqualified_table() {
+        let response = sql_get_update_sql(GetUpdateSqlParams {
+            database_name: None,
+            data_source_id: Some(1),
+            schema_name: None,
+            db_type: Some("MYSQL".into()),
+            table_name: Some("items".into()),
+            header_list: vec![
+                TableHeader {
+                    name: "row".into(),
+                    data_type: "DUANDB_ROW_NUMBER".into(),
+                    column_type: None,
+                    auto_increment: None,
+                    column_size: None,
+                    comment: None,
+                    decimal_digits: None,
+                    default_value: None,
+                    nullable: None,
+                    primary_key: None,
+                },
+                header("id", true, true),
+                header("name", false, false),
+            ],
+            operations: vec![UpdateOperation {
+                op_type: "CREATE".into(),
+                row_id: "1".into(),
+                data_list: Some(vec![Some("1".into()), Some("7".into()), Some("alpha".into())]),
+                old_data_list: None,
+            }],
+        })
+        .await
+        .expect("update sql should be generated");
+
+        let sql = response.data.expect("SQL data should be present");
+        assert_eq!("INSERT INTO `items` (`name`) VALUES ('alpha');", sql);
+        assert!(!sql.contains("``.`items`"));
     }
 }

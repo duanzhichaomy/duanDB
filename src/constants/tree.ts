@@ -33,7 +33,6 @@ export enum OperationColumn {
   OpenTable = 'openTable', // 打开表
   ViewDDL = 'viewDDL', // 查看ddl
   EditSource = 'editSource', // 编辑数据源
-  Pin = 'pin', // 置顶
   EditTable = 'editTable', // 编辑表
   EditTableData = 'editTableData', // 编辑表数据
   CopyName = 'copyName', // 复制名称
