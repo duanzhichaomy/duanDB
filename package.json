@@ -1,6 +1,6 @@
 {
   "name": "duan-db",
-  "version": "0.5.5",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "dev": "cross-env UMI_ENV=local HMR=none umi dev",
