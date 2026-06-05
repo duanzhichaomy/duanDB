@@ -112,7 +112,7 @@ function searchTree(treeData: ITreeNode[], searchValue: string): ITreeNode[] {
   return tranListToTreeData(deWeightList, undefined);
 }
 
-const itemHeight = 26; // 每个 item 的高度
+const itemHeight = 24; // 每个 item 的高度
 const paddingCount = 2;
 
 const Tree = (props: IProps) => {

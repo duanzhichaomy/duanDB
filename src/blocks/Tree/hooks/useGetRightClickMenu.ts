@@ -19,12 +19,12 @@ import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import { openView, openFunction, openProcedure, openTrigger } from '../functions/openAsyncSql';
 import { viewDDL } from '../functions/viewDDL';
 import { deleteTable } from '../functions/deleteTable';
+import { openTableNode } from '../functions/openTable';
 
 // ----- services -----
 import connectionService from '@/service/connection';
 
 // ----- utils -----
-import { compatibleDataBaseName } from '@/utils/database';
 
 interface IProps {
   treeNodeData: ITreeNode;
@@ -245,22 +245,7 @@ export const useGetRightClickMenu = (props: IProps) => {
         icon: '\ue618',
         doubleClickTrigger: true,
         handle: () => {
-          const databaseName = compatibleDataBaseName(treeNodeData.name!, treeNodeData.extraParams!.databaseType);
-          const dbName = treeNodeData.extraParams?.databaseName;
-          const tabTitle = dbName ? `${treeNodeData.name} (${dbName})` : treeNodeData.name;
-          addWorkspaceTab({
-            id: `${OperationColumn.OpenTable}-${treeNodeData.uuid}`,
-            title: tabTitle,
-            type: WorkspaceTabType.EditTableData,
-            uniqueData: {
-              dataSourceId: treeNodeData.extraParams!.dataSourceId!,
-              databaseType: treeNodeData.extraParams!.databaseType!,
-              databaseName: treeNodeData.extraParams?.databaseName,
-              schemaName: treeNodeData.extraParams?.schemaName,
-              tableName: treeNodeData.name,
-              sql: 'select * from ' + databaseName,
-            },
-          });
+          openTableNode(treeNodeData);
         },
       },
 
@@ -534,22 +519,7 @@ export const getRightClickMenu = (props: IProps) => {
       icon: '\ue618',
       doubleClickTrigger: true,
       handle: () => {
-        const databaseName = compatibleDataBaseName(treeNodeData.name!, treeNodeData.extraParams!.databaseType);
-        const dbName = treeNodeData.extraParams?.databaseName;
-        const tabTitle = dbName ? `${treeNodeData.name} (${dbName})` : treeNodeData.name;
-        addWorkspaceTab({
-          id: `${OperationColumn.OpenTable}-${treeNodeData.uuid}`,
-          title: tabTitle,
-          type: WorkspaceTabType.EditTableData,
-          uniqueData: {
-            dataSourceId: treeNodeData.extraParams!.dataSourceId!,
-            databaseType: treeNodeData.extraParams!.databaseType!,
-            databaseName: treeNodeData.extraParams?.databaseName,
-            schemaName: treeNodeData.extraParams?.schemaName,
-            tableName: treeNodeData.name,
-            sql: 'select * from ' + databaseName,
-          },
-        });
+        openTableNode(treeNodeData);
       },
     },
 

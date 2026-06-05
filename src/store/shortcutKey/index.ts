@@ -45,6 +45,13 @@ export const defaultBindings: Record<string, IShortcutBinding> = {
     code: 'Digit2',
     displayText: `${modKey}+2`,
   },
+  quickOpenTable: {
+    key: 'quickOpenTable',
+    label: '快速打开表',
+    modifiers: [isMac ? 'metaKey' : 'ctrlKey'],
+    code: 'KeyP',
+    displayText: `${modKey}+P`,
+  },
 };
 
 const initState: IShortcutKeyState = {
@@ -67,7 +74,7 @@ export const updateBinding = (key: string, binding: Partial<IShortcutBinding>) =
   useShortcutKeyStore.setState({
     bindings: {
       ...current,
-      [key]: { ...current[key], ...binding },
+      [key]: { ...(current[key] || defaultBindings[key]), ...binding },
     },
   });
 };
@@ -87,7 +94,7 @@ export const clearBinding = (key: string) => {
   useShortcutKeyStore.setState({
     bindings: {
       ...current,
-      [key]: { ...current[key], modifiers: [], code: '', displayText: '' },
+      [key]: { ...(current[key] || defaultBindings[key]), modifiers: [], code: '', displayText: '' },
     },
   });
 };

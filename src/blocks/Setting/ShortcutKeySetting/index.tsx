@@ -58,7 +58,7 @@ function eventToBinding(e: React.KeyboardEvent): Partial<IShortcutBinding> | nul
   };
 }
 
-const shortcutKeys = ['closeCurrentTab', 'newConsole', 'openInfoPanel'];
+const shortcutKeys = ['closeCurrentTab', 'newConsole', 'openInfoPanel', 'quickOpenTable'];
 
 export default function ShortcutKeySetting() {
   const bindings = useShortcutKeyStore((state) => state.bindings);
@@ -92,6 +92,7 @@ export default function ShortcutKeySetting() {
                 className={`${styles.shortcutInput} ${isRecording ? styles.recording : ''}`}
                 value={isRecording ? '请按下快捷键...' : binding.displayText || '未设置'}
                 readOnly
+                data-shortcut-recording-input
                 onFocus={() => setRecordingKey(key)}
                 onBlur={() => setRecordingKey(null)}
                 onKeyDown={(e) => handleKeyDown(key, e)}

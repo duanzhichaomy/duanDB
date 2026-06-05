@@ -1,0 +1,139 @@
+@import '../../../../../styles/var.less';
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 72px;
+  background: rgba(248, 250, 252, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.palette {
+  width: min(840px, calc(100vw - 64px));
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  padding: 0 18px;
+  border: 1px solid rgba(203, 213, 225, 0.86);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.16);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 16px;
+  letter-spacing: 0;
+
+  &::placeholder {
+    color: var(--color-text-quaternary);
+    font-weight: 500;
+  }
+}
+
+.shortcutText {
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid rgba(203, 213, 225, 0.78);
+  border-radius: 4px;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  line-height: 20px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.resultPanel {
+  margin-top: 8px;
+  max-height: min(540px, calc(100vh - 160px));
+  overflow: auto;
+  border: 1px solid rgba(203, 213, 225, 0.86);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.14);
+}
+
+.resultItem {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+  min-height: 66px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.72);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.activeResultItem {
+  background: rgba(99, 91, 255, 0.08);
+}
+
+.tableIcon {
+  color: var(--color-primary);
+}
+
+.resultBody {
+  min-width: 0;
+}
+
+.resultMain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tableName {
+  max-width: 100%;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  .f-single-line();
+}
+
+.pathText {
+  width: 100%;
+  flex-shrink: 0;
+  min-width: 0;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  .f-single-line();
+}
+
+.commentText {
+  margin-top: 3px;
+  color: var(--color-text-quaternary);
+  font-size: 12px;
+  .f-single-line();
+}
+
+.emptyText {
+  padding: 20px 16px;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  text-align: center;
+}

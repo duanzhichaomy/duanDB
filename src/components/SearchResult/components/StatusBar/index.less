@@ -1,24 +1,24 @@
 @import '../../../../styles/var.less';
 
 .statusBar {
-  height: 36px;
+  height: 28px;
   box-sizing: border-box;
-  padding: 8px 16px;
+  padding: 0 8px;
   font-size: 11px;
   display: flex;
   justify-content: start;
   align-items: center;
-  border-top: 1px solid rgba(225, 229, 241, 0.95);
-  background: linear-gradient(180deg, #fbfcff, #f7f8fe);
+  border-top: 1px solid #e6e9f2;
+  background: #fbfcff;
   overflow: hidden;
   flex-shrink: 0;
   color: #6d7488;
   .f-single-line();
   & > span {
-    margin-right: 16px;
+    margin-right: 10px;
     &::after {
       content: '|';
-      margin-left: 16px;
+      margin-left: 10px;
       color: var(--color-border);
     }
     &:last-child::after {

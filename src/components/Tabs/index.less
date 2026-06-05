@@ -3,9 +3,9 @@
 
 .tab-focus() {
   background-color: #ffffff;
-  border: 1px solid rgba(225, 229, 241, 0.95);
+  border: 1px solid #dfe3ee;
   border-bottom-color: #ffffff;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: none;
 
   .icon {
     opacity: 1;
@@ -21,11 +21,11 @@
   display: flex;
   overflow-x: hidden;
   position: relative;
-  height: 50px;
+  height: 36px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, rgba(250, 251, 255, 0.92), rgba(244, 246, 253, 0.92));
-  border-bottom: 1px solid rgba(225, 229, 241, 0.95);
-  padding: 8px 10px 0;
+  background: #f6f8fc;
+  border-bottom: 1px solid #dfe3ee;
+  padding: 4px 6px 0;
   &:hover {
     overflow-x: scroll;
   }
@@ -63,11 +63,11 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  line-height: 34px;
-  height: 34px;
-  min-width: 132px;
-  max-width: 260px;
+  padding: 0 8px;
+  line-height: 28px;
+  height: 28px;
+  min-width: 112px;
+  max-width: 240px;
   cursor: pointer;
   user-select: none;
   font-size: 12px;
@@ -75,8 +75,8 @@
   transition: color var(--motion-duration-fast) var(--motion-ease-in-out),
               background-color var(--motion-duration-fast) var(--motion-ease-in-out);
   border: 1px solid transparent;
-  border-radius: 8px 8px 0 0;
-  margin-right: 6px;
+  border-radius: 6px 6px 0 0;
+  margin-right: 4px;
 
   &:last-child {
     margin-right: 0;
@@ -101,7 +101,7 @@
     justify-content: center;
     width: 18px;
     height: 18px;
-    margin-left: 6px;
+    margin-left: 4px;
     border-radius: 4px;
     cursor: pointer;
     color: var(--color-text-tertiary);
@@ -139,9 +139,9 @@
   right: 0;
   top: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(250, 251, 255, 0.96), rgba(244, 246, 253, 0.96));
+  background: #f6f8fc;
   display: flex;
-  height: 34px;
+  height: 28px;
 }
 
 .moreTabs {
@@ -163,14 +163,14 @@
 }
 
 .addIcon {
-  width: 34px;
+  width: 28px;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   border-left: 0;
-  border-radius: 8px;
+  border-radius: 4px;
   color: var(--color-text-secondary);
   transition: color var(--motion-duration-fast) var(--motion-ease-in-out),
               background-color var(--motion-duration-fast) var(--motion-ease-in-out);

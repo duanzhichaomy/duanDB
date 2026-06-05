@@ -35,6 +35,10 @@ const shortcutsList = [
     title: i18n('common.button.createConsole'),
     keys: [keyboardKey.command, keyboardKey.Shift, 'L'],
   },
+  {
+    title: '快速打开表',
+    keys: [keyboardKey.command, 'P'],
+  },
 ];
 
 export default memo<IProps>((props) => {

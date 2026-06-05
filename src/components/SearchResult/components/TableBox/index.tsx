@@ -90,8 +90,8 @@ const SupportBaseTable: any = styled(BaseTable)`
     --lock-shadow: rgb(37 37 37 / 0.5) 0 0 6px 2px;
     --border-color: var(--color-border-secondary);
     --cell-padding: 0px;
-    --row-height: 28px;
-    --header-row-height: 36px;
+    --row-height: 26px;
+    --header-row-height: 30px;
     --lock-shadow: 0px 1px 2px 0px var(--color-border);
   }
 `;
@@ -1507,7 +1507,7 @@ export default function TableBox(props: ITableProps) {
                       components={{ EmptyContent: () => <h2>{i18n('common.text.noData')}</h2> }}
                       style={{ width: tableWidth, overflow: 'visible' }}
                       isStickyHead
-                      stickyTop={39}
+                      stickyTop={0}
                       {...pipeline.getProps()}
                     />
                   </>

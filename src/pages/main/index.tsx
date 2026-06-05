@@ -32,6 +32,7 @@ import Workspace from './workspace';
 import Connection from './connection';
 import Setting from '@/blocks/Setting';
 import LogViewer from '@/blocks/LogViewer';
+import QuickOpenTable from './workspace/components/QuickOpenTable';
 
 import styles from './index.less';
 import { useUpdateEffect } from '@/hooks';
@@ -50,6 +51,7 @@ const initNavConfig: INavItem[] = [
 
 function MainPage() {
   const showLeftSaveList = useWorkspaceStore((state) => state.showLeftSaveList);
+  const [quickOpenTableOpen, setQuickOpenTableOpen] = useState(false);
   const [navConfig, setNavConfig] = useState<INavItem[]>(initNavConfig);
   const mainPageActiveTab = useMainStore((state) => state.mainPageActiveTab);
   const [activeNavKey, setActiveNavKey] = useState<string>(
@@ -78,6 +80,10 @@ function MainPage() {
   // 全局快捷键
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement | null)?.closest?.('[data-shortcut-recording-input]')) {
+        return;
+      }
+
       const bindings = useShortcutKeyStore.getState().bindings;
 
       // 检查是否匹配某个快捷键
@@ -142,6 +148,13 @@ function MainPage() {
         e.stopPropagation();
         const current = useWorkspaceStore.getState().currentWorkspaceExtend;
         setCurrentWorkspaceExtend(current === 'info' ? null : 'info');
+        return;
+      }
+
+      if (matchBinding('quickOpenTable')) {
+        e.preventDefault();
+        e.stopPropagation();
+        setQuickOpenTableOpen(true);
         return;
       }
     };
@@ -230,6 +243,7 @@ function MainPage() {
           );
         })}
       </div>
+      <QuickOpenTable open={quickOpenTableOpen} onOpenChange={setQuickOpenTableOpen} />
     </div>
   );
 }

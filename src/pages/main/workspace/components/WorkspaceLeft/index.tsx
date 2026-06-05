@@ -15,34 +15,7 @@ import { databaseTypeList } from '@/constants';
 import connectionService from '@/service/connection';
 import { useConnectionStore, getConnectionList } from '@/pages/main/store/connection';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
-
-const DB_FILTER_STORAGE_KEY = 'workspace-db-filter';
-
-function loadDbFilter(connectionId: number | undefined): string[] | null {
-  if (!connectionId) return null;
-  try {
-    const stored = localStorage.getItem(DB_FILTER_STORAGE_KEY);
-    if (stored) {
-      const map = JSON.parse(stored);
-      return map[connectionId] ?? null;
-    }
-  } catch {}
-  return null;
-}
-
-function saveDbFilter(connectionId: number | undefined, selected: string[] | null) {
-  if (!connectionId) return;
-  try {
-    const stored = localStorage.getItem(DB_FILTER_STORAGE_KEY);
-    const map = stored ? JSON.parse(stored) : {};
-    if (selected === null) {
-      delete map[connectionId];
-    } else {
-      map[connectionId] = selected;
-    }
-    localStorage.setItem(DB_FILTER_STORAGE_KEY, JSON.stringify(map));
-  } catch {}
-}
+import { loadDbFilter, saveDbFilter } from '@/pages/main/workspace/functions/dbFilter';
 
 const WorkspaceLeft = memo(() => {
   const showLeftSaveList = useWorkspaceStore((state) => state.showLeftSaveList);
