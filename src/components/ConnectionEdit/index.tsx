@@ -29,6 +29,7 @@ interface IProps {
   closeCreateConnection: () => void;
   connectionData: IConnectionDetails;
   submit?: (data: IConnectionDetails) => Promise<any>;
+  onDelete?: () => void;
 }
 
 export interface ICreateConnectionFunction {
@@ -36,7 +37,7 @@ export interface ICreateConnectionFunction {
 }
 
 const ConnectionEdit = forwardRef((props: IProps, ref: ForwardedRef<ICreateConnectionFunction>) => {
-  const { closeCreateConnection, connectionData, submit } = props;
+  const { closeCreateConnection, connectionData, submit, onDelete } = props;
   const [baseInfoForm] = Form.useForm();
   const [backfillData, setBackfillData] = useState<IConnectionDetails>(connectionData);
   const [loadings, setLoading] = useState({
@@ -158,6 +159,11 @@ const ConnectionEdit = forwardRef((props: IProps, ref: ForwardedRef<ICreateConne
       </div>
       <div className={styles.formFooter}>
         <div className={styles.test}>
+          {backfillData.id && onDelete && (
+            <Button danger onClick={onDelete} className={styles.delete}>
+              {i18n('connection.button.remove')}
+            </Button>
+          )}
           {
             <Button
               loading={loadings.testButton}
@@ -460,4 +466,3 @@ function RenderForm(props: IRenderFormProps) {
     </Form>
   );
 }
-

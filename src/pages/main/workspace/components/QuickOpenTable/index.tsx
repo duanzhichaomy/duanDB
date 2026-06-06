@@ -267,6 +267,10 @@ const QuickOpenTable = memo<IProps>((props) => {
             className={styles.input}
             value={keyword}
             placeholder="Open anything search"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             onChange={(e) => setKeyword(e.target.value)}
           />
           <span className={styles.shortcutText}>ESC</span>
@@ -278,7 +282,7 @@ const QuickOpenTable = memo<IProps>((props) => {
               <div className={styles.emptyText}>正在加载表...</div>
             ) : filteredItems.length ? (
               filteredItems.map((item, index) => {
-                const pathText = [item.dataSourceName, item.databaseName, item.schemaName].filter(Boolean).join(' / ');
+                const databaseText = item.databaseName || '';
                 return (
                   <div
                     key={item.id}
@@ -293,9 +297,8 @@ const QuickOpenTable = memo<IProps>((props) => {
                     <div className={styles.resultBody}>
                       <div className={styles.resultMain}>
                         <span className={styles.tableName}>{item.node.name}</span>
-                        {pathText && <span className={styles.pathText}>{pathText}</span>}
+                        {databaseText && <span className={styles.pathText}>{databaseText}</span>}
                       </div>
-                      {item.comment && <div className={styles.commentText}>{item.comment}</div>}
                     </div>
                   </div>
                 );

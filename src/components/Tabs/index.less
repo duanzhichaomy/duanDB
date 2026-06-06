@@ -84,12 +84,14 @@
 
   .textBox {
     flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
   }
 
   .text {
     flex: 1;
+    min-width: 0;
     width: fit-content;
     .f-single-line();
   }
@@ -130,8 +132,14 @@
 
 .activeTab {
   .tab-focus();
+  max-width: none;
   color: var(--color-text);
   font-weight: 600;
+
+  .text {
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 
 .rightBox {

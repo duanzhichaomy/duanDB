@@ -104,3 +104,7 @@ i18n('home.tip.welcome', user.name); // => '欢迎您，张三！'
 - 响应统一使用 `ApiResponse::ok(data)` / `ApiResponse::err(message)`
 - 错误传播使用 `.map_err(|e| e.to_string())?`
 - SQL 值转义使用 MySQL 标准双单引号 `''`
+
+
+### 本机打包
+cargo tauri build --bundles app --config '{"bundle":{"createUpdaterArtifacts":false}}'

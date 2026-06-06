@@ -16,6 +16,7 @@ export default {
   'connection.button.addConnection': '新增连接',
   'connection.button.connect': '连接',
   'connection.button.disconnect': '断开连接',
+  'connection.button.manage': '管理连接',
   'connection.button.remove': '删除链接',
   'connection.message.testConnectResult': '测试连接{1}',
   'connection.message.testSshConnection': '测试ssh连接',
@@ -36,5 +37,6 @@ export default {
   'connection.menu.newConnection': '新建连接',
   'connection.tips.noConnection': '您当前还没有创建任何连接',
   'connection.tips.noConnectionTips': '无权限查看该连接详情，但你可以直接连接该连接',
+  'connection.tips.deleteConnection': '确定要删除连接{1}吗？',
   'connection.title.importTitle': '导入文件, .ncx(navicat) 或 .dbp(dbever)',
 };

@@ -1,13 +1,19 @@
 import React, { memo, useMemo, useState } from 'react';
 import classnames from 'classnames';
 import styles from './index.less';
-import { Checkbox, Dropdown, Input } from 'antd';
+import { Checkbox, Dropdown, Input, Modal } from 'antd';
 import Iconfont from '@/components/Iconfont';
-import { useConnectionStore } from '@/pages/main/store/connection';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
-import { setCurrentConnectionDetails } from '@/pages/main/workspace/store/common';
 import { databaseMap } from '@/constants';
-import { IConnectionListItem } from '@/typings/connection';
+import i18n from '@/i18n';
+import connectionService from '@/service/connection';
+import ConnectionEdit from '@/components/ConnectionEdit';
+import LoadingContent from '@/components/Loading/LoadingContent';
+import MenuLabel from '@/components/MenuLabel';
+import { getConnectionList } from '@/pages/main/store/connection';
+import { getOpenConsoleList } from '@/pages/main/workspace/store/console';
+import { IConnectionDetails } from '@/typings/connection';
+import { message } from '@/utils/globalMessage';
 
 interface IProps {
   allDbNames: string[];
@@ -20,9 +26,12 @@ interface IProps {
 export default memo<IProps>(({ allDbNames, selectedDbNames, onSelectionChange, isExpanded, onToggleExpand }) => {
   const [filterSearch, setFilterSearch] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [connectionDetail, setConnectionDetail] = useState<IConnectionDetails | null | undefined>(null);
 
-  const { connectionList } = useConnectionStore((state) => ({ connectionList: state.connectionList }));
-  const { currentConnectionDetails } = useWorkspaceStore((state) => ({ currentConnectionDetails: state.currentConnectionDetails }));
+  const { currentConnectionDetails } = useWorkspaceStore((state) => ({
+    currentConnectionDetails: state.currentConnectionDetails,
+  }));
 
   const effectiveSelected: string[] = selectedDbNames ?? allDbNames;
   const selectedCount = effectiveSelected.length;
@@ -54,20 +63,56 @@ export default memo<IProps>(({ allDbNames, selectedDbNames, onSelectionChange, i
     setFilterOpen(false);
   };
 
+  const handleManageConnection = () => {
+    if (!currentConnectionDetails?.id) return;
+
+    setManageOpen(true);
+    setConnectionDetail(undefined);
+    connectionService
+      .getDetails({ id: currentConnectionDetails.id })
+      .then((res) => {
+        setConnectionDetail(res);
+      })
+      .catch(() => {
+        setManageOpen(false);
+        setConnectionDetail(null);
+      });
+  };
+
+  const deleteConnection = () => {
+    if (!currentConnectionDetails?.id) return;
+
+    Modal.confirm({
+      title: i18n('connection.tips.deleteConnection', `"${currentConnectionDetails.alias}"`),
+      okText: i18n('common.button.delete'),
+      okButtonProps: { danger: true },
+      cancelText: i18n('common.button.cancel'),
+      onOk: () =>
+        connectionService.remove({ id: currentConnectionDetails.id }).then(() => {
+          message.success(i18n('common.text.successfullyDelete'));
+          setManageOpen(false);
+          setConnectionDetail(null);
+          getConnectionList().then(() => {
+            getOpenConsoleList();
+          });
+        }),
+    });
+  };
+
   const connectionMenuItems = useMemo(
-    () =>
-      (connectionList ?? []).map((item: IConnectionListItem) => ({
-        key: item.id,
-        label: (
-          <div className={styles.connMenuItem}>
-            <span className={styles.envDot} style={{ background: item.environment?.color }} />
-            <Iconfont code={databaseMap[item.type]?.icon} className={styles.connMenuIcon} />
-            <span className={styles.connMenuName}>{item.alias}</span>
-          </div>
-        ),
-        onClick: () => setCurrentConnectionDetails(item),
-      })),
-    [connectionList],
+    () => [
+      {
+        key: 'manage',
+        label: <MenuLabel icon="&#xe602;" label={i18n('connection.button.manage')} />,
+        onClick: handleManageConnection,
+      },
+      {
+        key: 'delete',
+        label: <MenuLabel icon="&#xe6a7;" label={i18n('connection.button.remove')} />,
+        onClick: deleteConnection,
+      },
+    ],
+    [currentConnectionDetails?.id, currentConnectionDetails?.alias],
   );
 
   const filterPanel = (
@@ -110,39 +155,59 @@ export default memo<IProps>(({ allDbNames, selectedDbNames, onSelectionChange, i
   );
 
   return (
-    <Dropdown menu={{ items: connectionMenuItems }} trigger={['contextMenu']} classNames={{ root: styles.connDropdown }}>
-      <div className={styles.connectionRow}>
-        <div
-          className={classnames(styles.expandArrow, { [styles.expanded]: isExpanded })}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleExpand();
-          }}
-        >
-          <Iconfont code="&#xe641;" className={styles.arrowIcon} />
+    <>
+      <Dropdown menu={{ items: connectionMenuItems }} trigger={['contextMenu']} classNames={{ root: styles.connDropdown }}>
+        <div className={styles.connectionRow} onClick={handleManageConnection}>
+          <div
+            className={classnames(styles.expandArrow, { [styles.expanded]: isExpanded })}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand();
+            }}
+          >
+            <Iconfont code="&#xe641;" className={styles.arrowIcon} />
+          </div>
+          <div className={styles.connInfo}>
+            {currentConnectionDetails && (
+              <Iconfont
+                code={databaseMap[currentConnectionDetails.type]?.icon}
+                className={styles.dbTypeIcon}
+              />
+            )}
+            <span className={styles.connName}>{currentConnectionDetails?.alias}</span>
+            {totalCount > 0 && (
+              <Dropdown
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                popupRender={() => filterPanel}
+                trigger={['click']}
+              >
+                <span className={styles.dbCount} onClick={(e) => e.stopPropagation()}>
+                  {selectedCount} of {totalCount}
+                </span>
+              </Dropdown>
+            )}
+          </div>
         </div>
-        <div className={styles.connInfo}>
-          {currentConnectionDetails && (
-            <Iconfont
-              code={databaseMap[currentConnectionDetails.type]?.icon}
-              className={styles.dbTypeIcon}
+      </Dropdown>
+      <Modal
+        open={manageOpen}
+        footer={null}
+        onCancel={() => setManageOpen(false)}
+        width={720}
+        centered
+        destroyOnHidden
+      >
+        <LoadingContent isLoading={connectionDetail === undefined}>
+          {connectionDetail && (
+            <ConnectionEdit
+              connectionData={connectionDetail}
+              closeCreateConnection={() => setManageOpen(false)}
+              onDelete={deleteConnection}
             />
           )}
-          <span className={styles.connName}>{currentConnectionDetails?.alias}</span>
-          {totalCount > 0 && (
-            <Dropdown
-              open={filterOpen}
-              onOpenChange={setFilterOpen}
-              popupRender={() => filterPanel}
-              trigger={['click']}
-            >
-              <span className={styles.dbCount} onClick={(e) => e.stopPropagation()}>
-                {selectedCount} of {totalCount}
-              </span>
-            </Dropdown>
-          )}
-        </div>
-      </div>
-    </Dropdown>
+        </LoadingContent>
+      </Modal>
+    </>
   );
 });

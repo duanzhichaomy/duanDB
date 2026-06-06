@@ -62,7 +62,9 @@ export const getConnectionList: () => Promise<IConnectionListItem[]> = () => {
         const currentConnection = connectionList.find((item) => item.id === currentConnectionDetails?.id);
         if (!currentConnection) {
           setCurrentConnectionDetails(connectionList[0]);
+          return;
         }
+        setCurrentConnectionDetails(currentConnection);
       })
       .catch(() => {
         useConnectionStore.setState({ connectionList: [] });
