@@ -26,6 +26,7 @@ import {
   createConsole,
 } from '@/pages/main/workspace/store/console';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
+import { setCurrentWorkspaceGlobalExtend } from '@/pages/main/workspace/store/common';
 import { useTreeStore } from '@/blocks/Tree/treeStore';
 import { useConnectionStore, getConnectionList } from '@/pages/main/store/connection';
 
@@ -34,6 +35,26 @@ import historyService from '@/service/history';
 import connectionService from '@/service/connection';
 
 import indexedDB from '@/indexedDB';
+
+const getTabDDLData = (tab?: IWorkspaceTab) => {
+  if (![WorkspaceTabType.EditTable, WorkspaceTabType.EditTableData].includes(tab?.type as WorkspaceTabType)) {
+    return null;
+  }
+
+  const { dataSourceId, dataSourceName, databaseName, databaseType, schemaName, tableName } = tab?.uniqueData || {};
+  if (dataSourceId == null || !tableName) {
+    return null;
+  }
+
+  return {
+    dataSourceId,
+    dataSourceName,
+    databaseName,
+    databaseType,
+    schemaName,
+    tableName,
+  };
+};
 
 const WorkspaceTabs = memo(() => {
   const { activeConsoleId, consoleList, workspaceTabList } = useWorkspaceStore((state) => {
@@ -59,6 +80,24 @@ const WorkspaceTabs = memo(() => {
   useEffect(() => {
     getOpenConsoleList();
   }, []);
+
+  // 表相关 tab 被激活时，右侧 DDL 信息跟随当前 tab，避免停留在上一次点击的表。
+  useEffect(() => {
+    const activeTab = workspaceTabList?.find((item) => item.id === activeConsoleId);
+    const ddlData = getTabDDLData(activeTab);
+
+    if (ddlData) {
+      setCurrentWorkspaceGlobalExtend({
+        code: 'viewDDL',
+        uniqueData: ddlData,
+      });
+      return;
+    }
+
+    if (activeTab && useWorkspaceStore.getState().currentWorkspaceGlobalExtend?.code === 'viewDDL') {
+      setCurrentWorkspaceGlobalExtend(null);
+    }
+  }, [activeConsoleId, workspaceTabList]);
 
   // consoleList 先转换为通用的 workspaceTabList
   useEffect(() => {

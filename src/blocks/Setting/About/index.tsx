@@ -20,6 +20,7 @@ interface IProps {
 export default function AboutUs(props: IProps) {
   const { updateDetectionData, updateDetectionRef } = props;
   const [updateRule, setUpdateRule] = React.useState<'manual' | 'auto'>(updateDetectionData?.type || 'manual');
+  const [checkUpdateSpinning, setCheckUpdateSpinning] = React.useState(false);
 
   const { holdingService } = useSettingStore((state) => {
     return {
@@ -43,6 +44,12 @@ export default function AboutUs(props: IProps) {
 
   const restartApp = () => {
     import('@/utils/tauri').then(({ relaunchApp }) => relaunchApp());
+  };
+
+  const handleCheckUpdate = () => {
+    setCheckUpdateSpinning(true);
+    updateDetectionRef?.current?.checkUpdate();
+    setTimeout(() => setCheckUpdateSpinning(false), 600);
   };
 
   const updateButton = useMemo(() => {
@@ -125,10 +132,8 @@ export default function AboutUs(props: IProps) {
           {!updateDetectionData?.needUpdate && (
             <div className={styles.updateButton}>
               <Button
-                icon={<SyncOutlined />}
-                onClick={() => {
-                  updateDetectionRef?.current?.checkUpdate();
-                }}
+                icon={<SyncOutlined className={classnames({ [styles.spinning]: checkUpdateSpinning })} />}
+                onClick={handleCheckUpdate}
               >
                 {i18n('setting.button.checkUpdate')}
               </Button>

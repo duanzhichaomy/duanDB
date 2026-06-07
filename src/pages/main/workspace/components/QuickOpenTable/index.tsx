@@ -198,14 +198,7 @@ const QuickOpenTable = memo<IProps>((props) => {
     const value = normalizeText(keyword.trim());
     const matched = value
       ? items.filter((item) => {
-        const searchText = [
-          item.node.name,
-          item.databaseName,
-          item.schemaName,
-          item.comment,
-          item.dataSourceName,
-        ].map(normalizeText).join(' ');
-        return searchText.includes(value);
+        return normalizeText(item.node.name).includes(value);
       })
       : items;
 
