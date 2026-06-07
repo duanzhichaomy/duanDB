@@ -3,6 +3,7 @@ import { useWorkspaceStore } from './index';
 
 export interface ICommonStore {
   currentConnectionDetails: IConnectionListItem | null;
+  openedDatabaseConnections: Record<number, string[]>;
   currentWorkspaceExtend: string | null;
   currentWorkspaceGlobalExtend: {
     code: string,
@@ -13,6 +14,7 @@ export interface ICommonStore {
 
 export const initCommonStore: ICommonStore = {
   currentConnectionDetails: null,
+  openedDatabaseConnections: {},
   currentWorkspaceExtend: null,
   currentWorkspaceGlobalExtend: null,
   showLeftSaveList: false,
@@ -20,6 +22,38 @@ export const initCommonStore: ICommonStore = {
 
 export const setCurrentConnectionDetails = (connectionDetails: ICommonStore['currentConnectionDetails']) => {
   return useWorkspaceStore.setState({ currentConnectionDetails: connectionDetails });
+}
+
+export const addOpenedDatabaseConnection = (dataSourceId?: number, databaseName?: string) => {
+  if (!dataSourceId || !databaseName) return;
+
+  return useWorkspaceStore.setState((state) => {
+    const opened = state.openedDatabaseConnections[dataSourceId] || [];
+    if (opened.includes(databaseName)) {
+      return state;
+    }
+
+    return {
+      openedDatabaseConnections: {
+        ...state.openedDatabaseConnections,
+        [dataSourceId]: [...opened, databaseName],
+      },
+    };
+  });
+}
+
+export const removeOpenedDatabaseConnection = (dataSourceId?: number, databaseName?: string) => {
+  if (!dataSourceId || !databaseName) return;
+
+  return useWorkspaceStore.setState((state) => {
+    const opened = state.openedDatabaseConnections[dataSourceId] || [];
+    return {
+      openedDatabaseConnections: {
+        ...state.openedDatabaseConnections,
+        [dataSourceId]: opened.filter((name) => name !== databaseName),
+      },
+    };
+  });
 }
 
 export const setCurrentWorkspaceExtend = (workspaceExtend: ICommonStore['currentWorkspaceExtend']) => {

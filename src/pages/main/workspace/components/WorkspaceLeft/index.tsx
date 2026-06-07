@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback, useRef } from 'react';
+import React, { memo, useState, useCallback, useRef, useEffect } from 'react';
 import i18n from '@/i18n';
 import classnames from 'classnames';
 import { Dropdown, Modal } from 'antd';
@@ -15,7 +15,12 @@ import { databaseTypeList } from '@/constants';
 import connectionService from '@/service/connection';
 import { useConnectionStore, getConnectionList } from '@/pages/main/store/connection';
 import { useWorkspaceStore } from '@/pages/main/workspace/store';
-import { loadDbFilter, saveDbFilter } from '@/pages/main/workspace/functions/dbFilter';
+import {
+  DB_FILTER_CHANGE_EVENT,
+  IDbFilterChangeDetail,
+  loadDbFilter,
+  saveDbFilter,
+} from '@/pages/main/workspace/functions/dbFilter';
 
 const WorkspaceLeft = memo(() => {
   const showLeftSaveList = useWorkspaceStore((state) => state.showLeftSaveList);
@@ -35,6 +40,20 @@ const WorkspaceLeft = memo(() => {
   const handleSelectionChange = useCallback((selected: string[] | null) => {
     setSelectedDbNames(selected);
     saveDbFilter(currentConnectionDetails?.id, selected);
+  }, [currentConnectionDetails?.id]);
+
+  useEffect(() => {
+    const handleDbFilterChange = (event: Event) => {
+      const detail = (event as CustomEvent<IDbFilterChangeDetail>).detail;
+      if (detail?.connectionId === currentConnectionDetails?.id) {
+        setSelectedDbNames(detail.selected);
+      }
+    };
+
+    window.addEventListener(DB_FILTER_CHANGE_EVENT, handleDbFilterChange);
+    return () => {
+      window.removeEventListener(DB_FILTER_CHANGE_EVENT, handleDbFilterChange);
+    };
   }, [currentConnectionDetails?.id]);
 
   const handleDbNamesLoaded = useCallback((names: string[]) => {

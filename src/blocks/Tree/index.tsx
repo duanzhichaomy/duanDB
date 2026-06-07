@@ -7,7 +7,11 @@ import { ITreeNode } from '@/typings';
 import { TreeNodeType, databaseMap } from '@/constants';
 import { treeConfig, switchIcon, ITreeConfigItem } from './treeConfig';
 import { useCommonStore } from '@/store/common';
-import { setCurrentWorkspaceGlobalExtend } from '@/pages/main/workspace/store/common';
+import {
+  addOpenedDatabaseConnection,
+  removeOpenedDatabaseConnection,
+  setCurrentWorkspaceGlobalExtend,
+} from '@/pages/main/workspace/store/common';
 import LoadingGracile from '@/components/Loading/LoadingGracile';
 import { setFocusId, setFocusTreeNode, useTreeStore, clearTreeStore } from './treeStore';
 import { useGetRightClickMenu } from './hooks/useGetRightClickMenu';
@@ -293,9 +297,21 @@ const TreeNode = memo((props: TreeNodeIProps) => {
           });
           result.children = [...(result.children || []), ...(data || [])];
           result.expanded = true;
+          if (result.treeNodeType === TreeNodeType.DATABASE) {
+            addOpenedDatabaseConnection(
+              result.extraParams?.dataSourceId,
+              result.extraParams?.databaseName || result.name,
+            );
+          }
         } else {
           result.children = null;
           result.expanded = false;
+          if (result.treeNodeType === TreeNodeType.DATABASE) {
+            removeOpenedDatabaseConnection(
+              result.extraParams?.dataSourceId,
+              result.extraParams?.databaseName || result.name,
+            );
+          }
         }
         setOriginalData?.(cloneDeep([...(originalData || [])]));
         break;
@@ -338,6 +354,13 @@ const TreeNode = memo((props: TreeNodeIProps) => {
       }
     } else {
       loadData();
+    }
+  };
+
+  const closeData = (_treeNodeData: ITreeNode = treeNodeData) => {
+    insertData(treeData!, _treeNodeData.uuid!, null, [treeData, setTreeData]);
+    if(searchTreeData){
+      insertData(searchTreeData!, _treeNodeData.uuid!, null, [searchTreeData, setSearchTreeData]);
     }
   };
 
@@ -417,6 +440,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
   const rightClickMenu = useGetRightClickMenu({
     treeNodeData,
     loadData,
+    closeData,
   });
 
   const treeNodeDom = useMemo(() => {

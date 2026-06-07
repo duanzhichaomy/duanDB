@@ -9,6 +9,11 @@ import { databaseMap } from '@/constants/database';
 import styles from './index.less';
 import sqlService from '@/service/sql';
 import { IBoundInfo } from '@/typings';
+import {
+  DB_FILTER_CHANGE_EVENT,
+  IDbFilterChangeDetail,
+  loadDbFilter,
+} from '@/pages/main/workspace/functions/dbFilter';
 
 import {
   registerIntelliSenseField,
@@ -45,6 +50,9 @@ const SelectBoundInfo = memo((props: IProps) => {
   const [databaseNameList, setDatabaseNameList] = useState<IOption<string>[]>([emptyOption]);
   const [schemaList, setSchemaList] = useState<IOption<string>[]>([emptyOption]);
   const [allTableList, setAllTableList] = useState<any>([]);
+  const [selectedDbNames, setSelectedDbNames] = useState<string[] | null>(
+    () => loadDbFilter(boundInfo.dataSourceId),
+  );
 
   useEffect(() => {
     if(!isActive){
@@ -73,6 +81,33 @@ const SelectBoundInfo = memo((props: IProps) => {
   const supportSchema = useMemo(() => {
     return connectionList?.find((item) => item.id === boundInfo.dataSourceId)?.supportSchema;
   }, [boundInfo.dataSourceId, connectionList]);
+
+  const filteredDatabaseNameList = useMemo(() => {
+    if (!selectedDbNames) {
+      return databaseNameList;
+    }
+
+    const selectedSet = new Set(selectedDbNames);
+    return databaseNameList.filter((item) => !item.value || selectedSet.has(item.value));
+  }, [databaseNameList, selectedDbNames]);
+
+  useEffect(() => {
+    setSelectedDbNames(loadDbFilter(boundInfo.dataSourceId));
+  }, [boundInfo.dataSourceId]);
+
+  useEffect(() => {
+    const handleDbFilterChange = (event: Event) => {
+      const detail = (event as CustomEvent<IDbFilterChangeDetail>).detail;
+      if (detail?.connectionId === boundInfo.dataSourceId) {
+        setSelectedDbNames(detail.selected);
+      }
+    };
+
+    window.addEventListener(DB_FILTER_CHANGE_EVENT, handleDbFilterChange);
+    return () => {
+      window.removeEventListener(DB_FILTER_CHANGE_EVENT, handleDbFilterChange);
+    };
+  }, [boundInfo.dataSourceId]);
 
   // 编辑器绑定的数据库类型变化时，重新注册智能提示
   useEffect(() => {
@@ -190,14 +225,14 @@ const SelectBoundInfo = memo((props: IProps) => {
 
   // 注册数据库名
   useEffect(() => {
-    const editorDatabaseTips = databaseNameList
+    const editorDatabaseTips = filteredDatabaseNameList
       .filter((item) => item.value)
       .map((item) => ({
         name: item.value,
         dataSourceName: boundInfo.dataSourceName,
       }));
     registerIntelliSenseDatabase(editorDatabaseTips);
-  }, [databaseNameList]);
+  }, [filteredDatabaseNameList]);
 
   // 选择数据源
   const changeDataSource = (item) => {
@@ -222,7 +257,7 @@ const SelectBoundInfo = memo((props: IProps) => {
 
   // 选择数据库
   const changeDataBase = (item) => {
-    const _databaseName = databaseNameList?.find((i) => i.key === item.key)?.value;
+    const _databaseName = filteredDatabaseNameList?.find((i) => i.key === item.key)?.value;
 
     setBoundInfo({
       ...boundInfo,
@@ -286,7 +321,7 @@ const SelectBoundInfo = memo((props: IProps) => {
       {supportDatabase && (
         <Dropdown
           menu={{
-            items: databaseNameList as any[],
+            items: filteredDatabaseNameList as any[],
             onClick: changeDataBase,
           }}
           trigger={['click']}

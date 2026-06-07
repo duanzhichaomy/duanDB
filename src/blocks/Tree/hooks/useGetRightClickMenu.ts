@@ -29,6 +29,7 @@ import connectionService from '@/service/connection';
 interface IProps {
   treeNodeData: ITreeNode;
   loadData: any;
+  closeData?: (treeNodeData: ITreeNode) => void;
 }
 
 interface IOperationColumnConfigItem {
@@ -51,7 +52,7 @@ interface IRightClickMenu {
 }
 
 export const useGetRightClickMenu = (props: IProps) => {
-  const { treeNodeData, loadData } = props;
+  const { treeNodeData, loadData, closeData } = props;
 
   const { openCreateDatabaseModal, currentConnectionDetails } = useWorkspaceStore((state) => {
     return {
@@ -115,6 +116,15 @@ export const useGetRightClickMenu = (props: IProps) => {
           if (dataSourceId) {
             connectionService.close({ id: dataSourceId });
           }
+        },
+      },
+
+      // 关闭数据库连接
+      [OperationColumn.CloseDatabase]: {
+        text: i18n('workspace.menu.closeConnection'),
+        icon: '\ue66f',
+        handle: () => {
+          closeData?.(treeNodeData);
         },
       },
 
@@ -335,7 +345,7 @@ export const useGetRightClickMenu = (props: IProps) => {
 };
 
 export const getRightClickMenu = (props: IProps) => {
-  const { treeNodeData, loadData } = props;
+  const { treeNodeData, loadData, closeData } = props;
 
   const openCreateDatabaseModal = useWorkspaceStore.getState().openCreateDatabaseModal;
   const currentConnectionDetails = useWorkspaceStore.getState().currentConnectionDetails;
@@ -394,6 +404,15 @@ export const getRightClickMenu = (props: IProps) => {
         if (dataSourceId) {
           connectionService.close({ id: dataSourceId });
         }
+      },
+    },
+
+    // 关闭数据库连接
+    [OperationColumn.CloseDatabase]: {
+      text: i18n('workspace.menu.closeConnection'),
+      icon: '\ue66f',
+      handle: () => {
+        closeData?.(treeNodeData);
       },
     },
 

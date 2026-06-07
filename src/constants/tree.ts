@@ -26,6 +26,7 @@ export enum TreeNodeType {
 // 树右键支持的功能
 export enum OperationColumn {
   Disconnect = 'disconnect', // 断开连接
+  CloseDatabase = 'closeDatabase', // 关闭数据库连接
   Refresh = 'refresh', // 刷新各级菜单
   CreateTable = 'createTable', //创建表
   CreateConsole = 'createConsole', // 新建console

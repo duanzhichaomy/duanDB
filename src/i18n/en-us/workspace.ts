@@ -10,6 +10,7 @@ export default {
   'workspace.menu.view': 'View',
   'workspace.menu.editTableData': 'Edit Table Data',
   'workspace.menu.queryConsole': 'Query console',
+  'workspace.menu.closeConnection': 'Close connection',
   'workspace.menu.viewAllTable': 'View all table',
   'workspace.menu.createDatabase': 'Create database',
   'workspace.menu.createSchema': 'Create schema',

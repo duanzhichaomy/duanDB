@@ -1,4 +1,10 @@
 export const DB_FILTER_STORAGE_KEY = 'workspace-db-filter';
+export const DB_FILTER_CHANGE_EVENT = 'workspace-db-filter-change';
+
+export interface IDbFilterChangeDetail {
+  connectionId: number;
+  selected: string[] | null;
+}
 
 export function loadDbFilter(connectionId: number | undefined): string[] | null {
   if (!connectionId) return null;
@@ -23,5 +29,13 @@ export function saveDbFilter(connectionId: number | undefined, selected: string[
       map[connectionId] = selected;
     }
     localStorage.setItem(DB_FILTER_STORAGE_KEY, JSON.stringify(map));
+    window.dispatchEvent(
+      new CustomEvent<IDbFilterChangeDetail>(DB_FILTER_CHANGE_EVENT, {
+        detail: {
+          connectionId,
+          selected,
+        },
+      }),
+    );
   } catch {}
 }

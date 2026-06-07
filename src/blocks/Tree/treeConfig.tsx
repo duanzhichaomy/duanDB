@@ -182,6 +182,7 @@ export const treeConfig: { [key in TreeNodeType]: ITreeConfigItem } = {
     operationColumn: [
       OperationColumn.CreateConsole,
       OperationColumn.CopyName,
+      OperationColumn.CloseDatabase,
       OperationColumn.Refresh,
     ],
     next: TreeNodeType.SCHEMAS,
