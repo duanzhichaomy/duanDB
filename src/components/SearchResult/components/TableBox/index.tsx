@@ -645,16 +645,22 @@ export default function TableBox(props: ITableProps) {
     }
     // 如果有聚焦的单元格
     if (editingCell && editingCell[2] === false) {
-      const oldRowDataList = oldDataList.find((item) => item[0] === editingCell[1]);
-      const oldData = oldRowDataList?.[editingCell[0]];
-      // 如果当前单元格的数据和老数据一样，则可用
-      if (oldData !== editingData) {
+      const [colId, rowId] = editingCell;
+      const pendingRowData = updateData.find((item) => item.rowId === rowId);
+
+      if (pendingRowData?.type === CRUD.CREATE || pendingRowData?.type === CRUD.DELETE) {
+        return false;
+      }
+
+      const oldRowTableData = oldTableData.find((item) => item[colNoCode] === rowId);
+      const currentRowData = tableData.find((item) => item[colNoCode] === rowId);
+      if (oldRowTableData && currentRowData && !lodash.isEqual(oldRowTableData[colId], currentRowData[colId])) {
         return false;
       }
     }
     // 如果都没，那撤销按钮不可用
     return true;
-  }, [curOperationRowNo, updateData, editingCell]);
+  }, [curOperationRowNo, updateData, editingCell, oldTableData, tableData]);
 
   // 处理撤销
   const handleRevoke = () => {
@@ -673,27 +679,61 @@ export default function TableBox(props: ITableProps) {
       setUpdateData(_updateData);
       setTableData(_tableData);
       setCurOperationRowNo(null);
+      setEditingCell(null);
       return;
     }
 
     // 聚焦单元格撤销
     if (editingCell && editingCell[2] === false) {
-      const oldRowTableData = oldTableData.find((item) => item[colNoCode] === editingCell[1])!;
-      const oldData = oldRowTableData[editingCell[0]];
+      const [colId, rowId] = editingCell;
+      const rowUpdateData = updateData.find((item) => item.rowId === rowId);
+
+      if (rowUpdateData?.type === CRUD.CREATE) {
+        setUpdateData(updateData.filter((item) => item.rowId !== rowId));
+        setTableData(tableData.filter((item) => item[colNoCode] !== rowId));
+        setEditingCell(null);
+        return;
+      }
+
+      const oldRowTableData = oldTableData.find((item) => item[colNoCode] === rowId);
+      if (!oldRowTableData) {
+        return;
+      }
+
+      if (rowUpdateData?.type === CRUD.DELETE) {
+        setUpdateData(updateData.filter((item) => item.rowId !== rowId));
+        setTableData(tableData.map((item) => (item[colNoCode] === rowId ? lodash.cloneDeep(oldRowTableData) : item)));
+        setEditingCell(null);
+        return;
+      }
+
       const _tableData = tableData.map((item) => {
-        if (item[colNoCode] === editingCell[1]) {
-          item[editingCell[0]] = oldData || '';
+        if (item[colNoCode] === rowId) {
+          return {
+            ...item,
+            [colId]: oldRowTableData[colId],
+          };
         }
         return item;
       });
 
       // 如果撤销后这一行的数据和原始数据一样，则删除这条更新记录
-      const newRowTableData = _tableData.find((item) => item[colNoCode] === editingCell[1])!;
+      const newRowTableData = _tableData.find((item) => item[colNoCode] === rowId)!;
       if (lodash.isEqual(newRowTableData, oldRowTableData)) {
-        setUpdateData(updateData.filter((item) => item.rowId !== editingCell[1]));
+        setUpdateData(updateData.filter((item) => item.rowId !== rowId));
+      } else if (rowUpdateData?.type === CRUD.UPDATE) {
+        setUpdateData(updateData.map((item) => (
+          item.rowId === rowId
+            ? {
+              ...item,
+              dataList: Object.keys(newRowTableData).map((key) => newRowTableData[key]),
+            }
+            : item
+        )));
       }
 
       setTableData(_tableData);
+      setEditingCell(null);
     }
   };
 
@@ -1024,6 +1064,7 @@ export default function TableBox(props: ITableProps) {
               {editingCell?.[0] === colId && editingCell?.[1] === rowId && editingCell?.[2] ? (
                 <Input
                   ref={editDataInputRef}
+                  className={styles.cellEditorInput}
                   autoComplete="new-password"
                   autoCorrect="off"
                   autoCapitalize="off"
@@ -1438,16 +1479,30 @@ export default function TableBox(props: ITableProps) {
                       handleDeleteData();
                     }}
                     className={classnames(styles.deleteDataBar, styles.editTableDataBarItem, {
-                      [styles.disableBar]: curOperationRowNo === null,
+                      [styles.disableBar]: !curOperationRowNo && !editingCell,
                     })}
                   >
                     <Iconfont code="&#xe644;" />
                   </div>
                 </Popover>
                 {/* 撤销 */}
-                <Popover mouseEnterDelay={0.8} content={i18n('editTableData.tips.revert')} trigger="hover">
+                <Popover
+                  mouseEnterDelay={0.3}
+                  content={
+                    revokeDisableBarState
+                      ? i18n('editTableData.tips.revertDisabled')
+                      : i18n('editTableData.tips.revert')
+                  }
+                  trigger="hover"
+                >
                   <div
                     onClick={handleRevoke}
+                    aria-disabled={revokeDisableBarState}
+                    aria-label={
+                      revokeDisableBarState
+                        ? i18n('editTableData.tips.revertDisabled')
+                        : i18n('editTableData.tips.revert')
+                    }
                     className={classnames(styles.revokeBar, styles.editTableDataBarItem, {
                       [styles.disableBar]: revokeDisableBarState,
                     })}
@@ -1463,6 +1518,7 @@ export default function TableBox(props: ITableProps) {
                 >
                   <div
                     onClick={handleViewSql}
+                    aria-disabled={!updateData.length}
                     className={classnames(styles.viewSqlBar, styles.editTableDataBarItem, {
                       [styles.disableBar]: !updateData.length,
                     })}
@@ -1474,8 +1530,9 @@ export default function TableBox(props: ITableProps) {
                 <Popover mouseEnterDelay={0.8} content={i18n('editTableData.tips.submit')} trigger="hover">
                   <div
                     onClick={handleUpdateSubmit}
+                    aria-disabled={!updateData.length || tableLoading}
                     className={classnames(styles.updateSubmitBar, styles.editTableDataBarItem, {
-                      [styles.disableBar]: !updateData.length,
+                      [styles.disableBar]: !updateData.length || tableLoading,
                     })}
                   >
                     <Iconfont code="&#xe687;" />

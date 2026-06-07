@@ -9,13 +9,14 @@
   align-items: center;
   cursor: pointer;
   border-radius: 4px;
-  transition: background-color var(--motion-duration-fast) var(--motion-ease-in-out);
-  i {
-    font-size: 13px;
-    color: #635bff;
-  }
+  color: var(--color-text);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-in-out),
+    color var(--motion-duration-fast) var(--motion-ease-in-out),
+    opacity var(--motion-duration-fast) var(--motion-ease-in-out);
   &:hover{
     background-color: rgba(99, 91, 255, 0.08);
+    color: #635bff;
   }
 }
 
@@ -177,19 +178,16 @@
   padding: 0px 4px;
   height: 28px;
   gap: 1px;
-  i {
-    color: var(--color-text-disabled);
-  }
   .editTableDataBarItem {
     .button-bar-item();
   }
   .disableBar {
-    cursor: default;
-    i {
-      color: var(--color-text-disabled);
-    }
+    cursor: not-allowed;
+    color: var(--color-text-quaternary);
+    opacity: 0.42;
     &:hover{
       background-color: transparent;
+      color: var(--color-text-quaternary);
     }
   }
 }
@@ -377,6 +375,18 @@
   input {
     background: none;
   }
+}
+
+.cellEditorInput {
+  flex: 1;
+  width: 100%;
+  height: 24px !important;
+  min-height: 24px;
+  padding: 0 8px !important;
+  line-height: 22px;
+  box-sizing: border-box;
+  background: #ffffff !important;
+  border-radius: 4px;
 }
 
 .tableItemEdit {
