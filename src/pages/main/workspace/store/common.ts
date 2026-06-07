@@ -28,14 +28,15 @@ export const addOpenedDatabaseConnection = (dataSourceId?: number, databaseName?
   if (!dataSourceId || !databaseName) return;
 
   return useWorkspaceStore.setState((state) => {
-    const opened = state.openedDatabaseConnections[dataSourceId] || [];
+    const openedDatabaseConnections = state.openedDatabaseConnections || {};
+    const opened = openedDatabaseConnections[dataSourceId] || [];
     if (opened.includes(databaseName)) {
       return state;
     }
 
     return {
       openedDatabaseConnections: {
-        ...state.openedDatabaseConnections,
+        ...openedDatabaseConnections,
         [dataSourceId]: [...opened, databaseName],
       },
     };
@@ -46,10 +47,11 @@ export const removeOpenedDatabaseConnection = (dataSourceId?: number, databaseNa
   if (!dataSourceId || !databaseName) return;
 
   return useWorkspaceStore.setState((state) => {
-    const opened = state.openedDatabaseConnections[dataSourceId] || [];
+    const openedDatabaseConnections = state.openedDatabaseConnections || {};
+    const opened = openedDatabaseConnections[dataSourceId] || [];
     return {
       openedDatabaseConnections: {
-        ...state.openedDatabaseConnections,
+        ...openedDatabaseConnections,
         [dataSourceId]: opened.filter((name) => name !== databaseName),
       },
     };

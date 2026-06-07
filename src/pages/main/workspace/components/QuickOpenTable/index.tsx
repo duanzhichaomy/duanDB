@@ -74,7 +74,7 @@ async function getDatabaseScopes(connection: IConnectionListItem): Promise<IScop
   const dbList = await connectionService.getDatabaseList({ dataSourceId: connection.id });
   const dbNames = (dbList || []).map((item: { name: string }) => item.name).filter(Boolean);
   const selectedDbNames = loadDbFilter(connection.id);
-  const openedDbNames = useWorkspaceStore.getState().openedDatabaseConnections[connection.id] || [];
+  const openedDbNames = useWorkspaceStore.getState().openedDatabaseConnections?.[connection.id] || [];
   const visibleDbNames = selectedDbNames ? dbNames.filter((name) => selectedDbNames.includes(name)) : dbNames;
   const activeDbNames = visibleDbNames.filter((name) => openedDbNames.includes(name));
 
@@ -108,7 +108,7 @@ const QuickOpenTable = memo<IProps>((props) => {
   const requestIdRef = useRef(0);
   const currentConnectionDetails = useWorkspaceStore((state) => state.currentConnectionDetails);
   const openedDbNames = useWorkspaceStore((state) => (
-    currentConnectionDetails?.id ? state.openedDatabaseConnections[currentConnectionDetails.id] : undefined
+    currentConnectionDetails?.id ? state.openedDatabaseConnections?.[currentConnectionDetails.id] : undefined
   ));
   const [keyword, setKeyword] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
