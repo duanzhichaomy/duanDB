@@ -11,12 +11,12 @@ import { Context } from '@/components/SearchResult';
 interface IProps {
   className?: string;
   promptWord: any[];
-  getTableData: (params?: Partial<IExecuteSqlParams>) => void;
+  getTableData: (params?: Partial<IExecuteSqlParams>) => Promise<unknown>;
 }
 
 export interface IScreeningResultRefFunction {
   setOrderByValue: (value: string) => void;
-  search: (extraParams?: Partial<IExecuteSqlParams>) => void;
+  search: (extraParams?: Partial<IExecuteSqlParams>) => Promise<unknown>;
 }
 
 const keywordHintList = [
@@ -96,7 +96,7 @@ export default forwardRef<IScreeningResultRefFunction, IProps>((props, ref) => {
     const orderByValue = orderBySingleFileMonacoEditorRef.current?.getAllContent().trim() || '';
     let sql = whereValue ? notChangedSql + ' WHERE ' + whereValue : notChangedSql;
     sql = orderByValue ? sql + ' ORDER BY ' + orderByValue : sql;
-    getTableData({ sql, ...extraParams });
+    return getTableData({ sql, ...extraParams });
   };
 
   const focusChange = (_isActive: boolean) => {

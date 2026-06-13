@@ -10,7 +10,7 @@ export default {
   'workspace.menu.view': '查看',
   'workspace.menu.editTableData': '编辑表数据',
   'workspace.menu.queryConsole': '新建查询',
-  'workspace.menu.closeConnection': '关闭连接',
+  'workspace.menu.closeConnection': '关闭数据库',
   'workspace.menu.viewAllTable': '查看所有表',
   'workspace.menu.createDatabase': '创建数据库',
   'workspace.menu.createSchema': '创建Schema',

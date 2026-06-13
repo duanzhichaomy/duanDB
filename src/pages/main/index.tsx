@@ -31,7 +31,6 @@ import CustomLayout from '@/components/CustomLayout';
 import Workspace from './workspace';
 import Connection from './connection';
 import Setting from '@/blocks/Setting';
-import LogViewer from '@/blocks/LogViewer';
 import QuickOpenTable from './workspace/components/QuickOpenTable';
 
 import styles from './index.less';
@@ -230,7 +229,6 @@ function MainPage() {
           )}
         </ul>
         <div className={styles.footer}>
-          <LogViewer className={styles.setIcon} />
           <Setting className={styles.setIcon} />
         </div>
       </div>

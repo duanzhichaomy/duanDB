@@ -817,8 +817,8 @@ export default function TableBox(props: ITableProps) {
               type: props.executeSqlParams?.databaseType,
             })
             .catch(() => {});
-          // 更新成功后，需要重新获取表格数据
-          getTableData().then(() => {
+          // 更新成功后，需要按当前筛选条件重新获取表格数据
+          refreshTableData().then(() => {
             message.success(i18n('common.text.successfulExecution'));
             setUpdateData([]);
           });
@@ -866,9 +866,16 @@ export default function TableBox(props: ITableProps) {
       });
   };
 
+  const refreshTableData = (params?: Partial<IExecuteSqlParams>) => {
+    if (concealTabHeader && screeningResultRef.current) {
+      return screeningResultRef.current.search(params);
+    }
+    return getTableData(params);
+  };
+
   // sql执行成功后的回调
   const executeSuccessCallBack = () => {
-    getTableData().then(() => {
+    refreshTableData().then(() => {
       setViewUpdateDataSqlModal(false);
       message.success(i18n('common.text.successfulExecution'));
     });
@@ -1450,7 +1457,7 @@ export default function TableBox(props: ITableProps) {
                 <div
                   onClick={() => {
                     setRefreshSpinning(true);
-                    screeningResultRef.current ? screeningResultRef.current.search() : getTableData();
+                    refreshTableData();
                     setTimeout(() => setRefreshSpinning(false), 600);
                   }}
                   className={classnames(styles.refreshIconBox)}

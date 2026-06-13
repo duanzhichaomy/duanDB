@@ -12,6 +12,7 @@ import {
   removeOpenedDatabaseConnection,
   setCurrentWorkspaceGlobalExtend,
 } from '@/pages/main/workspace/store/common';
+import { useWorkspaceStore } from '@/pages/main/workspace/store';
 import LoadingGracile from '@/components/Loading/LoadingGracile';
 import { setFocusId, setFocusTreeNode, useTreeStore, clearTreeStore } from './treeStore';
 import { useGetRightClickMenu } from './hooks/useGetRightClickMenu';
@@ -220,6 +221,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const indentArr = new Array(level).fill('indent');
   const { treeData, setTreeData, searchTreeData, setSearchTreeData } = useContext(Context);
+  const openedDatabaseConnections = useWorkspaceStore((state) => state.openedDatabaseConnections || {});
 
   // 加载数据
   function loadData(_props?: { refresh: boolean; pageNo: number; treeNodeData?: ITreeNode }) {
@@ -387,7 +389,16 @@ const TreeNode = memo((props: TreeNodeIProps) => {
     TreeNodeType.COLUMN, TreeNodeType.KEY, TreeNodeType.INDEX, TreeNodeType.VIEWCOLUMN,
   ]);
 
+  const isDatabaseOpened =
+    treeNodeData.treeNodeType === TreeNodeType.DATABASE &&
+    (
+      openedDatabaseConnections?.[treeNodeData.extraParams?.dataSourceId || 0] || []
+    ).includes(treeNodeData.extraParams?.databaseName || treeNodeData.name);
+
   const getIconColorClass = (treeNodeType: TreeNodeType) => {
+    if (treeNodeType === TreeNodeType.DATABASE) {
+      return isDatabaseOpened ? styles.databaseOpenedIcon : styles.databaseClosedIcon;
+    }
     if (folderTypes.has(treeNodeType)) return styles.folderIcon;
     if (itemTypes.has(treeNodeType)) return styles.itemIcon;
     return '';
@@ -511,7 +522,7 @@ const TreeNode = memo((props: TreeNodeIProps) => {
         </Tooltip>
       </Dropdown>
     );
-  }, [isFocus, isLoading, rightClickMenu, treeNodeData.children, treeNodeData.expanded]);
+  }, [isFocus, isLoading, isDatabaseOpened, rightClickMenu, treeNodeData.children, treeNodeData.expanded]);
 
   return treeNodeDom;
 });
