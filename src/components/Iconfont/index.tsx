@@ -108,7 +108,7 @@ const lucideMap: Record<string, LucideIcon> = {
   '\ue670': PanelLeftOpen,  // 面板左开
   '\ue673': PanelRightOpen, // 面板右开
   '\ue641': ChevronDown,    // 展开箭头
-  '\u100be': ChevronDown,   // 下箭头
+  '\u{100be}': ChevronDown, // 下箭头
 
   // === 加号/新增 ===
   '\ue631': Plus,           // 新增

@@ -79,11 +79,19 @@
     height: 100%;
   }
 
-  .updateCount {
+  .executionMessage {
     height: calc(100% - 26px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    padding: 18px 16px;
+    overflow: auto;
+    color: var(--color-text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .executionSql {
+    margin-bottom: 2px;
   }
 }
-

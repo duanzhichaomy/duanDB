@@ -873,6 +873,31 @@ export default function TableBox(props: ITableProps) {
     return getTableData(params);
   };
 
+  const handleRefreshTableData = useCallback(() => {
+    setRefreshSpinning(true);
+    refreshTableData();
+    setTimeout(() => setRefreshSpinning(false), 600);
+  }, [refreshTableData]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isActive) return;
+      if ((e.target as HTMLElement | null)?.closest?.('[data-shortcut-recording-input]')) return;
+
+      const isRefreshShortcut =
+        e.code === 'KeyR' && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey;
+
+      if (!isRefreshShortcut) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      handleRefreshTableData();
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [handleRefreshTableData, isActive]);
+
   // sql执行成功后的回调
   const executeSuccessCallBack = () => {
     refreshTableData().then(() => {
@@ -1455,11 +1480,7 @@ export default function TableBox(props: ITableProps) {
               {/* 刷新 */}
               <Popover mouseEnterDelay={0.8} content={i18n('common.button.refresh')} trigger="hover">
                 <div
-                  onClick={() => {
-                    setRefreshSpinning(true);
-                    refreshTableData();
-                    setTimeout(() => setRefreshSpinning(false), 600);
-                  }}
+                  onClick={handleRefreshTableData}
                   className={classnames(styles.refreshIconBox)}
                 >
                   <Iconfont code="&#xe62d;" className={classnames({ [styles.spinning]: refreshSpinning })} />

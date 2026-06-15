@@ -37,9 +37,15 @@ interface IOption<T> {
   value: T;
 }
 
-const emptyOption = {
+const emptyDatabaseOption = {
   key: '',
-  label: '',
+  label: '不选择数据库',
+  value: '',
+};
+
+const emptySchemaOption = {
+  key: '',
+  label: '未选择 Schema',
   value: '',
 };
 
@@ -47,8 +53,8 @@ const SelectBoundInfo = memo((props: IProps) => {
   const { boundInfo, setBoundInfo } = props;
   const { setSelectedTables, setTableNameList, isActive } = useContext(IntelligentEditorContext);
   const connectionList = useConnectionStore((state) => state.connectionList);
-  const [databaseNameList, setDatabaseNameList] = useState<IOption<string>[]>([emptyOption]);
-  const [schemaList, setSchemaList] = useState<IOption<string>[]>([emptyOption]);
+  const [databaseNameList, setDatabaseNameList] = useState<IOption<string>[]>([emptyDatabaseOption]);
+  const [schemaList, setSchemaList] = useState<IOption<string>[]>([emptySchemaOption]);
   const [allTableList, setAllTableList] = useState<any>([]);
   const [selectedDbNames, setSelectedDbNames] = useState<string[] | null>(
     () => loadDbFilter(boundInfo.dataSourceId),
@@ -177,7 +183,7 @@ const SelectBoundInfo = memo((props: IProps) => {
         if (!_databaseNameList.length) {
           getSchemaList();
         }
-        setDatabaseNameList([emptyOption, ..._databaseNameList]);
+        setDatabaseNameList([emptyDatabaseOption, ..._databaseNameList]);
       });
   };
 
@@ -197,7 +203,7 @@ const SelectBoundInfo = memo((props: IProps) => {
           label: item.name,
           value: item.name,
         }));
-        setSchemaList([emptyOption, ..._schemaList]);
+        setSchemaList([emptySchemaOption, ..._schemaList]);
       });
   };
 

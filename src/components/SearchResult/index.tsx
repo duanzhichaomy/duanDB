@@ -44,6 +44,11 @@ const getDefaultResultConfig = (): IResultConfig => ({
   hasNextPage: true,
 });
 
+const formatDurationSeconds = (duration?: number) => {
+  if (duration == null) return '0.000s';
+  return `${(duration / 1000).toFixed(3)}s`;
+};
+
 export interface ISearchResultRef {
   handleExecuteSQL: (sql: string) => void;
 }
@@ -166,8 +171,10 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
               />
             ) : (
               <div className={styles.updateCountBox}>
-                <div className={styles.updateCount}>
-                  {i18n('common.text.affectedRows', queryResultData.updateCount)}
+                <div className={styles.executionMessage}>
+                  <div className={styles.executionSql}>{queryResultData.originalSql || queryResultData.sql}</div>
+                  <div>{`> Affected rows: ${queryResultData.updateCount ?? 0}`}</div>
+                  <div>{`> 查询时间: ${formatDurationSeconds(queryResultData.duration)}`}</div>
                 </div>
                 <StatusBar
                   dataLength={queryResultData?.dataList?.length}
