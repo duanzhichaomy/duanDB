@@ -20,6 +20,7 @@ import { openView, openFunction, openProcedure, openTrigger } from '../functions
 import { viewDDL } from '../functions/viewDDL';
 import { deleteTable } from '../functions/deleteTable';
 import { openTableNode } from '../functions/openTable';
+import { renameTable } from '../functions/renameTable';
 
 // ----- services -----
 import connectionService from '@/service/connection';
@@ -237,6 +238,15 @@ export const useGetRightClickMenu = (props: IProps) => {
               },
             },
           });
+        },
+      },
+
+      // 重命名表
+      [OperationColumn.RenameTable]: {
+        text: i18n('workspace.menu.renameTable'),
+        icon: '\ue602',
+        handle: () => {
+          renameTable(treeNodeData, loadData);
         },
       },
 
@@ -520,6 +530,15 @@ export const getRightClickMenu = (props: IProps) => {
             submitCallback: () => {treeNodeData.parentNode?.loadData?.({refresh: true})},
           },
         });
+      },
+    },
+
+    // 重命名表
+    [OperationColumn.RenameTable]: {
+      text: i18n('workspace.menu.renameTable'),
+      icon: '\ue602',
+      handle: () => {
+        renameTable(treeNodeData);
       },
     },
 

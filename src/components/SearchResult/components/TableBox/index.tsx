@@ -100,6 +100,7 @@ const preCode = '$$duandb_';
 
 // No列的code
 const colNoCode = `${preCode}0No.`;
+const emptyTableRowCount = 80;
 
 const getDefaultPaginationConfig = (): IResultConfig => ({
   pageNo: 1,
@@ -1022,6 +1023,8 @@ export default function TableBox(props: ITableProps) {
 
   // 表格 列配置
   const columns: ArtColumn[] = useMemo(() => {
+    const isNoData = !tableData.length;
+
     return (queryResultData.headerList || []).map((item, colIndex) => {
       const { dataType, name } = item;
       const isNumber = dataType === TableDataType.NUMERIC;
@@ -1052,6 +1055,10 @@ export default function TableBox(props: ITableProps) {
           lock: true,
           // features: { sortable: compareStrings },
           render: (value: any, rowData, rowIndex) => {
+            if (isNoData) {
+              return <div className={styles.emptyTableCell} />;
+            }
+
             const rowId = rowData[colNoCode];
             return (
               <div
@@ -1081,6 +1088,10 @@ export default function TableBox(props: ITableProps) {
         key: name,
         title: renderColumnHeaderTitle(item, colId, showColumnType),
         render: (value: any, rowData) => {
+          if (isNoData) {
+            return <div className={styles.emptyTableCell} />;
+          }
+
           const rowId = rowData[colNoCode];
           const content = renderTableCellValue(value);
           return (
@@ -1125,7 +1136,16 @@ export default function TableBox(props: ITableProps) {
         features: { sortable: isNumber ? compareStrings : true },
       };
     });
-  }, [queryResultData.headerList, editingCell, editingData, curOperationRowNo, curOperationColIds, oldDataList, showColumnType]);
+  }, [
+    queryResultData.headerList,
+    tableData.length,
+    editingCell,
+    editingData,
+    curOperationRowNo,
+    curOperationColIds,
+    oldDataList,
+    showColumnType,
+  ]);
 
   const { updateTableData, handleCreateData, handleDeleteData } = useCurdTableData({
     tableData,
@@ -1157,11 +1177,33 @@ export default function TableBox(props: ITableProps) {
     return totalWidth;
   }, [columns, columnResize]);
 
+  const emptyTableData = useMemo(() => {
+    if (tableData.length || !columns.length) {
+      return [];
+    }
+
+    return Array.from({ length: emptyTableRowCount }).map((_, rowIndex) => {
+      const rowData: { [key: string]: string } = {
+        [colNoCode]: `empty-${rowIndex}`,
+      };
+
+      columns.forEach((column) => {
+        if (column.code && column.code !== colNoCode) {
+          rowData[column.code] = '';
+        }
+      });
+
+      return rowData;
+    });
+  }, [columns, tableData.length]);
+
   // 当前展示的数据，供状态栏和右键菜单读取最新值
   const filteredTableData = useMemo(() => {
     filteredTableDataRef.current = tableData;
     return tableData;
   }, [tableData]);
+
+  const displayTableData = tableData.length ? filteredTableData : emptyTableData;
 
   // 自定义排序表头，支持独立点击上/下箭头
   const CustomSortHeaderCell = useMemo(() => {
@@ -1209,7 +1251,7 @@ export default function TableBox(props: ITableProps) {
 
   // 表格渲染的配置
   const pipeline = useTablePipeline()
-    .input({ dataSource: filteredTableData, columns })
+    .input({ dataSource: displayTableData, columns })
     .use(
       features.sort({
         mode: 'single',

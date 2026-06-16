@@ -35,6 +35,7 @@ export enum OperationColumn {
   ViewDDL = 'viewDDL', // 查看ddl
   EditSource = 'editSource', // 编辑数据源
   EditTable = 'editTable', // 编辑表
+  RenameTable = 'renameTable', // 重命名表
   EditTableData = 'editTableData', // 编辑表数据
   CopyName = 'copyName', // 复制名称
   EditView = 'editView', // 编辑视图

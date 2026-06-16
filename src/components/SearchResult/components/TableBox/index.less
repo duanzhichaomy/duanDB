@@ -130,6 +130,16 @@
     .art-table-body {
       height: calc(100% - 28px);
       overflow-y: auto !important;
+      background: #ffffff;
+    }
+    .art-table-row td {
+      background-color: #ffffff !important;
+    }
+    .art-table-row:nth-child(even) td {
+      background-color: #f8fbff !important;
+    }
+    .art-table-row:hover td {
+      background-color: inherit !important;
     }
   }
   table {
@@ -321,6 +331,13 @@
 
 .table {
   height: 100%;
+}
+
+.emptyTableCell {
+  height: 26px;
+  background: transparent;
+  cursor: default;
+  user-select: none;
 }
 
 .tableItem {
