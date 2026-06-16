@@ -1,6 +1,9 @@
 @import '../../../../styles/var.less';
 @import '../../../../styles/motion.less';
 
+@table-cell-focus-bg: #ecebff;
+@table-cell-focus-border: rgba(99, 91, 255, 0.28);
+
 .button-bar-item() {
   width: 28px;
   height: 28px;
@@ -403,16 +406,15 @@
   }
 }
 .tableItemFocus {
-  background-color: #635bff;
-  color: var(--color-bg-base);
+  background-color: @table-cell-focus-bg;
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px @table-cell-focus-border;
   .previewTableItemContent {
-    background-color: #635bff;
-  }
-  .previewTableItemContent{
-    background-color: #635bff;
+    background-color: @table-cell-focus-bg;
+    color: inherit;
   }
   .cellValueNull {
-    color: var(--color-bg-base);
+    color: var(--color-text-tertiary);
   }
 }
 .tableItemSuccess {
