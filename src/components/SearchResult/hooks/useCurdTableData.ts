@@ -2,6 +2,12 @@ import lodash from 'lodash';
 import { CRUD } from '@/constants';
 import { USER_FILLED_VALUE, IUpdateData } from '../components/TableBox/index';
 
+interface ICellRangeUpdateData {
+  colId: string;
+  rowIds: string[];
+  values: Array<string | null>;
+}
+
 export interface IProps {
   preCode: string;
   //
@@ -45,80 +51,94 @@ const useCurdTableData = (props: IProps) => {
   } = props;
 
   // 编辑数据
-  const updateTableData = (type: 'setCell' | 'setRow', _data: string | null | Array<string | null>) => {
+  const updateTableData = (
+    type: 'setCell' | 'setRow' | 'setCells',
+    _data: string | null | Array<string | null> | ICellRangeUpdateData,
+  ) => {
     const newTableData = lodash.cloneDeep(tableData);
-    let oldRowDataList: Array<string | null> = [];
-    let newRowDataList: Array<string | null> = [];
-    let curRowNo: string | null = null;
+    const changedRows: Array<{ rowId: string; dataList: Array<string | null> }> = [];
+
     if (type === 'setCell' && (typeof _data === 'string' || _data === null)) {
       const [colId, rowId] = editingCell!;
-      curRowNo = rowId;
       newTableData.forEach((item) => {
         if (item[colNoCode] === rowId) {
           item[colId] = _data;
-          newRowDataList = Object.keys(item).map((i) => item[i]);
+          changedRows.push({
+            rowId,
+            dataList: Object.keys(item).map((i) => item[i]),
+          });
         }
       });
     }
 
     if (type === 'setRow' && Array.isArray(_data) && curOperationRowNo) {
-      curRowNo = curOperationRowNo[0];
-      _data.unshift(curOperationRowNo[0]);
+      const rowId = curOperationRowNo[0];
+      const nextRowData = [rowId, ..._data];
       newTableData.forEach((t) => {
-        if (t[colNoCode] === curOperationRowNo[0]) {
+        if (t[colNoCode] === rowId) {
           const dataLength = Object.keys(t).length;
           Object.keys(t).forEach((item, index) => {
             if (index > dataLength) return;
-            t[item] = _data[index] || null;
+            t[item] = nextRowData[index] || null;
           });
+          changedRows.push({ rowId, dataList: Object.keys(t).map((i) => t[i]) });
           return;
         }
       });
-      newRowDataList = _data;
     }
+
+    if (type === 'setCells' && !Array.isArray(_data) && typeof _data === 'object' && _data) {
+      const { colId, rowIds, values } = _data;
+      newTableData.forEach((item) => {
+        const rowIndex = rowIds.indexOf(item[colNoCode]!);
+        if (rowIndex === -1 || rowIndex >= values.length) return;
+        item[colId] = values[rowIndex];
+        changedRows.push({
+          rowId: item[colNoCode]!,
+          dataList: Object.keys(item).map((i) => item[i]),
+        });
+      });
+    }
+
+    if (!changedRows.length) return;
 
     setTableData(newTableData);
 
-    oldDataList.forEach((item) => {
-      if (item[0] === curRowNo) {
-        oldRowDataList = item;
+    let newUpdateData = lodash.cloneDeep(updateData);
+    changedRows.forEach(({ rowId, dataList }) => {
+      const oldRowDataList = oldDataList.find((item) => item[0] === rowId) || [];
+      const index = newUpdateData.findIndex((item) => item.rowId === rowId);
+      // 如果新旧数据一样，代表用户虽然编辑过，但是又改回去了，则不需要更新
+      if (oldRowDataList?.join(',') === dataList?.join(',')) {
+        if (index !== -1) {
+          newUpdateData = newUpdateData.filter((item) => item.rowId !== rowId);
+        }
+        return;
       }
-    });
 
-    const index = updateData.findIndex((item) => item.rowId === curRowNo);
-    // 如果newRowDataList和oldRowDataList的数据一样，代表用户虽然编辑过，但是又改回去了，则不需要更新
-    if (oldRowDataList?.join(',') === newRowDataList?.join(',')) {
-      if (index !== -1) {
-        setUpdateData(updateData.filter((item) => item.rowId !== curRowNo && item.type !== CRUD.UPDATE));
-      }
-      return;
-    }
-
-    if (index === -1) {
-      setUpdateData([
-        ...updateData,
-        {
+      if (index === -1) {
+        newUpdateData.push({
           type: CRUD.UPDATE,
           oldDataList: oldRowDataList,
-          dataList: newRowDataList,
-          rowId: curRowNo!,
-        },
-      ]);
-      return;
-    }
+          dataList,
+          rowId,
+        });
+        return;
+      }
 
-    const newRowUpdateData = {
-      ...updateData[index],
-      dataList: newRowDataList,
-    };
+      const newRowUpdateData = {
+        ...newUpdateData[index],
+        dataList,
+      };
 
-    // 如果是删除过的，则需要把type改为update
-    if (newRowUpdateData.type === CRUD.DELETE) {
-      newRowUpdateData.type = CRUD.UPDATE;
-    }
+      // 如果是删除过的，则需要把type改为update
+      if (newRowUpdateData.type === CRUD.DELETE) {
+        newRowUpdateData.type = CRUD.UPDATE;
+      }
 
-    updateData[index] = newRowUpdateData;
-    setUpdateData([...updateData]);
+      newUpdateData[index] = newRowUpdateData;
+    });
+    setUpdateData(newUpdateData);
   };
 
   // 处理创建数据

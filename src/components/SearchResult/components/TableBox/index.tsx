@@ -66,6 +66,11 @@ interface IViewTableCellData {
   rowId: string;
 }
 
+interface ICellRangeSelection {
+  colId: string;
+  rowIds: string[];
+}
+
 export interface IUpdateData {
   oldDataList?: Array<string | null>;
   dataList?: Array<string | null>;
@@ -135,6 +140,8 @@ export default function TableBox(props: ITableProps) {
   const [curOperationRowNo, setCurOperationRowNo] = useState<Array<string> | null>(null);
   // 当前选中的列 id（点击列标题时填充，与行选择互斥）
   const [curOperationColIds, setCurOperationColIds] = useState<Array<string> | null>(null);
+  // 当前竖向拖拽选中的单元格范围（同一列的多行）
+  const [curOperationCellRange, setCurOperationCellRange] = useState<ICellRangeSelection | null>(null);
   const [refreshSpinning, setRefreshSpinning] = useState(false);
   // 操作过的数据列表
   const [updateData, setUpdateData] = useState<IUpdateData[] | []>([]);
@@ -162,6 +169,8 @@ export default function TableBox(props: ITableProps) {
   // const [tableBoxWidth, setTableBoxWidth] = useState<number>(0);
   // 缓存当前展示的（过滤后）表格数据，供表头右键菜单读取最新值
   const filteredTableDataRef = useRef<{ [key: string]: string | null }[]>([]);
+  const cellRangeDragRef = useRef<{ colId: string; anchorRowId: string; moved: boolean } | null>(null);
+  const suppressCellClickRef = useRef<boolean>(false);
   // 表头是否展示字段类型（受右键菜单中的"显示字段类型"开关控制，作用于所有列）
   const [showColumnType, setShowColumnType] = useState<boolean>(false);
 
@@ -429,6 +438,19 @@ export default function TableBox(props: ITableProps) {
     return header?.name || code;
   };
 
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (cellRangeDragRef.current?.moved) {
+        suppressCellClickRef.current = true;
+        window.getSelection()?.removeAllRanges();
+      }
+      cellRangeDragRef.current = null;
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, []);
+
   // 点击列头排序箭头时，生成 ORDER BY 子句并触发服务端查询
   const onChangeSorts = (nextSorts: SortItem[]) => {
     setSorts(nextSorts);
@@ -489,6 +511,10 @@ export default function TableBox(props: ITableProps) {
   }
 
   const handleClickTableItem = (colId, rowId, value, isEditing) => {
+    if (suppressCellClickRef.current) {
+      suppressCellClickRef.current = false;
+      return;
+    }
     // 1. 如果当前单元格正在编辑，则不需要再次编辑
     // 2. 如果当前单元格正在编辑，则不需要聚焦
     if (editingCell?.[0] === colId && editingCell?.[1] === rowId && editingCell?.[2]) {
@@ -498,6 +524,7 @@ export default function TableBox(props: ITableProps) {
     // 聚焦当前单元格，取消对于行/列的聚焦
     setCurOperationRowNo(null);
     setCurOperationColIds(null);
+    setCurOperationCellRange(null);
     // 当前聚焦或者编辑的单元格的数据
     setEditingData(value);
     // 如果数据不支持修改，则该单元格不支持编辑
@@ -555,6 +582,11 @@ export default function TableBox(props: ITableProps) {
     }
     // 当前单元格所在的列被选中了(列聚焦)
     if (curOperationColIds?.includes(colId)) {
+      styleList.push(styles.tableItemFocus);
+      return classnames(...styleList);
+    }
+    // 当前单元格处于竖向拖拽选区
+    if (curOperationCellRange?.colId === colId && curOperationCellRange.rowIds.includes(rowId)) {
       styleList.push(styles.tableItemFocus);
       return classnames(...styleList);
     }
@@ -659,9 +691,25 @@ export default function TableBox(props: ITableProps) {
         return false;
       }
     }
+    // 如果有竖向单元格选区，选区内任意单元格存在待恢复值时可撤销
+    if (curOperationCellRange?.rowIds.length) {
+      const { colId, rowIds } = curOperationCellRange;
+      const hasChangedCell = rowIds.some((rowId) => {
+        const pendingRowData = updateData.find((item) => item.rowId === rowId);
+        if (pendingRowData?.type === CRUD.CREATE || pendingRowData?.type === CRUD.DELETE) {
+          return true;
+        }
+        const oldRowTableData = oldTableData.find((item) => item[colNoCode] === rowId);
+        const currentRowData = tableData.find((item) => item[colNoCode] === rowId);
+        return !!oldRowTableData && !!currentRowData && !lodash.isEqual(oldRowTableData[colId], currentRowData[colId]);
+      });
+      if (hasChangedCell) {
+        return false;
+      }
+    }
     // 如果都没，那撤销按钮不可用
     return true;
-  }, [curOperationRowNo, updateData, editingCell, oldTableData, tableData]);
+  }, [curOperationRowNo, curOperationCellRange, updateData, editingCell, oldTableData, tableData]);
 
   // 处理撤销
   const handleRevoke = () => {
@@ -680,6 +728,19 @@ export default function TableBox(props: ITableProps) {
       setUpdateData(_updateData);
       setTableData(_tableData);
       setCurOperationRowNo(null);
+      setEditingCell(null);
+      return;
+    }
+
+    // 竖向单元格选区撤销
+    if (curOperationCellRange?.rowIds.length) {
+      const { colId, rowIds } = curOperationCellRange;
+      const values = rowIds.map((rowId) => {
+        const oldRowTableData = oldTableData.find((item) => item[colNoCode] === rowId);
+        return oldRowTableData?.[colId] ?? null;
+      });
+      updateTableData('setCells', { colId, rowIds, values });
+      setCurOperationCellRange(null);
       setEditingCell(null);
       return;
     }
@@ -839,6 +900,8 @@ export default function TableBox(props: ITableProps) {
   const getTableData = (params?: Partial<IExecuteSqlParams>) => {
     setTableLoading(true);
     setCurOperationRowNo(null);
+    setCurOperationColIds(null);
+    setCurOperationCellRange(null);
     setEditingCell(null);
     const executeSQLParams: IExecuteSqlParams = {
       sql: queryResultData.originalSql,
@@ -887,17 +950,33 @@ export default function TableBox(props: ITableProps) {
 
       const isRefreshShortcut =
         e.code === 'KeyR' && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey;
+      const isSubmitShortcut =
+        e.code === 'KeyS' && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey;
 
-      if (!isRefreshShortcut) return;
+      if (!isRefreshShortcut && !isSubmitShortcut) return;
+      if (isSubmitShortcut) {
+        const target = e.target as HTMLElement | null;
+        const activeElement = document.activeElement as HTMLElement | null;
+        const isTableFocused =
+          !!tableBoxRef.current &&
+          (!!target?.closest?.(`.${styles.supportBaseTableBox}`) ||
+            (!!activeElement && tableBoxRef.current.contains(activeElement)));
+
+        if (!viewTable && !concealTabHeader && !isTableFocused) return;
+      }
 
       e.preventDefault();
       e.stopPropagation();
-      handleRefreshTableData();
+      if (isRefreshShortcut) {
+        handleRefreshTableData();
+        return;
+      }
+      handleUpdateSubmit();
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [handleRefreshTableData, isActive]);
+  }, [concealTabHeader, handleRefreshTableData, handleUpdateSubmit, isActive, viewTable]);
 
   // sql执行成功后的回调
   const executeSuccessCallBack = () => {
@@ -941,6 +1020,69 @@ export default function TableBox(props: ITableProps) {
     [],
   );
 
+  const normalizeCopyValue = useCallback((val: string | null | undefined) => {
+    if (val === USER_FILLED_VALUE.DEFAULT || val == null) return '';
+    return String(val);
+  }, []);
+
+  const clearNativeSelection = useCallback(() => {
+    window.getSelection()?.removeAllRanges();
+  }, []);
+
+  const getRowIdRange = useCallback(
+    (startRowId: string, endRowId: string) => {
+      const startIndex = tableData.findIndex((item) => item[colNoCode] === startRowId);
+      const endIndex = tableData.findIndex((item) => item[colNoCode] === endRowId);
+      if (startIndex < 0 || endIndex < 0) return [endRowId];
+      const [from, to] = startIndex < endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
+      return tableData.slice(from, to + 1).map((item) => item[colNoCode]!);
+    },
+    [tableData],
+  );
+
+  const getCellRangeData = useCallback(
+    (selection: ICellRangeSelection): Array<Array<string | null>> => {
+      return selection.rowIds.map((rowId) => {
+        const row = tableData.find((item) => item[colNoCode] === rowId);
+        return [normalizeCopyValue(row?.[selection.colId])];
+      });
+    },
+    [normalizeCopyValue, tableData],
+  );
+
+  const startCellRangeSelect = useCallback(
+    (event: React.MouseEvent, colId: string, rowId: string, value: string | null) => {
+      if (event.button !== 0) return;
+      if (editingCell?.[0] === colId && editingCell?.[1] === rowId && editingCell?.[2]) return;
+      event.preventDefault();
+      clearNativeSelection();
+      cellRangeDragRef.current = { colId, anchorRowId: rowId, moved: false };
+      setEditingCell(null);
+      setCurOperationRowNo(null);
+      setCurOperationColIds(null);
+      const nextSelection = { colId, rowIds: [rowId] };
+      setCurOperationCellRange(nextSelection);
+      setFocusedContent([[normalizeCopyValue(value)]]);
+    },
+    [clearNativeSelection, editingCell, normalizeCopyValue],
+  );
+
+  const extendCellRangeSelect = useCallback(
+    (colId: string, rowId: string) => {
+      const dragState = cellRangeDragRef.current;
+      if (!dragState || dragState.colId !== colId) return;
+      clearNativeSelection();
+      const rowIds = getRowIdRange(dragState.anchorRowId, rowId);
+      if (rowIds.length > 1) {
+        dragState.moved = true;
+      }
+      const nextSelection = { colId, rowIds };
+      setCurOperationCellRange(nextSelection);
+      setFocusedContent(getCellRangeData(nextSelection));
+    },
+    [clearNativeSelection, getCellRangeData, getRowIdRange],
+  );
+
   const { multipleSelectColumn } = useMultipleSelectColumn({
     curOperationColIds,
     setCurOperationColIds,
@@ -952,11 +1094,13 @@ export default function TableBox(props: ITableProps) {
   const handleColHeaderClick = (colId: string) => {
     setEditingCell(null);
     setCurOperationRowNo(null);
+    setCurOperationCellRange(null);
     multipleSelectColumn(colId);
   };
 
   const handelRowNoClick = (rowId: string) => {
     setCurOperationColIds(null);
+    setCurOperationCellRange(null);
     multipleSelect(rowId);
     setEditingCell(null);
     // const newRowData = tableData.find((item) => item[colNoCode] === rowId)!;
@@ -1041,6 +1185,7 @@ export default function TableBox(props: ITableProps) {
               onClick={() => {
                 setEditingCell(null);
                 setCurOperationColIds(null);
+                setCurOperationCellRange(null);
                 if (curOperationRowNo) {
                   setCurOperationRowNo(null);
                   return;
@@ -1100,6 +1245,8 @@ export default function TableBox(props: ITableProps) {
               data-duandb-edit-table-data-can-paste
               data-duandb-edit-table-data-can-right-click
               className={tableCellStyle(value, rowId, colId)}
+              onMouseDown={(event) => startCellRangeSelect(event, colId, rowId, value)}
+              onMouseEnter={() => extendCellRangeSelect(colId, rowId)}
               onClick={handleClickTableItem.bind(null, colId, rowId, value, false)}
               onDoubleClick={handleClickTableItem.bind(null, colId, rowId, value, true)}
               onContextMenu={handleClickTableItem.bind(null, colId, rowId, value, false)}
@@ -1143,8 +1290,13 @@ export default function TableBox(props: ITableProps) {
     editingData,
     curOperationRowNo,
     curOperationColIds,
+    curOperationCellRange,
     oldDataList,
+    oldTableData,
+    updateData,
     showColumnType,
+    startCellRangeSelect,
+    extendCellRangeSelect,
   ]);
 
   const { updateTableData, handleCreateData, handleDeleteData } = useCurdTableData({
@@ -1166,7 +1318,12 @@ export default function TableBox(props: ITableProps) {
   });
 
   // 处理粘贴的数据 hooks
-  usePasteData({ updateTableData, curOperationRowNo, editingCell });
+  usePasteData({
+    updateTableData,
+    curOperationRowNo,
+    curOperationCellRange,
+    editingCell,
+  });
 
   // 计算表格总宽度，避免表格撑满整个屏幕
   const tableWidth = useMemo(() => {
@@ -1619,7 +1776,13 @@ export default function TableBox(props: ITableProps) {
               </Dropdown>
             </div>
           </div>
-          {concealTabHeader && <ScreeningResult ref={screeningResultRef} getTableData={getTableData} promptWord={queryResultData.headerList} />}
+          {concealTabHeader && (
+            <ScreeningResult
+              ref={screeningResultRef}
+              getTableData={getTableData}
+              promptWord={queryResultData.headerList}
+            />
+          )}
           {isActive ? (
             <RightClickMenu menuList={rowRightClickMenu}>
               <div

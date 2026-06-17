@@ -3,13 +3,14 @@ import { clipboardToArray } from '@/utils';
 
 interface IUsePasteDataRelyData {
   curOperationRowNo: Array<string> | null;
+  curOperationCellRange: { colId: string; rowIds: string[] } | null;
   editingCell;
   updateTableData;
 }
 
 // 处理粘贴的数据 hooks
 const usePasteData = (props: IUsePasteDataRelyData) => {
-  const { curOperationRowNo, editingCell, updateTableData } = props;
+  const { curOperationRowNo, curOperationCellRange, editingCell, updateTableData } = props;
   const [canPaste, setCanPaste] = useState<boolean>(false);
 
   // 判断当前是否可以粘贴
@@ -33,6 +34,27 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
   // 读取剪切板数据，更新表格数据
   useEffect(() => {
     const handleCopy = () => {
+      if (curOperationCellRange?.rowIds.length) {
+        navigator.clipboard
+          .readText()
+          .then((text) => {
+            const array2D = clipboardToArray(text.replace(/\r/g, ''));
+            const pastedValues = array2D.map((row) => row[0] ?? null);
+            const values =
+              array2D.length === 1 && array2D[0]?.length === 1
+                ? curOperationCellRange.rowIds.map(() => pastedValues[0])
+                : pastedValues.slice(0, curOperationCellRange.rowIds.length);
+            updateTableData('setCells', {
+              colId: curOperationCellRange.colId,
+              rowIds: curOperationCellRange.rowIds,
+              values,
+            });
+          })
+          .catch((err) => {
+            console.error('Failed to read clipboard contents: ', err);
+          });
+        return;
+      }
       if (curOperationRowNo) {
         navigator.clipboard
           .readText()
@@ -63,7 +85,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
     return () => {
       document.removeEventListener('paste', handleCopy);
     };
-  }, [curOperationRowNo, editingCell, canPaste]);
+  }, [curOperationRowNo, curOperationCellRange, editingCell, canPaste]);
 };
 
 export default usePasteData;
