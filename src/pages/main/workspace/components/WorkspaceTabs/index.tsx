@@ -249,6 +249,8 @@ const WorkspaceTabs = memo(() => {
         databaseType={uniqueData?.databaseType}
         schemaName={uniqueData?.schemaName}
         tableName={uniqueData.tableName}
+        initialTabKey={uniqueData.initialTabKey}
+        initialTabNonce={uniqueData.initialTabNonce}
         submitCallback={uniqueData.submitCallback}
       />
     );

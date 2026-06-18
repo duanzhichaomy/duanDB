@@ -10,7 +10,7 @@ export enum EditColumnOperationType {
 // nullable
 export enum NullableType {
   // 不可为空
-  NotNull = 0,
+  NotNull = 'NO',
   // 可为空
-  Null = 1,
+  Null = 'YES',
 }

@@ -19,6 +19,8 @@ interface IProps {
   schemaName?: string | null;
   tableName?: string;
   databaseType: DatabaseTypeCode;
+  initialTabKey?: string;
+  initialTabNonce?: number;
   changeTabDetails: (data: IWorkspaceTab) => void;
   tabDetails: IWorkspaceTab;
   submitCallback: () => void;
@@ -68,6 +70,8 @@ export default memo((props: IProps) => {
     changeTabDetails,
     tabDetails,
     databaseType,
+    initialTabKey,
+    initialTabNonce,
     submitCallback,
   } = props;
   const [tableDetails, setTableDetails] = useState<IEditTableInfo>({} as any);
@@ -99,7 +103,10 @@ export default memo((props: IProps) => {
       },
     ];
   }, []);
-  const [currentTab, setCurrentTab] = useState<ITabItem>(tabList[0]);
+  const getTabByKey = (key?: string) => {
+    return tabList.find((item) => item.key === key) || tabList[0];
+  };
+  const [currentTab, setCurrentTab] = useState<ITabItem>(getTabByKey(initialTabKey));
   const [databaseSupportField, setDatabaseSupportField] = useState<IDatabaseSupportField>({
     columnTypes: [],
     charsets: [],
@@ -112,6 +119,12 @@ export default memo((props: IProps) => {
   function changeTab(item: ITabItem) {
     setCurrentTab(item);
   }
+
+  useEffect(() => {
+    if (initialTabKey) {
+      setCurrentTab(getTabByKey(initialTabKey));
+    }
+  }, [initialTabKey, initialTabNonce]);
 
   useEffect(() => {
     if (tableName) {
@@ -132,6 +145,7 @@ export default memo((props: IProps) => {
           res?.columnTypes?.map((i) => {
             return {
               ...i,
+              supportComments: i.supportComments ?? (i as any).supportComment,
               value: i.typeName,
               label: i.typeName,
             };

@@ -128,6 +128,13 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
   // 整理服务端返回的数据，构造为前端需要的数据结构
   useEffect(() => {
     if (tableDetails) {
+      const primaryIndex = tableDetails.indexList?.find((index) => index.name === 'PRIMARY' || index.type === 'PRIMARY_KEY');
+      const primaryColumnOrderMap = new Map<string, number>();
+      primaryIndex?.columnList?.forEach((column, index) => {
+        if (column.columnName) {
+          primaryColumnOrderMap.set(column.columnName, column.ordinalPosition || index + 1);
+        }
+      });
       const list =
         tableDetails?.columnList?.map((t) => {
           // typeName 是裸类型（如 "VARCHAR"），同步到 columnType 让 Select 能匹配到选项；
@@ -139,6 +146,7 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
             oldName: t.name,
             typeName: bareType || t.typeName,
             columnType: isEnumLike ? t.columnType : bareType || t.columnType,
+            primaryKeyOrder: t.primaryKey ? t.primaryKeyOrder ?? primaryColumnOrderMap.get(t.name || '') ?? null : null,
             key: uuidv4(),
           };
         }) || [];
@@ -362,7 +370,7 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
         }
         const editingDataItem = {
           ...item,
-          nullable: !item.nullable ? NullableType.Null : NullableType.NotNull,
+          nullable: item.nullable === NullableType.Null ? NullableType.NotNull : NullableType.Null,
           editStatus,
         };
         return editingDataItem;
@@ -377,7 +385,19 @@ const ColumnList = forwardRef((props: IProps, ref: ForwardedRef<IColumnListRef>)
       setDataSource((previous) => {
         const activeIndex = previous.findIndex((i) => i.key === active.id);
         const overIndex = previous.findIndex((i) => i.key === over?.id);
-        return arrayMove(previous, activeIndex, overIndex);
+        let ordinalPosition = 1;
+        return arrayMove(previous, activeIndex, overIndex).map((item) => {
+          if (item.editStatus === EditColumnOperationType.Delete) {
+            return item;
+          }
+
+          const nextOrdinalPosition = ordinalPosition;
+          ordinalPosition += 1;
+          return {
+            ...item,
+            ordinalPosition: nextOrdinalPosition,
+          };
+        });
       });
     }
   };

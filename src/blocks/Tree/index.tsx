@@ -433,6 +433,23 @@ const TreeNode = memo((props: TreeNodeIProps) => {
     });
   };
 
+  const clearNativeSelection = () => {
+    window.getSelection()?.removeAllRanges();
+  };
+
+  const handleTreeNodeMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button === 2) {
+      event.preventDefault();
+      clearNativeSelection();
+    }
+  };
+
+  const handleTreeNodeContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    clearNativeSelection();
+    handelClickTreeNode();
+  };
+
   // 双击节点
   const handelDoubleClickTreeNode = () => {
     if (
@@ -479,7 +496,8 @@ const TreeNode = memo((props: TreeNodeIProps) => {
           <div
             className={classnames(styles.treeNode, { [styles.treeNodeFocus]: isFocus })}
             onClick={handelClickTreeNode}
-            onContextMenu={handelClickTreeNode}
+            onMouseDown={handleTreeNodeMouseDown}
+            onContextMenu={handleTreeNodeContextMenu}
             onDoubleClick={handelDoubleClickTreeNode}
             data-duandb-general-can-copy-element
           >

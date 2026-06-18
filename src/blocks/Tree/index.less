@@ -39,6 +39,7 @@
               height var(--motion-duration-fast) var(--motion-ease-in-out),
               background-color var(--motion-duration-fast) var(--motion-ease-in-out);
   user-select: none;
+  -webkit-user-select: none;
   padding-right: 6px;
 
   &:hover {
@@ -67,6 +68,8 @@
   align-items: center;
   height: 100%;
   flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .right {
@@ -76,6 +79,9 @@
   height: 100%;
   padding-left: 4px;
   border-radius: 2px;
+  user-select: none;
+  -webkit-user-select: none;
+
   .moreBox {
     width: 22px;
     height: 100%;
@@ -119,6 +125,8 @@
   display: flex;
   flex: 1;
   height: 24px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .typeIcon {
@@ -156,12 +164,16 @@
   flex: 1;
   display: flex;
   align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .name {
   .f-lines(1);
   line-height: 18px;
   font-size: 12px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .type {

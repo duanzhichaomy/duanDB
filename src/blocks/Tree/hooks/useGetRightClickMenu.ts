@@ -230,6 +230,8 @@ export const useGetRightClickMenu = (props: IProps) => {
               databaseName: treeNodeData.extraParams?.databaseName,
               schemaName: treeNodeData.extraParams?.schemaName,
               tableName: treeNodeData?.name,
+              initialTabKey: 'column',
+              initialTabNonce: Date.now(),
               submitCallback: () => {
                 loadData({
                   treeNodeData: treeNodeData.parentNode,
@@ -527,6 +529,8 @@ export const getRightClickMenu = (props: IProps) => {
             databaseName: treeNodeData.extraParams?.databaseName,
             schemaName: treeNodeData.extraParams?.schemaName,
             tableName: treeNodeData?.name,
+            initialTabKey: 'column',
+            initialTabNonce: Date.now(),
             submitCallback: () => {treeNodeData.parentNode?.loadData?.({refresh: true})},
           },
         });

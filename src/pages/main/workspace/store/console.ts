@@ -103,7 +103,18 @@ export const createConsole = (params: ICreateConsoleParams) => {
 
 export const addWorkspaceTab = (params: IWorkspaceTab) => {
   const workspaceTabList = useWorkspaceStore.getState().workspaceTabList;
-  if (workspaceTabList?.findIndex((item) => item?.id === params?.id) !== -1) {
+  const existingIndex = workspaceTabList?.findIndex((item) => item?.id === params?.id) ?? -1;
+  if (existingIndex !== -1) {
+    const newList = [...(workspaceTabList || [])];
+    newList[existingIndex] = {
+      ...newList[existingIndex],
+      ...params,
+      uniqueData: {
+        ...(newList[existingIndex].uniqueData || {}),
+        ...(params.uniqueData || {}),
+      },
+    };
+    setWorkspaceTabList(newList);
     setActiveConsoleId(params.id);
     return;
   }

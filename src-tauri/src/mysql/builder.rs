@@ -118,37 +118,45 @@ pub fn build_modify_table_sql(
     }
 
     // 6. 列变更
-    for col in &new_table.column_list {
+    for (index, col) in new_table.column_list.iter().enumerate() {
         let status = col.edit_status.as_deref().unwrap_or("");
         match status {
             "ADD" => {
                 let col_def = build_column_definition(col);
                 sqls.push(format!(
-                    "ALTER TABLE {} ADD COLUMN {}",
-                    table_ref_new, col_def
+                    "ALTER TABLE {} ADD COLUMN {}{}",
+                    table_ref_new,
+                    col_def,
+                    build_column_position_clause(&new_table.column_list, index).unwrap_or_default()
                 ));
             }
             "MODIFY" => {
                 let col_def = build_column_definition(col);
+                let position_clause = if is_column_position_changed(old_table, new_table, col) {
+                    build_column_position_clause(&new_table.column_list, index).unwrap_or_default()
+                } else {
+                    String::new()
+                };
                 if let Some(ref old_name) = col.old_name {
                     let name = col.name.as_deref().unwrap_or("");
                     if old_name != name {
                         sqls.push(format!(
-                            "ALTER TABLE {} CHANGE COLUMN `{}` {}",
+                            "ALTER TABLE {} CHANGE COLUMN `{}` {}{}",
                             table_ref_new,
                             old_name.replace('`', "``"),
-                            col_def
+                            col_def,
+                            position_clause
                         ));
                     } else {
                         sqls.push(format!(
-                            "ALTER TABLE {} MODIFY COLUMN {}",
-                            table_ref_new, col_def
+                            "ALTER TABLE {} MODIFY COLUMN {}{}",
+                            table_ref_new, col_def, position_clause
                         ));
                     }
                 } else {
                     sqls.push(format!(
-                        "ALTER TABLE {} MODIFY COLUMN {}",
-                        table_ref_new, col_def
+                        "ALTER TABLE {} MODIFY COLUMN {}{}",
+                        table_ref_new, col_def, position_clause
                     ));
                 }
             }
@@ -161,11 +169,40 @@ pub fn build_modify_table_sql(
                     ));
                 }
             }
-            _ => {}
+            _ => {
+                if is_column_position_changed(old_table, new_table, col) {
+                    let col_def = build_column_definition(col);
+                    sqls.push(format!(
+                        "ALTER TABLE {} MODIFY COLUMN {}{}",
+                        table_ref_new,
+                        col_def,
+                        build_column_position_clause(&new_table.column_list, index)
+                            .unwrap_or_default()
+                    ));
+                }
+            }
         }
     }
 
-    // 7. 索引变更（MODIFY 走先 DROP 再 ADD）
+    // 7. 主键变更（列信息页的主键勾选不会改 index_list，需要在这里对比 column_list）
+    if !has_explicit_primary_index_change(&new_table.index_list) {
+        let old_primary_keys = primary_key_column_names(&old_table.column_list);
+        let new_primary_keys = primary_key_column_names(&new_table.column_list);
+        if old_primary_keys != new_primary_keys {
+            if !old_primary_keys.is_empty() {
+                sqls.push(format!("ALTER TABLE {} DROP PRIMARY KEY", table_ref_new));
+            }
+            if !new_primary_keys.is_empty() {
+                sqls.push(format!(
+                    "ALTER TABLE {} ADD PRIMARY KEY ({})",
+                    table_ref_new,
+                    quote_column_names(&new_primary_keys)
+                ));
+            }
+        }
+    }
+
+    // 8. 索引变更（MODIFY 走先 DROP 再 ADD）
     for idx in &new_table.index_list {
         let status = idx.edit_status.as_deref().unwrap_or("");
         match status {
@@ -205,21 +242,12 @@ fn build_create_table_sql(escaped_db: &str, table: &EditTableInfo) -> String {
     }
 
     // 主键（来自 column_list 中标记了 primary_key 的列）
-    let mut primary_keys: Vec<&ColumnInfo> = table
-        .column_list
-        .iter()
-        .filter(|c| c.primary_key.unwrap_or(false) && c.edit_status.as_deref() != Some("DELETE"))
-        .collect();
-    primary_keys.sort_by_key(|c| c.primary_key_order.unwrap_or(0));
+    let primary_keys = primary_key_column_names(&table.column_list);
     if !primary_keys.is_empty() {
-        let cols: Vec<String> = primary_keys
-            .iter()
-            .filter_map(|c| c.name.as_ref())
-            .map(|n| format!("`{}`", n.replace('`', "``")))
-            .collect();
-        if !cols.is_empty() {
-            lines.push(format!("  PRIMARY KEY ({})", cols.join(", ")));
-        }
+        lines.push(format!(
+            "  PRIMARY KEY ({})",
+            quote_column_names(&primary_keys)
+        ));
     }
 
     // 索引
@@ -280,6 +308,124 @@ fn build_drop_index_sql(table_ref: &str, idx: &IndexInfo) -> String {
             idx.name.replace('`', "``")
         )
     }
+}
+
+fn has_explicit_primary_index_change(indexes: &[IndexInfo]) -> bool {
+    indexes.iter().any(|idx| {
+        matches!(
+            idx.edit_status.as_deref(),
+            Some("ADD" | "DELETE" | "MODIFY")
+        ) && (idx.name == "PRIMARY" || idx.index_type == "PRIMARY_KEY")
+    })
+}
+
+fn primary_key_column_names(columns: &[ColumnInfo]) -> Vec<String> {
+    let mut primary_keys: Vec<(i64, usize, String)> = columns
+        .iter()
+        .enumerate()
+        .filter(|(_, col)| {
+            col.primary_key.unwrap_or(false) && col.edit_status.as_deref() != Some("DELETE")
+        })
+        .filter_map(|(index, col)| {
+            let name = col.name.as_deref()?.trim();
+            if name.is_empty() {
+                return None;
+            }
+            Some((
+                col.primary_key_order
+                    .or(col.ordinal_position)
+                    .unwrap_or((index + 1) as i64),
+                index,
+                name.to_string(),
+            ))
+        })
+        .collect();
+
+    primary_keys.sort_by_key(|(order, index, _)| (*order, *index));
+    primary_keys.into_iter().map(|(_, _, name)| name).collect()
+}
+
+fn quote_column_names(names: &[String]) -> String {
+    names
+        .iter()
+        .map(|name| format!("`{}`", name.replace('`', "``")))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn column_identity(col: &ColumnInfo) -> Option<&str> {
+    col.old_name
+        .as_deref()
+        .filter(|name| !name.is_empty())
+        .or_else(|| col.name.as_deref().filter(|name| !name.is_empty()))
+}
+
+fn visible_column_identities(columns: &[ColumnInfo]) -> Vec<&str> {
+    columns
+        .iter()
+        .filter(|col| col.edit_status.as_deref() != Some("DELETE"))
+        .filter_map(column_identity)
+        .collect()
+}
+
+fn previous_visible_column_identity<'a>(
+    columns: &'a [ColumnInfo],
+    identity: &str,
+) -> Option<&'a str> {
+    let identities = visible_column_identities(columns);
+    identities
+        .iter()
+        .position(|candidate| *candidate == identity)
+        .and_then(|index| index.checked_sub(1))
+        .and_then(|index| identities.get(index).copied())
+}
+
+fn build_column_position_clause(columns: &[ColumnInfo], index: usize) -> Option<String> {
+    let visible_columns: Vec<&ColumnInfo> = columns
+        .iter()
+        .filter(|col| col.edit_status.as_deref() != Some("DELETE"))
+        .filter(|col| {
+            col.name
+                .as_deref()
+                .map(|name| !name.is_empty())
+                .unwrap_or(false)
+        })
+        .collect();
+
+    let column = columns.get(index)?;
+    let name = column.name.as_deref()?;
+    let visible_index = visible_columns
+        .iter()
+        .position(|col| col.name.as_deref() == Some(name))?;
+
+    if visible_index == 0 {
+        return Some(" FIRST".into());
+    }
+
+    visible_columns
+        .get(visible_index - 1)
+        .and_then(|col| col.name.as_deref())
+        .map(|previous_name| format!(" AFTER `{}`", previous_name.replace('`', "``")))
+}
+
+fn is_column_position_changed(
+    old_table: &EditTableInfo,
+    new_table: &EditTableInfo,
+    column: &ColumnInfo,
+) -> bool {
+    let Some(identity) = column_identity(column) else {
+        return false;
+    };
+
+    if !visible_column_identities(&old_table.column_list)
+        .iter()
+        .any(|candidate| *candidate == identity)
+    {
+        return false;
+    }
+
+    previous_visible_column_identity(&old_table.column_list, identity)
+        != previous_visible_column_identity(&new_table.column_list, identity)
 }
 
 /// 构建列定义 SQL 片段
@@ -587,5 +733,87 @@ mod tests {
             "ALTER TABLE `app`.`members` CHANGE COLUMN `name` `display_name` VARCHAR(128) NULL"
         );
         assert_eq!(sqls[3], "ALTER TABLE `app`.`members` DROP PRIMARY KEY");
+    }
+
+    #[test]
+    fn modify_table_generates_column_reorder_sql() {
+        let mut old_table = table("users");
+        old_table.column_list = vec![
+            column("id", "INT"),
+            column("mobile", "VARCHAR"),
+            column("password", "VARCHAR"),
+        ];
+
+        let mut new_table = table("users");
+        new_table.column_list = vec![
+            column("id", "INT"),
+            column("password", "VARCHAR"),
+            column("mobile", "VARCHAR"),
+        ];
+
+        let sqls = build_modify_table_sql("app", Some(&old_table), &new_table);
+
+        assert_eq!(
+            sqls,
+            vec![
+                "ALTER TABLE `app`.`users` MODIFY COLUMN `password` VARCHAR AFTER `id`",
+                "ALTER TABLE `app`.`users` MODIFY COLUMN `mobile` VARCHAR AFTER `password`",
+            ]
+        );
+    }
+
+    #[test]
+    fn modify_table_generates_primary_key_change_from_columns() {
+        let mut old_id = column("id", "INT");
+        old_id.primary_key = Some(true);
+        old_id.ordinal_position = Some(1);
+
+        let mut new_id = column("id", "INT");
+        new_id.primary_key = Some(true);
+        new_id.ordinal_position = Some(1);
+
+        let mut tenant_id = column("tenant_id", "INT");
+        tenant_id.primary_key = Some(true);
+        tenant_id.primary_key_order = Some(2);
+        tenant_id.ordinal_position = Some(2);
+
+        let mut old_table = table("users");
+        old_table.column_list = vec![old_id, column("tenant_id", "INT")];
+
+        let mut new_table = table("users");
+        new_table.column_list = vec![new_id, tenant_id];
+
+        let sqls = build_modify_table_sql("app", Some(&old_table), &new_table);
+
+        assert_eq!(
+            sqls,
+            vec![
+                "ALTER TABLE `app`.`users` DROP PRIMARY KEY",
+                "ALTER TABLE `app`.`users` ADD PRIMARY KEY (`id`, `tenant_id`)",
+            ]
+        );
+    }
+
+    #[test]
+    fn modify_table_appends_position_to_changed_column() {
+        let mut old_table = table("users");
+        old_table.column_list = vec![column("id", "INT"), column("name", "VARCHAR")];
+
+        let mut changed_column = column("name", "VARCHAR");
+        changed_column.edit_status = Some("MODIFY".into());
+        changed_column.column_size = Some(128);
+
+        let mut new_table = table("users");
+        new_table.column_list = vec![changed_column, column("id", "INT")];
+
+        let sqls = build_modify_table_sql("app", Some(&old_table), &new_table);
+
+        assert_eq!(
+            sqls,
+            vec![
+                "ALTER TABLE `app`.`users` MODIFY COLUMN `name` VARCHAR(128) FIRST",
+                "ALTER TABLE `app`.`users` MODIFY COLUMN `id` INT AFTER `name`",
+            ]
+        );
     }
 }

@@ -6,7 +6,7 @@ export default {
   'workspace.menu.ViewDDL': '查看DDL',
   'workspace.menu.deleteTable': '删除表',
   'workspace.menu.openTable': '打开表',
-  'workspace.menu.editTable': '修改表',
+  'workspace.menu.editTable': '设计表',
   'workspace.menu.renameTable': '重命名表',
   'workspace.menu.view': '查看',
   'workspace.menu.editTableData': '编辑表数据',
