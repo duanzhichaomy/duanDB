@@ -174,6 +174,15 @@ export default function TableBox(props: ITableProps) {
   // 表头是否展示字段类型（受右键菜单中的"显示字段类型"开关控制，作用于所有列）
   const [showColumnType, setShowColumnType] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (isActive) return;
+    setCurOperationRowNo(null);
+    setCurOperationColIds(null);
+    setCurOperationCellRange(null);
+    setEditingCell(null);
+    setFocusedContent(null);
+  }, [isActive]);
+
   // 取当前页有效的列头与对应 colId（剔除序号列）
   const getExportColumns = () => {
     return (queryResultData.headerList || [])
@@ -1324,6 +1333,8 @@ export default function TableBox(props: ITableProps) {
 
   // 处理粘贴的数据 hooks
   usePasteData({
+    isActive,
+    tableBoxRef,
     updateTableData,
     curOperationRowNo,
     curOperationCellRange,

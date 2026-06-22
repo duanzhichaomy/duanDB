@@ -69,10 +69,10 @@ export default memo<IProps>((props) => {
 
   useEffect(() => {
     setInternalTabs(items || []);
-    if (items?.length && !isValid(internalActiveTab)) {
+    if (items?.length && (!isValid(internalActiveTab) || !items.some((item) => item.key === internalActiveTab))) {
       setInternalActiveTab(items[0]?.key);
     }
-  }, [items]);
+  }, [items, internalActiveTab]);
 
   useEffect(() => {
     const fn = (e) => {

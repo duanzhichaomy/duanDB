@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { RefObject, useEffect } from 'react';
 import { clipboardToArray, readClipboardText } from '@/utils';
 
 interface IUsePasteDataRelyData {
+  isActive?: boolean;
+  tableBoxRef: RefObject<HTMLElement>;
   curOperationRowNo: Array<string> | null;
   curOperationCellRange: { colId: string; rowIds: string[] } | null;
   editingCell;
@@ -10,12 +12,32 @@ interface IUsePasteDataRelyData {
 
 // 处理粘贴的数据 hooks
 const usePasteData = (props: IUsePasteDataRelyData) => {
-  const { curOperationRowNo, curOperationCellRange, editingCell, updateTableData } = props;
+  const { isActive, tableBoxRef, curOperationRowNo, curOperationCellRange, editingCell, updateTableData } = props;
 
   // 读取剪切板数据，更新表格数据
   useEffect(() => {
     const hasPasteTarget =
       !!curOperationCellRange?.rowIds.length || !!curOperationRowNo || !!(editingCell && editingCell[2] === false);
+    if (!isActive || !hasPasteTarget) return;
+
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      return !!target.closest('input, textarea, [contenteditable="true"], [data-shortcut-recording-input]');
+    };
+
+    const isTableEventTarget = (event: Event) => {
+      const tableBox = tableBoxRef.current;
+      if (!tableBox) return false;
+      const target = event.target as Node | null;
+      const activeElement = document.activeElement;
+      return !!((target && tableBox.contains(target)) || (activeElement && tableBox.contains(activeElement)));
+    };
+
+    const shouldHandlePaste = (event: Event) => {
+      if (!isTableEventTarget(event)) return false;
+      if (isEditableTarget(event.target)) return false;
+      return true;
+    };
 
     const updateByClipboard = () => {
       if (curOperationCellRange?.rowIds.length) {
@@ -60,7 +82,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
     };
 
     const handlePaste = (event: ClipboardEvent) => {
-      if (!hasPasteTarget) return;
+      if (!shouldHandlePaste(event)) return;
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -69,7 +91,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code !== 'KeyV' || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
-      if (!hasPasteTarget) return;
+      if (!shouldHandlePaste(event)) return;
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -77,7 +99,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
     };
 
     const handleBeforeInput = (event: InputEvent) => {
-      if (!hasPasteTarget || event.inputType !== 'insertFromPaste') return;
+      if (event.inputType !== 'insertFromPaste' || !shouldHandlePaste(event)) return;
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -93,7 +115,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
       window.removeEventListener('paste', handlePaste, true);
       window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [curOperationRowNo, curOperationCellRange, editingCell, updateTableData]);
+  }, [isActive, tableBoxRef, curOperationRowNo, curOperationCellRange, editingCell, updateTableData]);
 };
 
 export default usePasteData;

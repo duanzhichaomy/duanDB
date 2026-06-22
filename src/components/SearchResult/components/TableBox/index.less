@@ -420,22 +420,39 @@
 .cellEditorInput {
   flex: 1;
   width: 100%;
-  height: 24px !important;
-  min-height: 24px;
-  padding: 0 8px !important;
-  font: inherit;
-  font-size: inherit;
+  height: 26px !important;
+  min-height: 26px;
+  padding: 0 !important;
+  font-family: inherit;
+  font-size: 12px !important;
   font-weight: inherit;
-  line-height: 22px;
+  line-height: 26px !important;
+  color: inherit;
   box-sizing: border-box;
-  background: #ffffff !important;
-  border-radius: 4px;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  outline: none !important;
+  caret-color: #635bff;
 
   &:global(.ant-input) {
-    font: inherit;
-    font-size: inherit;
+    font-family: inherit;
+    font-size: 12px !important;
     font-weight: inherit;
-    line-height: 22px;
+    line-height: 26px !important;
+    color: inherit;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  &:global(.ant-input:focus),
+  &:global(.ant-input-focused) {
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
 }
 

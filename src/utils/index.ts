@@ -278,12 +278,15 @@ export async function readClipboardText() {
       return await readText();
     } catch (e) {
       console.error('[clipboard] Tauri plugin 读取失败:', e);
-      return '';
     }
   }
 
   if (navigator.clipboard?.readText) {
-    return navigator.clipboard.readText();
+    try {
+      return await navigator.clipboard.readText();
+    } catch (e) {
+      console.error('[clipboard] navigator.clipboard 读取失败:', e);
+    }
   }
 
   return '';

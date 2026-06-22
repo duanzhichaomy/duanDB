@@ -20,27 +20,36 @@ const useMultipleSelectColumn = (props: {
   }, [curOperationColIds]);
 
   useEffect(() => {
+    const resetModifierState = () => {
+      isShiftDownRef.current = false;
+      isCmdDownRef.current = false;
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.keyCode === 16) {
+      if (event.key === 'Shift' || event.shiftKey) {
         isShiftDownRef.current = true;
       }
-      if (event.keyCode === 91 || event.keyCode === 17) {
+      if (event.key === 'Meta' || event.key === 'Control' || event.metaKey || event.ctrlKey) {
         isCmdDownRef.current = true;
       }
     };
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.keyCode === 16) {
+      if (event.key === 'Shift' || !event.shiftKey) {
         isShiftDownRef.current = false;
       }
-      if (event.keyCode === 91) {
+      if (event.key === 'Meta' || event.key === 'Control' || (!event.metaKey && !event.ctrlKey)) {
         isCmdDownRef.current = false;
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', resetModifierState);
+    document.addEventListener('visibilitychange', resetModifierState);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', resetModifierState);
+      document.removeEventListener('visibilitychange', resetModifierState);
     };
   }, []);
 

@@ -72,6 +72,7 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
   const unlistenRef = useRef<(() => void) | null>(null);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [notChangedSql, setNotChangedSql] = useState<string>('');
+  const activeResultTabId = activeTabId || resultDataList?.[0]?.uuid || '';
 
   useEffect(() => {
     if (sql) {
@@ -161,7 +162,7 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
           <div className={styles.successResultContent}>
             {needTable ? (
               <TableBox
-                isActive={isActive}
+                isActive={!!isActive && activeResultTabId === queryResultData.uuid}
                 tableBoxId={queryResultData.uuid}
                 key={queryResultData.uuid}
                 outerQueryResultData={queryResultData}
@@ -220,7 +221,7 @@ export default forwardRef((props: IProps, ref: ForwardedRef<ISearchResultRef>) =
         children: renderResult(queryResultData),
       };
     });
-  }, [resultDataList, isActive]);
+  }, [resultDataList, isActive, activeResultTabId]);
 
   const onEdit = useCallback(
     (type: 'add' | 'remove', data: ITabItem[]) => {

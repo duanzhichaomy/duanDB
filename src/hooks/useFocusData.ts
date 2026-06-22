@@ -1,7 +1,26 @@
 import { useEffect } from 'react';
 import { useCommonStore } from '@/store/common';
-import { tableCopy, copy } from '@/utils'
+import { copy } from '@/utils'
 import { setFocusedContent } from '@/store/common/copyFocusedContent';
+
+const serializeFocusedContent = (focusedContent: any[][] | any[] | string) => {
+  if (!Array.isArray(focusedContent)) {
+    return String(focusedContent);
+  }
+
+  if (!Array.isArray(focusedContent[0])) {
+    return focusedContent.map((item) => item ?? '').join('\t');
+  }
+
+  return (focusedContent as any[][])
+    .map((row) => row.map((item) => item ?? '').join('\t'))
+    .join('\n');
+};
+
+const isEditableTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false;
+  return !!target.closest('input, textarea, [contenteditable="true"], [data-shortcut-recording-input]');
+};
 
 // 如果用户点击的不是可复制的元素，就清空选中的内容
 function useCopyFocusData() {
@@ -11,23 +30,24 @@ function useCopyFocusData() {
     }
   });
   
-  // 注册快捷键监听cmd+c或ctrl+c复制focusedContent
+  // 注册系统 copy 事件复制 focusedContent，避免抢占输入框/编辑器的原生复制。
   useEffect(() => {
-    const handleCopy = (e: KeyboardEvent) => {
-      if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
-        if (!focusedContent) return
-        e.preventDefault();
-        // 如果是数据是数组，就调用tableCopy
-        if (Array.isArray(focusedContent)) {
-          tableCopy(focusedContent as any)
-          return
-        }
-        copy(focusedContent as any);
+    const handleCopy = (e: ClipboardEvent) => {
+      if (!focusedContent || isEditableTarget(e.target)) return;
+      const text = serializeFocusedContent(focusedContent);
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.clipboardData) {
+        e.clipboardData.setData('text/plain', text);
+        return;
       }
+
+      copy(text);
     };
-    document.addEventListener('keydown', handleCopy);
+    document.addEventListener('copy', handleCopy);
     return () => {
-      document.removeEventListener('keydown', handleCopy);
+      document.removeEventListener('copy', handleCopy);
     };
   }, [focusedContent]);
 
