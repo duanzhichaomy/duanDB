@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { clipboardToArray } from '@/utils';
+import { useEffect } from 'react';
+import { clipboardToArray, readClipboardText } from '@/utils';
 
 interface IUsePasteDataRelyData {
   curOperationRowNo: Array<string> | null;
@@ -11,32 +11,15 @@ interface IUsePasteDataRelyData {
 // 处理粘贴的数据 hooks
 const usePasteData = (props: IUsePasteDataRelyData) => {
   const { curOperationRowNo, curOperationCellRange, editingCell, updateTableData } = props;
-  const [canPaste, setCanPaste] = useState<boolean>(false);
-
-  // 判断当前是否可以粘贴
-  useEffect(() => {
-    const handleClick = (event) => {
-      const targetElement = event.target as Element;
-      if (targetElement.closest('[data-duandb-edit-table-data-can-paste]')) {
-        setCanPaste(true);
-      } else {
-        setCanPaste(false);
-      }
-    };
-    document.addEventListener('click', handleClick);
-    document.addEventListener('contextmenu', handleClick);
-    return () => {
-      document.removeEventListener('click', handleClick);
-      document.removeEventListener('contextmenu', handleClick);
-    };
-  }, []);
 
   // 读取剪切板数据，更新表格数据
   useEffect(() => {
-    const handleCopy = () => {
+    const hasPasteTarget =
+      !!curOperationCellRange?.rowIds.length || !!curOperationRowNo || !!(editingCell && editingCell[2] === false);
+
+    const updateByClipboard = () => {
       if (curOperationCellRange?.rowIds.length) {
-        navigator.clipboard
-          .readText()
+        readClipboardText()
           .then((text) => {
             const array2D = clipboardToArray(text.replace(/\r/g, ''));
             const pastedValues = array2D.map((row) => row[0] ?? null);
@@ -56,8 +39,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
         return;
       }
       if (curOperationRowNo) {
-        navigator.clipboard
-          .readText()
+        readClipboardText()
           .then((text) => {
             const array2D = clipboardToArray(text);
             updateTableData('setRow', array2D[0]);
@@ -67,8 +49,7 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
           });
       }
       if (editingCell && editingCell[2] === false) {
-        navigator.clipboard
-          .readText()
+        readClipboardText()
           .then((text) => {
             updateTableData('setCell', text);
           })
@@ -77,15 +58,42 @@ const usePasteData = (props: IUsePasteDataRelyData) => {
           });
       }
     };
-    if (canPaste) {
-      document.addEventListener('paste', handleCopy);
-    } else {
-      document.removeEventListener('paste', handleCopy);
-    }
-    return () => {
-      document.removeEventListener('paste', handleCopy);
+
+    const handlePaste = (event: ClipboardEvent) => {
+      if (!hasPasteTarget) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      updateByClipboard();
     };
-  }, [curOperationRowNo, curOperationCellRange, editingCell, canPaste]);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== 'KeyV' || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
+      if (!hasPasteTarget) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      updateByClipboard();
+    };
+
+    const handleBeforeInput = (event: InputEvent) => {
+      if (!hasPasteTarget || event.inputType !== 'insertFromPaste') return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      updateByClipboard();
+    };
+
+    window.addEventListener('beforeinput', handleBeforeInput, true);
+    window.addEventListener('paste', handlePaste, true);
+    window.addEventListener('keydown', handleKeyDown, true);
+
+    return () => {
+      window.removeEventListener('beforeinput', handleBeforeInput, true);
+      window.removeEventListener('paste', handlePaste, true);
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [curOperationRowNo, curOperationCellRange, editingCell, updateTableData]);
 };
 
 export default usePasteData;

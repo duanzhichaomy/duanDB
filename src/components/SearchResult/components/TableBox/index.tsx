@@ -520,6 +520,7 @@ export default function TableBox(props: ITableProps) {
     if (editingCell?.[0] === colId && editingCell?.[1] === rowId && editingCell?.[2]) {
       return;
     }
+    clearNativeFocusAndSelection();
     setFocusedContent(value);
     // 聚焦当前单元格，取消对于行/列的聚焦
     setCurOperationRowNo(null);
@@ -586,7 +587,8 @@ export default function TableBox(props: ITableProps) {
       return classnames(...styleList);
     }
     // 当前单元格处于竖向拖拽选区
-    if (curOperationCellRange?.colId === colId && curOperationCellRange.rowIds.includes(rowId)) {
+    const cellRange = curOperationCellRange;
+    if (cellRange && cellRange.colId === colId && cellRange.rowIds.includes(rowId)) {
       styleList.push(styles.tableItemFocus);
       return classnames(...styleList);
     }
@@ -1025,8 +1027,11 @@ export default function TableBox(props: ITableProps) {
     return String(val);
   }, []);
 
-  const clearNativeSelection = useCallback(() => {
+  const clearNativeFocusAndSelection = useCallback(() => {
     window.getSelection()?.removeAllRanges();
+    const activeElement = document.activeElement as HTMLElement | null;
+    activeElement?.blur?.();
+    tableBoxRef.current?.focus?.({ preventScroll: true });
   }, []);
 
   const getRowIdRange = useCallback(
@@ -1055,7 +1060,7 @@ export default function TableBox(props: ITableProps) {
       if (event.button !== 0) return;
       if (editingCell?.[0] === colId && editingCell?.[1] === rowId && editingCell?.[2]) return;
       event.preventDefault();
-      clearNativeSelection();
+      clearNativeFocusAndSelection();
       cellRangeDragRef.current = { colId, anchorRowId: rowId, moved: false };
       setEditingCell(null);
       setCurOperationRowNo(null);
@@ -1064,14 +1069,14 @@ export default function TableBox(props: ITableProps) {
       setCurOperationCellRange(nextSelection);
       setFocusedContent([[normalizeCopyValue(value)]]);
     },
-    [clearNativeSelection, editingCell, normalizeCopyValue],
+    [clearNativeFocusAndSelection, editingCell, normalizeCopyValue],
   );
 
   const extendCellRangeSelect = useCallback(
     (colId: string, rowId: string) => {
       const dragState = cellRangeDragRef.current;
       if (!dragState || dragState.colId !== colId) return;
-      clearNativeSelection();
+      clearNativeFocusAndSelection();
       const rowIds = getRowIdRange(dragState.anchorRowId, rowId);
       if (rowIds.length > 1) {
         dragState.moved = true;
@@ -1080,7 +1085,7 @@ export default function TableBox(props: ITableProps) {
       setCurOperationCellRange(nextSelection);
       setFocusedContent(getCellRangeData(nextSelection));
     },
-    [clearNativeSelection, getCellRangeData, getRowIdRange],
+    [clearNativeFocusAndSelection, getCellRangeData, getRowIdRange],
   );
 
   const { multipleSelectColumn } = useMultipleSelectColumn({
@@ -1092,6 +1097,7 @@ export default function TableBox(props: ITableProps) {
   });
 
   const handleColHeaderClick = (colId: string) => {
+    clearNativeFocusAndSelection();
     setEditingCell(null);
     setCurOperationRowNo(null);
     setCurOperationCellRange(null);
@@ -1099,6 +1105,7 @@ export default function TableBox(props: ITableProps) {
   };
 
   const handelRowNoClick = (rowId: string) => {
+    clearNativeFocusAndSelection();
     setCurOperationColIds(null);
     setCurOperationCellRange(null);
     multipleSelect(rowId);
@@ -1208,7 +1215,6 @@ export default function TableBox(props: ITableProps) {
             return (
               <div
                 data-duandb-general-can-copy-element
-                data-duandb-edit-table-data-can-paste
                 data-duandb-edit-table-data-can-right-click
                 onClick={() => {
                   handelRowNoClick(rowId);
@@ -1242,7 +1248,6 @@ export default function TableBox(props: ITableProps) {
           return (
             <div
               data-duandb-general-can-copy-element
-              data-duandb-edit-table-data-can-paste
               data-duandb-edit-table-data-can-right-click
               className={tableCellStyle(value, rowId, colId)}
               onMouseDown={(event) => startCellRangeSelect(event, colId, rowId, value)}
@@ -1785,27 +1790,41 @@ export default function TableBox(props: ITableProps) {
           )}
           {isActive ? (
             <RightClickMenu menuList={rowRightClickMenu}>
-              <div
-                ref={tableBoxRef}
-                className={classnames(styles.supportBaseTableBox, { [styles.supportBaseTableBoxHidden]: tableLoading })}
-              >
-                {allDataReady && (
-                  <>
-                    {tableLoading && <Spin className={styles.supportBaseTableSpin} />}
-                    <SupportBaseTable
-                      className={classnames('supportBaseTable', props.className, styles.table)}
-                      components={{ EmptyContent: () => <h2>{i18n('common.text.noData')}</h2> }}
-                      style={{ width: tableWidth, overflow: 'visible' }}
-                      isStickyHead
-                      stickyTop={0}
-                      {...pipeline.getProps()}
-                    />
-                  </>
+              <div className={styles.supportBaseTableFrame}>
+                {tableLoading && (
+                  <div className={styles.supportBaseTableMask}>
+                    <Spin />
+                  </div>
                 )}
+                <div
+                  ref={tableBoxRef}
+                  tabIndex={-1}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                  }}
+                  className={classnames(styles.supportBaseTableBox, {
+                    [styles.supportBaseTableBoxHidden]: tableLoading,
+                  })}
+                >
+                  {allDataReady && (
+                    <>
+                      <SupportBaseTable
+                        className={classnames('supportBaseTable', props.className, styles.table)}
+                        components={{ EmptyContent: () => <h2>{i18n('common.text.noData')}</h2> }}
+                        style={{ width: tableWidth, overflow: 'visible' }}
+                        isStickyHead
+                        stickyTop={0}
+                        {...pipeline.getProps()}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </RightClickMenu>
           ) : (
-            <div className={styles.supportBaseTableBox} />
+            <div className={styles.supportBaseTableFrame}>
+              <div className={styles.supportBaseTableBox} />
+            </div>
           )}
           <StatusBar
             description={queryResultData.description}

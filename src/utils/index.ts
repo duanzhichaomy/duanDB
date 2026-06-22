@@ -270,6 +270,25 @@ export function clipboardToArray(text: string): Array<Array<string | null>> {
   }
 }
 
+// 读取剪贴板
+export async function readClipboardText() {
+  if ((window as any).__TAURI_INTERNALS__) {
+    try {
+      const { readText } = await import('@tauri-apps/plugin-clipboard-manager');
+      return await readText();
+    } catch (e) {
+      console.error('[clipboard] Tauri plugin 读取失败:', e);
+      return '';
+    }
+  }
+
+  if (navigator.clipboard?.readText) {
+    return navigator.clipboard.readText();
+  }
+
+  return '';
+}
+
 // 写入剪贴板
 export async function copy(text: string) {
   // 方式1: Tauri 剪贴板插件
