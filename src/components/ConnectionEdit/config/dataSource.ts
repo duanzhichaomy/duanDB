@@ -206,7 +206,7 @@ export const dataSourceFormConfigs: IConnectionConfig[] = [
           required: false,
         },
       ],
-      pattern: /mysql:\/\/(.*):(\d+)(\/(\w+))?/,
+      pattern: /mysql:\/\/(?:[^:@/]+(?::[^@/]*)?@)?([^:/?#]+):(\d+)(\/([^?]+))?/,
       template: 'mysql://{host}:{port}/{database}',
     },
     ssh: sshConfig,

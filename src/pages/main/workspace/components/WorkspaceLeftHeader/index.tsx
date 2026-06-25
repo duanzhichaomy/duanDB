@@ -203,7 +203,6 @@ export default memo<IProps>(({ allDbNames, selectedDbNames, onSelectionChange, i
             <ConnectionEdit
               connectionData={connectionDetail}
               closeCreateConnection={() => setManageOpen(false)}
-              onDelete={deleteConnection}
             />
           )}
         </LoadingContent>

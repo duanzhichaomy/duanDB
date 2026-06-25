@@ -29,7 +29,6 @@ interface IProps {
   closeCreateConnection: () => void;
   connectionData: IConnectionDetails;
   submit?: (data: IConnectionDetails) => Promise<any>;
-  onDelete?: () => void;
 }
 
 export interface ICreateConnectionFunction {
@@ -37,7 +36,7 @@ export interface ICreateConnectionFunction {
 }
 
 const ConnectionEdit = forwardRef((props: IProps, ref: ForwardedRef<ICreateConnectionFunction>) => {
-  const { closeCreateConnection, connectionData, submit, onDelete } = props;
+  const { closeCreateConnection, connectionData, submit } = props;
   const [baseInfoForm] = Form.useForm();
   const [backfillData, setBackfillData] = useState<IConnectionDetails>(connectionData);
   const [loadings, setLoading] = useState({
@@ -145,8 +144,15 @@ const ConnectionEdit = forwardRef((props: IProps, ref: ForwardedRef<ICreateConne
   return (
     <div ref={ref as any}  className={styles.connectionBox}>
       <div className={styles.title}>
-        <Iconfont code={databaseMap[backfillData.type]?.icon} />
-        <div>{databaseMap[backfillData.type]?.name}</div>
+        <Iconfont
+          box
+          boxSize={36}
+          size={20}
+          code={databaseMap[backfillData.type]?.icon}
+          classNameBox={styles.titleIconBox}
+          className={styles.titleIcon}
+        />
+        <div className={styles.titleText}>{databaseMap[backfillData.type]?.name}</div>
       </div>
       <div className={styles.baseInfoBox}>
         <RenderForm
@@ -159,11 +165,6 @@ const ConnectionEdit = forwardRef((props: IProps, ref: ForwardedRef<ICreateConne
       </div>
       <div className={styles.formFooter}>
         <div className={styles.test}>
-          {backfillData.id && onDelete && (
-            <Button danger onClick={onDelete} className={styles.delete}>
-              {i18n('connection.button.remove')}
-            </Button>
-          )}
           {
             <Button
               loading={loadings.testButton}
@@ -370,7 +371,7 @@ function RenderForm(props: IRenderFormProps) {
           style={{ '--form-label-width': labelWidth } as any}
           labelAlign={labelAlign}
         >
-          <Input placeholder={placeholder} />
+          <Input className={styles.inputControl} placeholder={placeholder} />
         </Form.Item>
       ),
 
@@ -382,6 +383,7 @@ function RenderForm(props: IRenderFormProps) {
           labelAlign={labelAlign}
         >
           <Select
+            className={styles.inputControl}
             placeholder={placeholder}
             value={t.defaultValue}
             onChange={(e) => {
@@ -425,7 +427,7 @@ function RenderForm(props: IRenderFormProps) {
           style={{ '--form-label-width': labelWidth } as any}
           labelAlign={labelAlign}
         >
-          <Input.Password />
+          <Input.Password className={styles.inputControl} />
         </Form.Item>
       ),
     };
@@ -434,7 +436,10 @@ function RenderForm(props: IRenderFormProps) {
       <Fragment key={t.name}>
         <div
           key={t.name}
-          className={classnames({ [styles.labelTextAlign]: t.labelTextAlign })}
+          className={classnames(styles.formField, {
+            [styles.inlineField]: width !== '100%',
+            [styles.labelTextAlign]: t.labelTextAlign,
+          })}
           style={{ width: width }}
         >
           {FormItemTypes[t.inputType]()}

@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState, createContext, useContext } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState, createContext, useContext } from 'react';
 import styles from './index.less';
 import classnames from 'classnames';
 import Iconfont from '@/components/Iconfont';
@@ -118,16 +118,19 @@ function searchTree(treeData: ITreeNode[], searchValue: string): ITreeNode[] {
 }
 
 const itemHeight = 24; // 每个 item 的高度
+const minRenderNodeCount = 120;
 const paddingCount = 2;
 
 const Tree = (props: IProps) => {
   const { className, treeData: outerTreeData, searchValue } = props;
+  const scrollBoxRef = useRef<HTMLDivElement | null>(null);
   const [treeData, setTreeData] = useState<ITreeNode[] | null>(null);
   const [smoothTreeData, setSmoothTreeData] = useState<ITreeNode[]>([]);
   const [searchTreeData, setSearchTreeData] = useState<ITreeNode[] | null>(null); // 搜索结果
   const [searchSmoothTreeData, setSearchSmoothTreeData] = useState<ITreeNode[] | null>(null); // 搜索结果 平级
 
   const [scrollTop, setScrollTop] = useState(0); // 滚动位置 // 继续需要渲染的 item 索引有哪些
+  const [scrollBoxHeight, setScrollBoxHeight] = useState(0);
 
   const startIdx = useMemo(() => {
     let _startIdx = Math.floor(scrollTop / itemHeight);
@@ -136,6 +139,35 @@ const Tree = (props: IProps) => {
   }, [scrollTop]);
 
   const top = itemHeight * startIdx; // 第一个渲染的 item 到顶部距离
+  const renderNodeCount = useMemo(() => {
+    const visibleCount = Math.ceil(scrollBoxHeight / itemHeight);
+    return Math.max(minRenderNodeCount, visibleCount + paddingCount * 4);
+  }, [scrollBoxHeight]);
+
+  useEffect(() => {
+    const scrollBox = scrollBoxRef.current;
+    if (!scrollBox) return;
+
+    const updateScrollBoxHeight = () => {
+      const nextHeight = scrollBox.clientHeight;
+      setScrollBoxHeight((currentHeight) => (currentHeight === nextHeight ? currentHeight : nextHeight));
+    };
+
+    updateScrollBoxHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateScrollBoxHeight);
+      return () => {
+        window.removeEventListener('resize', updateScrollBoxHeight);
+      };
+    }
+
+    const resizeObserver = new ResizeObserver(updateScrollBoxHeight);
+    resizeObserver.observe(scrollBox);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   // 清空treeStore
   useEffect(() => {
@@ -171,11 +203,11 @@ const Tree = (props: IProps) => {
   }, [searchTreeData]);
 
   const treeNodes = useMemo(() => {
-    const realNodeList = (searchSmoothTreeData || smoothTreeData).slice(startIdx, startIdx + 50);
+    const realNodeList = (searchSmoothTreeData || smoothTreeData).slice(startIdx, startIdx + renderNodeCount);
     return realNodeList.map((item) => {
       return <TreeNode key={item.uuid} level={item.level || 0} data={item} />;
     });
-  }, [smoothTreeData, searchSmoothTreeData, startIdx]);
+  }, [smoothTreeData, searchSmoothTreeData, startIdx, renderNodeCount]);
 
   useEffect(() => {
     if (searchValue && treeData) {
@@ -198,6 +230,7 @@ const Tree = (props: IProps) => {
         }}
       >
         <div
+          ref={scrollBoxRef}
           className={classnames(styles.scrollBox)}
           onScroll={(e: any) => {
             setScrollTop(e.target.scrollTop);

@@ -1064,6 +1064,108 @@ export default function TableBox(props: ITableProps) {
     [normalizeCopyValue, tableData],
   );
 
+  const serializeCopyRows = useCallback((rows: Array<Array<string | null>>) => {
+    return rows.map((row) => row.map((item) => item ?? '').join('\t')).join('\n');
+  }, []);
+
+  const getActiveTableCopyText = useCallback(() => {
+    if (curOperationCellRange?.rowIds.length) {
+      return serializeCopyRows(getCellRangeData(curOperationCellRange));
+    }
+
+    if (curOperationColIds?.length) {
+      return serializeCopyRows(getColumnData(curOperationColIds));
+    }
+
+    if (curOperationRowNo?.length) {
+      const rows = tableData
+        .filter((item) => curOperationRowNo.includes(item[colNoCode]!))
+        .map((item) => {
+          const row = lodash.cloneDeep(item);
+          delete row[colNoCode];
+          return Object.keys(row).map((key) => (
+            row[key] === USER_FILLED_VALUE.DEFAULT ? '' : normalizeCopyValue(row[key])
+          ));
+        });
+      return serializeCopyRows(rows);
+    }
+
+    if (editingCell && editingCell[2] === false) {
+      return normalizeCopyValue(editingData);
+    }
+
+    return null;
+  }, [
+    curOperationCellRange,
+    curOperationColIds,
+    curOperationRowNo,
+    editingCell,
+    editingData,
+    getCellRangeData,
+    getColumnData,
+    normalizeCopyValue,
+    serializeCopyRows,
+    tableData,
+  ]);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      return !!target.closest('input, textarea, [contenteditable="true"], [data-shortcut-recording-input]');
+    };
+
+    const isTableEventTarget = (event: Event) => {
+      const tableBox = tableBoxRef.current;
+      if (!tableBox) return false;
+      const target = event.target as Node | null;
+      const activeElement = document.activeElement;
+      return !!((target && tableBox.contains(target)) || (activeElement && tableBox.contains(activeElement)));
+    };
+
+    const shouldHandleCopy = (event: Event) => {
+      if (isEditableTarget(event.target)) return false;
+      if (!isTableEventTarget(event)) return false;
+      return getActiveTableCopyText() !== null;
+    };
+
+    const writeCopyText = (text: string, event?: ClipboardEvent) => {
+      event?.clipboardData?.setData('text/plain', text);
+      if (!event?.clipboardData) {
+        copy(text);
+      }
+    };
+
+    const handleCopy = (event: ClipboardEvent) => {
+      if (!shouldHandleCopy(event)) return;
+      const text = getActiveTableCopyText();
+      if (text === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      writeCopyText(text, event);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== 'KeyC' || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
+      if (!shouldHandleCopy(event)) return;
+      const text = getActiveTableCopyText();
+      if (text === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      writeCopyText(text);
+    };
+
+    window.addEventListener('copy', handleCopy, true);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      window.removeEventListener('copy', handleCopy, true);
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [getActiveTableCopyText, isActive]);
+
   const startCellRangeSelect = useCallback(
     (event: React.MouseEvent, colId: string, rowId: string, value: string | null) => {
       if (event.button !== 0) return;
